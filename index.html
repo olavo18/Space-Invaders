@@ -119,15 +119,42 @@
             }
         }
 
-        function desenharEntidade(img, obj, fallback, isFireball) {
-            ctx.save();
-            if(isFireball) { ctx.shadowBlur = 40; ctx.shadowColor = "orange"; }
-            if(obj.isShield) { ctx.globalAlpha = 0.5; ctx.shadowBlur = 15; ctx.shadowColor = "cyan"; }
-            if(player.danoTime > 0 && obj === player) ctx.globalAlpha = 0.5;
-            
-            if(img.complete && img.naturalWidth !== 0) ctx.drawImage(img, obj.x, obj.y, obj.w, obj.h);
-            else { ctx.fillStyle = fallback; ctx.fillRect(obj.x, obj.y, obj.w, obj.h); }
-            ctx.restore();
+        let frameAnimacao = 0; 
+function desenharEntidade(img, obj, fallback, isFireball) {
+    ctx.save();
+    frameAnimacao += 0.01; // Velocidade do balanço
+    
+    // Cálculo para flutuar e pulsar
+    let oscilacaoY = Math.sin(frameAnimacao + (obj.x * 0.1)) * 4;
+    let pulsarEscala = 1 + Math.sin(frameAnimacao) * 0.02;
+
+    // Traduz para o centro do objeto para animar corretamente
+    ctx.translate(obj.x + obj.w / 2, obj.y + obj.h / 2 + oscilacaoY);
+    ctx.scale(pulsarEscala, pulsarEscala);
+
+    if (isFireball) { 
+        ctx.shadowBlur = 40; 
+        ctx.shadowColor = "orange"; 
+        ctx.rotate(frameAnimacao * 10); // Gira a bola de fogo
+    }
+    
+    if (obj.isShield) { 
+        ctx.globalAlpha = 0.5; 
+        ctx.shadowBlur = 20; 
+        ctx.shadowColor = "cyan"; 
+    }
+    
+    if (player.danoTime > 0 && obj === player) ctx.globalAlpha = 0.5;
+
+    // Importante: aqui usamos -w/2 para centralizar após o translate
+    if (img.complete && img.naturalWidth !== 0) {
+        ctx.drawImage(img, -obj.w / 2, -obj.h / 2, obj.w, obj.h);
+    } else {
+        ctx.fillStyle = fallback;
+        ctx.fillRect(-obj.w / 2, -obj.h / 2, obj.w, obj.h);
+    }
+    ctx.restore();
+}
         }
 
         function gameLoop() {

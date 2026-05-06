@@ -19,7 +19,6 @@
         
         #ui-camada { position: absolute; top: 20px; left: 25px; right: 25px; display: flex; justify-content: space-between; font-family: 'Orbitron'; font-size: 18px; color: var(--neon-blue); pointer-events: none; z-index: 50; }
         
-        /* Legenda centralizada para não cobrir as naves no topo durante o diálogo */
         #dialogo-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; color: black; padding: 25px 40px; border-radius: 25px; font-weight: 800; display: none; z-index: 200; width: 550px; text-align: center; border: 6px solid var(--neon-blue); box-shadow: 0 0 100px rgba(0,0,0,1); font-size: 20px; }
 
         #efeito-tempo { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 150, 255, 0.3); display: none; z-index: 5; pointer-events: none; }
@@ -61,8 +60,9 @@
 
         let modo = 'menu', faseAtual = 1, tempoParado = false, contadorTempo = 0;
         let player = { x: 370, y: 520, w: 60, h: 60, tx: 370, ty: 520, vidas: 3, danoTime: 0, kills: 0 };
-        let amigo = { x: -100, y: 450, w: 60, h: 60, tx: -100, ty: 450 }; // Começa fora da tela
+        let amigo = { x: -100, y: 450, w: 60, h: 60, tx: -100, ty: 450 };
         let invasores = [], tiros = [], tirosE = [], keys = {};
+        let frameAnimacao = 0; 
 
         const falasChefe = ["ZA WARUDO!", "O tempo é meu!", "Hunter, você não pode se mexer!", "Inútil! Inútil! Inútil!"];
 
@@ -76,15 +76,15 @@
             document.getElementById('menu-principal').style.display = 'none';
             document.getElementById('game-container').style.display = 'block';
             modo = 'historia';
-            amigo.tx = 200; // Amigo entra na tela para falar
+            amigo.tx = 200;
             player.tx = 500;
             
             falar("Hunter: Eu consigo derrotar esses alienígenas sozinho!", 2500, () => {
                 falar("Amigo: Hunter, você enlouqueceu? São muitos!", 2500, () => {
                     falar("Hunter: Vou mostrar do que sou capaz!", 1500, () => {
                         modo = 'jogando';
-                        amigo.tx = -150; // Amigo vai embora após a fala
-                        player.tx = 370; // Hunter volta para o centro
+                        amigo.tx = -150;
+                        player.tx = 370;
                         criarFase();
                     });
                 });
@@ -117,56 +117,41 @@
                 tiros.push({ x: player.x - 20, y: player.y - 40, w: 100, h: 100, s: 8, isFireball: true });
                 player.kills -= 3;
             }
-        
+        }
 
-        let frameAnimacao = 0; 
-function desenharEntidade(img, obj, fallback, isFireball) {
-    ctx.save();
-    frameAnimacao += 0.01; // Velocidade do balanço
-    
-    // Cálculo para flutuar e pulsar
-    let oscilacaoY = Math.sin(frameAnimacao + (obj.x * 0.1)) * 4;
-    let pulsarEscala = 1 + Math.sin(frameAnimacao) * 0.02;
+        function desenharEntidade(img, obj, fallback, isFireball) {
+            ctx.save();
+            frameAnimacao += 0.005;
+            let oscilacaoY = Math.sin(frameAnimacao * 5 + (obj.x * 0.1)) * 4;
+            let pulsarEscala = 1 + Math.sin(frameAnimacao * 5) * 0.02;
 
-    // Traduz para o centro do objeto para animar corretamente
-    ctx.translate(obj.x + obj.w / 2, obj.y + obj.h / 2 + oscilacaoY);
-    ctx.scale(pulsarEscala, pulsarEscala);
+            ctx.translate(obj.x + obj.w / 2, obj.y + obj.h / 2 + oscilacaoY);
+            ctx.scale(pulsarEscala, pulsarEscala);
 
-    if (isFireball) { 
-        ctx.shadowBlur = 40; 
-        ctx.shadowColor = "orange"; 
-        ctx.rotate(frameAnimacao * 10); // Gira a bola de fogo
-    }
-    
-    if (obj.isShield) { 
-        ctx.globalAlpha = 0.5; 
-        ctx.shadowBlur = 20; 
-        ctx.shadowColor = "cyan"; 
-    }
-    
-    if (player.danoTime > 0 && obj === player) ctx.globalAlpha = 0.5;
+            if (isFireball) { 
+                ctx.shadowBlur = 40; ctx.shadowColor = "orange"; 
+                ctx.rotate(frameAnimacao * 50); 
+            }
+            if (obj.isShield) { ctx.globalAlpha = 0.5; ctx.shadowBlur = 20; ctx.shadowColor = "cyan"; }
+            if (player.danoTime > 0 && obj === player) ctx.globalAlpha = 0.5;
 
-    // Importante: aqui usamos -w/2 para centralizar após o translate
-    if (img.complete && img.naturalWidth !== 0) {
-        ctx.drawImage(img, -obj.w / 2, -obj.h / 2, obj.w, obj.h);
-    } else {
-        ctx.fillStyle = fallback;
-        ctx.fillRect(-obj.w / 2, -obj.h / 2, obj.w, obj.h);
-    }
-    ctx.restore();
-}
+            if (img.complete && img.naturalWidth !== 0) {
+                ctx.drawImage(img, -obj.w / 2, -obj.h / 2, obj.w, obj.h);
+            } else {
+                ctx.fillStyle = fallback;
+                ctx.fillRect(-obj.w / 2, -obj.h / 2, obj.w, obj.h);
+            }
+            ctx.restore();
         }
 
         function gameLoop() {
             ctx.clearRect(0, 0, 800, 600);
 
             if(modo !== 'menu') {
-                // Suavização de movimento para Hunter e Amigo
                 player.x = (1 - 0.1) * player.x + 0.1 * player.tx;
                 amigo.x = (1 - 0.1) * amigo.x + 0.1 * amigo.tx;
 
                 desenharEntidade(skins.player, player, 'green');
-                // Amigo só aparece se estiver dentro de uma margem visível
                 if(amigo.x > -80) desenharEntidade(skins.amigo, amigo, 'blue');
 
                 if(modo === 'jogando') {
@@ -236,7 +221,6 @@ function desenharEntidade(img, obj, fallback, isFireball) {
                         });
                         if(vivos === 0) { faseAtual++; criarFase(); }
                     } else {
-                        // Tempo Parado: Desenha inimigos sem mover
                         invasores.forEach(inv => {
                             if(inv.isBoss ? inv.hp > 0 : (inv.isShield ? inv.hp > 0 : inv.vivo)) {
                                 desenharEntidade(inv.isBoss ? skins.chefe : (inv.isShield ? skins.escudo : skins.alien), inv, 'red');

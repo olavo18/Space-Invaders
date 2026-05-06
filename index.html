@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Space Invaders - Olavo Marchiori</title>
+<title>Space Invaders - Hunter Protocol</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Orbitron:wght@700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -18,83 +18,112 @@
 * { margin:0; padding:0; box-sizing:border-box; }
 
 body {
-    background-color: var(--space-dark);
+    background: var(--space-dark);
     background-image: radial-gradient(white, rgba(255,255,255,.1) 1px, transparent 20px);
     background-size: 50px 50px;
     font-family: 'Plus Jakarta Sans', sans-serif;
-    color: white;
-    height: 100vh;
+    color:white;
+    height:100vh;
     display:flex;
     align-items:center;
     justify-content:center;
     overflow:hidden;
 }
 
-/* MENU ORIGINAL RESTAURADO */
+/* MENU NOVO */
 #menu-principal {
-    text-align: center;
-    background: rgba(10, 10, 30, 0.95);
-    padding: 50px;
-    border-radius: 40px;
-    border: 2px solid var(--neon-blue);
-    backdrop-filter: blur(15px);
-    z-index: 100;
-    max-width: 450px;
-    width: 90%;
-    box-shadow: 0 0 50px rgba(0, 210, 255, 0.2);
-    animation: floating 4s infinite ease-in-out;
+    position: absolute;
+    width:100%;
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
 }
 
-@keyframes floating {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-12px); }
+.menu-card {
+    background: rgba(10,10,30,0.85);
+    padding:60px;
+    border-radius:30px;
+    backdrop-filter:blur(20px);
+    border:1px solid rgba(0,210,255,0.3);
+    box-shadow:0 0 60px rgba(0,210,255,0.15);
+    text-align:center;
+    animation:floatMenu 5s infinite ease-in-out;
 }
 
-h1 { font-family: 'Orbitron'; font-size: 32px; color: var(--neon-blue); text-shadow: 0 0 20px var(--neon-blue); }
-.subtitle { margin-bottom: 40px; }
+@keyframes floatMenu {
+    0%,100%{transform:translateY(0);}
+    50%{transform:translateY(-15px);}
+}
+
+h1 {
+    font-family:'Orbitron';
+    font-size:38px;
+    color:var(--neon-blue);
+    text-shadow:0 0 25px var(--neon-blue);
+}
+
+.subtitle {
+    margin:20px 0 40px;
+    opacity:0.7;
+}
 
 .btn-menu {
-    padding: 16px 25px;
-    font-weight: 800;
-    border-radius: 15px;
-    cursor: pointer;
-    margin: 10px;
+    display:block;
+    margin:10px 0;
+    padding:15px;
+    width:220px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.2);
+    background:transparent;
+    color:white;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+.btn-menu:hover {
+    transform:scale(1.05);
+    background:rgba(255,255,255,0.08);
+}
+
+.btn-play {
+    background:var(--neon-pink);
+    border:none;
+    box-shadow:0 0 25px rgba(255,0,85,0.4);
 }
 
 /* GAME */
-#game-container { 
+#game-container {
     display:none;
     position:relative;
     width:800px;
     height:600px;
-    background:#000;
+    background:black;
     border:2px solid var(--neon-blue);
 }
 
-/* LEGENDA FIX */
+/* LEGENDA */
 #dialogo-box {
     position:absolute;
     bottom:20px;
     left:50%;
     transform:translateX(-50%);
     background:rgba(0,0,0,0.7);
-    color:white;
-    padding:18px;
-    border-radius:15px;
-    display:none;
+    padding:15px;
+    border-radius:10px;
     opacity:0;
+    display:none;
     transition:0.4s;
-    width:70%;
-    text-align:center;
 }
 
+/* ALERTA */
 #alerta-invasao {
     position:absolute;
     top:50%;
     left:50%;
     transform:translate(-50%,-50%);
+    font-size:40px;
     color:var(--neon-pink);
-    font-size:50px;
     display:none;
 }
 </style>
@@ -102,12 +131,17 @@ h1 { font-family: 'Orbitron'; font-size: 32px; color: var(--neon-blue); text-sha
 
 <body>
 
+<!-- MENU -->
 <div id="menu-principal">
-    <h1>SPACE INVADERS</h1>
-    <div class="subtitle">Olavo Marchiori</div>
-    <button class="btn-menu" onclick="iniciarHistoria()">JOGAR</button>
+    <div class="menu-card">
+        <h1>SPACE INVADERS</h1>
+        <div class="subtitle">Missão Hunter</div>
+
+        <button class="btn-menu btn-play" onclick="iniciarHistoria()">JOGAR</button>
+    </div>
 </div>
 
+<!-- GAME -->
 <div id="game-container">
     <div id="dialogo-box"></div>
     <div id="alerta-invasao">A INVASÃO COMEÇOU!</div>
@@ -115,35 +149,34 @@ h1 { font-family: 'Orbitron'; font-size: 32px; color: var(--neon-blue); text-sha
 </div>
 
 <script>
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-const dialBox = document.getElementById('dialogo-box');
-const alerta = document.getElementById('alerta-invasao');
+const canvas=document.getElementById('gameCanvas');
+const ctx=canvas.getContext('2d');
+const dialBox=document.getElementById('dialogo-box');
+const alerta=document.getElementById('alerta-invasao');
 
-canvas.width = 800;
-canvas.height = 600;
+canvas.width=800;
+canvas.height=600;
 
-const skinPlayer = new Image(); skinPlayer.src = 'jogadorprincipal.png';
-const skinAmigo = new Image(); skinAmigo.src = 'amigo.png';
+const skinPlayer=new Image(); skinPlayer.src='jogadorprincipal.png';
+const skinAmigo=new Image(); skinAmigo.src='amigo.png';
 
-let modo='menu';
-let cam={x:0,y:0,zoom:1,tZoom:1};
-
-let player={x:450,y:450,w:65,h:65,tx:450,ty:450,rot:0};
-let amigo={x:250,y:450,w:65,h:65,tx:250,ty:450,rot:0};
+let player={x:400,y:450,tx:400,ty:450,w:60,h:60};
+let amigo={x:250,y:450,tx:250,ty:450,w:60,h:60};
 
 let tiros=[],invasores=[],keys={};
 let particulas=[],subindo=false;
+let modo='menu';
 
 function lerp(a,b,n){return(1-n)*a+n*b;}
 
+/* LEGENDA */
 function falar(t,tempo,cb){
     dialBox.innerText=t;
     dialBox.style.display='block';
-    setTimeout(()=>dialBox.style.opacity='1',10);
+    setTimeout(()=>dialBox.style.opacity=1,10);
 
     setTimeout(()=>{
-        dialBox.style.opacity='0';
+        dialBox.style.opacity=0;
         setTimeout(()=>{
             dialBox.style.display='none';
             if(cb)cb();
@@ -151,122 +184,80 @@ function falar(t,tempo,cb){
     },tempo);
 }
 
-/* HISTORIA ORIGINAL + DECOLAGEM */
+/* HISTORIA */
 function iniciarHistoria(){
     document.getElementById('menu-principal').style.display='none';
     document.getElementById('game-container').style.display='block';
 
-    modo='historia';
-
-    setTimeout(()=>{
-        cam.tZoom=1.6;
-
-        falar("Hunter: Eu consigo derrotar esses alienígenas sozinho!",4000,()=>{
-            amigo.tx=330;
-
-            falar("Riven: Você enlouqueceu? São muitos!",4000,()=>{
-                falar("Hunter: Eu posso sim! Olha isso!",3000,()=>{
-                    demonstrarHabilidades();
-                });
+    falar("Hunter: Eu consigo derrotar eles!",3000,()=>{
+        falar("Riven: Você não vai sobreviver!",3000,()=>{
+            falar("Hunter: Adeus...",2000,()=>{
+                decolar();
             });
         });
-
-    },1000);
+    });
 }
 
-function demonstrarHabilidades(){
-    player.tx=650;
-
-    let mtr=setInterval(()=>{tiros.push({x:player.x+30,y:player.y,s:18});},150);
-
-    setTimeout(()=>{
-        clearInterval(mtr);
-        player.tx=400;
-
-        falar("Hunter: Adeus, Riven...",2000,()=>{
-            iniciarDecolagem();
-        });
-
-    },2000);
-}
-
-function iniciarDecolagem(){
-    modo='decolando';
+/* DECOLAGEM */
+function decolar(){
     subindo=true;
 
     let subida=setInterval(()=>{
-        player.ty-=7;
+        player.ty-=6;
 
         particulas.push({
-            x:player.x+30+(Math.random()*20-10),
+            x:player.x+30,
             y:player.y+60,
-            size:Math.random()*6+4,
-            life:60
+            size:5,
+            life:50
         });
 
-        if(player.y<-120){
+        if(player.y<-100){
             clearInterval(subida);
-            subindo=false;
-
             alerta.style.display='block';
 
             setTimeout(()=>{
                 alerta.style.display='none';
-                iniciarJogoReal();
-            },2500);
+                iniciarJogo();
+            },2000);
         }
 
     },16);
 }
 
-function iniciarJogoReal(){
-    modo='jogando';
+/* JOGO */
+function iniciarJogo(){
+    modo='jogo';
 
-    for(let i=0;i<30;i++){
-        invasores.push({x:(i%10)*65+85,y:Math.floor(i/10)*50+60,w:45,h:35,vivo:true});
+    for(let i=0;i<20;i++){
+        invasores.push({x:50+i*30,y:50});
     }
 
     window.addEventListener('keydown',e=>keys[e.code]=true);
     window.addEventListener('keyup',e=>keys[e.code]=false);
 }
 
-function drawShip(img,obj,fallback){
-    ctx.save();
-    ctx.translate(obj.x+obj.w/2,obj.y+obj.h/2);
+/* LOOP */
+function loop(){
+    ctx.clearRect(0,0,800,600);
 
-    if(subindo && obj===player){
-        ctx.shadowBlur=30;
-        ctx.shadowColor='#00d2ff';
-    }
+    player.x=lerp(player.x,player.tx,0.1);
+    player.y=lerp(player.y,player.ty,0.1);
 
-    if(img.complete) ctx.drawImage(img,-obj.w/2,-obj.h/2,obj.w,obj.h);
-    else {ctx.fillStyle=fallback; ctx.fillRect(-obj.w/2,-obj.h/2,obj.w,obj.h);}
-
-    ctx.restore();
-}
-
-function gameLoop(){
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-
-    player.x=lerp(player.x,player.tx,0.08);
-    player.y=lerp(player.y,player.ty,0.08);
-    amigo.x=lerp(amigo.x,amigo.tx,0.08);
-
-    drawShip(skinPlayer,player,'#0f0');
-    if(amigo.y<700) drawShip(skinAmigo,amigo,'#0ff');
+    ctx.fillStyle='#0f0';
+    ctx.fillRect(player.x,player.y,60,60);
 
     particulas.forEach((p,i)=>{
-        p.y+=2;p.life--;
-        ctx.fillStyle=`rgba(200,200,255,${p.life/60})`;
-        ctx.beginPath();
-        ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
-        ctx.fill();
+        p.y+=2;
+        p.life--;
+        ctx.fillStyle=`rgba(200,200,255,${p.life/50})`;
+        ctx.fillRect(p.x,p.y,p.size,p.size);
         if(p.life<=0) particulas.splice(i,1);
     });
 
-    requestAnimationFrame(gameLoop);
+    requestAnimationFrame(loop);
 }
-gameLoop();
+loop();
 </script>
 
 </body>

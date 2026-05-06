@@ -6,92 +6,31 @@
     <title>Space Invaders - Hunter Mission Extreme</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Orbitron:wght@700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --neon-blue: #00d2ff;
-            --neon-pink: #ff0055;
-            --space-dark: #050510;
-        }
-
+        :root { --neon-blue: #00d2ff; --neon-pink: #ff0055; --space-dark: #050510; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            background-color: var(--space-dark);
-            background-image: radial-gradient(white, rgba(255,255,255,.1) 1px, transparent 20px);
-            background-size: 50px 50px;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            color: white;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-
-        #menu-principal {
-            text-align: center;
-            background: rgba(10, 10, 30, 0.95);
-            padding: 60px;
-            border-radius: 40px;
-            border: 2px solid var(--neon-blue);
-            backdrop-filter: blur(15px);
-            z-index: 100;
-            max-width: 500px;
-            width: 90%;
-            box-shadow: 0 0 50px rgba(0, 210, 255, 0.2);
-        }
-
+        body { background-color: var(--space-dark); background-image: radial-gradient(white, rgba(255,255,255,.1) 1px, transparent 20px); background-size: 50px 50px; font-family: 'Plus Jakarta Sans', sans-serif; color: white; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        
+        #menu-principal { text-align: center; background: rgba(10, 10, 30, 0.95); padding: 60px; border-radius: 40px; border: 2px solid var(--neon-blue); z-index: 100; max-width: 500px; width: 90%; box-shadow: 0 0 50px rgba(0, 210, 255, 0.2); }
         h1 { font-family: 'Orbitron', sans-serif; font-size: 36px; color: var(--neon-blue); text-shadow: 0 0 20px var(--neon-blue); margin-bottom: 10px; }
-        .subtitle { font-size: 14px; margin-bottom: 40px; opacity: 0.9; letter-spacing: 4px; text-transform: uppercase; }
+        
+        .btn-play { padding: 20px 30px; font-size: 18px; font-weight: 800; background: var(--neon-pink); color: white; border: none; border-radius: 20px; cursor: pointer; width: 100%; text-transform: uppercase; box-shadow: 0 10px 20px rgba(255, 0, 85, 0.3); }
 
-        .btn-play {
-            padding: 20px 30px; font-size: 18px; font-weight: 800; background: var(--neon-pink);
-            color: white; border: none; border-radius: 20px;
-            cursor: pointer; transition: 0.3s; width: 100%; text-transform: uppercase;
-            box-shadow: 0 10px 20px rgba(255, 0, 85, 0.3);
-        }
+        #game-container { display: none; position: relative; width: 800px; height: 600px; background: #000; border: 3px solid var(--neon-blue); overflow: hidden; }
+        
+        #ui-camada { position: absolute; top: 20px; left: 25px; right: 25px; display: flex; justify-content: space-between; font-family: 'Orbitron'; font-size: 18px; color: var(--neon-blue); pointer-events: none; z-index: 50; }
+        
+        /* Ajuste da Legenda para não cobrir as naves no topo */
+        #dialogo-box { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); background: white; color: black; padding: 20px 30px; border-radius: 20px; font-weight: 800; display: none; z-index: 100; width: 500px; text-align: center; border: 4px solid var(--neon-blue); box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
 
-        .btn-play:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(255, 0, 85, 0.5); }
-
-        #game-container { 
-            display: none; position: relative; width: 800px; height: 600px; 
-            background: #000; border: 3px solid var(--neon-blue); overflow: hidden;
-        }
-
-        #ui-camada {
-            position: absolute; top: 20px; left: 25px; right: 25px;
-            display: flex; justify-content: space-between; font-family: 'Orbitron';
-            font-size: 18px; color: var(--neon-blue); pointer-events: none; z-index: 10;
-        }
-
-        #dialogo-box {
-            position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%);
-            background: white; color: black; padding: 25px 40px; border-radius: 25px;
-            font-weight: 800; display: none; z-index: 200; width: 500px; text-align: center;
-            border: 5px solid var(--neon-blue); font-size: 18px; box-shadow: 0 20px 50px rgba(0,0,0,0.9);
-        }
-
-        #efeito-tempo {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 150, 255, 0.3); display: none; z-index: 5;
-            pointer-events: none; animation: pulse 1s infinite;
-        }
-
-        @keyframes pulse { 0% { opacity: 0.2; } 50% { opacity: 0.5; } 100% { opacity: 0.2; } }
-
-        #boss-hp-bar {
-            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
-            width: 600px; height: 12px; background: #222; border: 2px solid #fff;
-            display: none; border-radius: 10px; z-index: 15; overflow: hidden;
-        }
-
-        #boss-hp-fill { width: 100%; height: 100%; background: #ff0055; transition: 0.3s; }
+        #efeito-tempo { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 150, 255, 0.3); display: none; z-index: 5; pointer-events: none; }
+        #boss-hp-bar { position: absolute; top: 60px; left: 50%; transform: translateX(-50%); width: 400px; height: 10px; background: #222; border: 1px solid #fff; display: none; border-radius: 5px; z-index: 15; overflow: hidden; }
+        #boss-hp-fill { width: 100%; height: 100%; background: #ff0055; transition: 0.2s; }
     </style>
 </head>
 <body>
 
     <div id="menu-principal">
         <h1>SPACE HUNTER</h1>
-        <div class="subtitle">Ultimate Mission</div>
         <button class="btn-play" onclick="iniciarHistoria()">INICIAR COMBATE</button>
     </div>
 
@@ -112,10 +51,7 @@
         const ctx = canvas.getContext('2d');
         canvas.width = 800; canvas.height = 600;
 
-        const skins = {
-            player: new Image(), amigo: new Image(), alien: new Image(),
-            chefe: new Image(), fireball: new Image(), escudo: new Image()
-        };
+        const skins = { player: new Image(), amigo: new Image(), alien: new Image(), chefe: new Image(), fireball: new Image(), escudo: new Image() };
         skins.player.src = 'jogadorprincipal.png';
         skins.amigo.src = 'amigo.png';
         skins.alien.src = 'alien.png';
@@ -125,10 +61,10 @@
 
         let modo = 'menu', faseAtual = 1, tempoParado = false, contadorTempo = 0;
         let player = { x: 370, y: 520, w: 60, h: 60, tx: 370, ty: 520, vidas: 3, danoTime: 0, kills: 0 };
-        let amigo = { x: 250, y: 450, w: 60, h: 60, tx: 250 };
-        let invasores = [], tiros = [], tirosE = [], particulas = [], keys = {};
+        let amigo = { x: 100, y: 520, w: 60, h: 60, tx: 100, ty: 520 };
+        let invasores = [], tiros = [], tirosE = [], keys = {};
 
-        const falasChefe = ["ZA WARUDO!", "O tempo é meu!", "Inútil!", "6 segundos de silêncio!"];
+        const falasChefe = ["ZA WARUDO!", "O tempo é meu!", "Hunter, você não pode fugir!", "Tudo para agora!"];
 
         function falar(texto, tempo, callback) {
             const box = document.getElementById('dialogo-box');
@@ -141,10 +77,11 @@
             document.getElementById('game-container').style.display = 'block';
             modo = 'historia';
             falar("Hunter: Eu consigo derrotar esses alienígenas sozinho!", 2500, () => {
-                amigo.tx = 330;
+                amigo.tx = 250;
                 falar("Amigo: Hunter, você enlouqueceu?", 2500, () => {
                     falar("Hunter: Vou mostrar do que sou capaz!", 1500, () => {
                         modo = 'jogando';
+                        amigo.tx = 50; // Amigo vai para o canto dar suporte
                         criarFase();
                     });
                 });
@@ -169,10 +106,7 @@
             }
         }
 
-        window.addEventListener('keydown', e => { 
-            keys[e.code] = true; 
-            if(e.code === 'KeyE' && !tempoParado && modo === 'jogando') usarHabilidade(); 
-        });
+        window.addEventListener('keydown', e => { keys[e.code] = true; if(e.code === 'KeyE' && !tempoParado) usarHabilidade(); });
         window.addEventListener('keyup', e => keys[e.code] = false);
 
         function usarHabilidade() {
@@ -185,7 +119,7 @@
         function desenharEntidade(img, obj, fallback, isFireball) {
             ctx.save();
             if(isFireball) { ctx.shadowBlur = 40; ctx.shadowColor = "orange"; }
-            if(obj.isShield) { ctx.globalAlpha = 0.6; ctx.shadowBlur = 20; ctx.shadowColor = "cyan"; }
+            if(obj.isShield) { ctx.globalAlpha = 0.5; ctx.shadowBlur = 15; ctx.shadowColor = "cyan"; }
             if(player.danoTime > 0 && obj === player) ctx.globalAlpha = 0.5;
             
             if(img.complete && img.naturalWidth !== 0) ctx.drawImage(img, obj.x, obj.y, obj.w, obj.h);
@@ -196,89 +130,94 @@
         function gameLoop() {
             ctx.clearRect(0, 0, 800, 600);
 
-            if(modo === 'jogando') {
-                document.getElementById('fase-txt').innerText = faseAtual;
-                document.getElementById('vidas-txt').innerText = player.vidas;
-                document.getElementById('hab-txt').innerText = Math.min(player.kills, 3);
+            if(modo === 'jogando' || modo === 'historia') {
+                player.x = (1 - 0.1) * player.x + 0.1 * player.tx;
+                amigo.x = (1 - 0.1) * amigo.x + 0.1 * amigo.tx;
 
-                let boss = invasores.find(i => i.isBoss && i.hp > 0);
-                if(boss && !tempoParado) {
-                    contadorTempo += 1/60;
-                    if(contadorTempo >= 5) {
-                        tempoParado = true;
-                        document.getElementById('efeito-tempo').style.display = 'block';
-                        falar(falasChefe[Math.floor(Math.random()*falasChefe.length)], 6000, () => {
-                            tempoParado = false;
-                            contadorTempo = 0;
-                            document.getElementById('efeito-tempo').style.display = 'none';
+                desenharEntidade(skins.player, player, 'green');
+                desenharEntidade(skins.amigo, amigo, 'blue'); // Amigo sempre desenhado!
+
+                if(modo === 'jogando') {
+                    document.getElementById('fase-txt').innerText = faseAtual;
+                    document.getElementById('vidas-txt').innerText = player.vidas;
+                    document.getElementById('hab-txt').innerText = Math.min(player.kills, 3);
+
+                    let boss = invasores.find(i => i.isBoss && i.hp > 0);
+                    if(boss && !tempoParado) {
+                        contadorTempo += 1/60;
+                        if(contadorTempo >= 5) {
+                            tempoParado = true;
+                            document.getElementById('efeito-tempo').style.display = 'block';
+                            falar(falasChefe[Math.floor(Math.random()*falasChefe.length)], 6000, () => {
+                                tempoParado = false; contadorTempo = 0;
+                                document.getElementById('efeito-tempo').style.display = 'none';
+                            });
+                        }
+                    }
+
+                    if(!tempoParado) {
+                        if(keys['ArrowLeft'] && player.tx > 10) player.tx -= 8;
+                        if(keys['ArrowRight'] && player.tx < 730) player.tx += 8;
+                        if(keys['Space'] && (tiros.length === 0 || tiros[tiros.length-1].y < player.y - 150)) {
+                            tiros.push({x: player.x + 25, y: player.y, w: 6, h: 20, s: 12});
+                        }
+
+                        tiros.forEach((t, i) => { t.y -= t.s; if(t.y < -100) tiros.splice(i, 1); });
+                        tirosE.forEach((te, i) => { 
+                            te.y += 6; 
+                            if(te.x > player.x && te.x < player.x+player.w && te.y > player.y && te.y < player.y+player.h) {
+                                player.vidas--; player.danoTime = 30; tirosE.splice(i, 1);
+                                if(player.vidas <= 0) location.reload();
+                            }
+                            if(te.y > 600) tirosE.splice(i, 1);
                         });
-                    }
-                }
 
-                if(!tempoParado) {
-                    if(keys['ArrowLeft'] && player.x > 10) player.x -= 8;
-                    if(keys['ArrowRight'] && player.x < 730) player.x += 8;
-                    if(keys['Space'] && (tiros.length === 0 || tiros[tiros.length-1].y < player.y - 150)) {
-                        tiros.push({x: player.x + 25, y: player.y, w: 6, h: 20, s: 12});
-                    }
+                        let vivos = 0;
+                        let shield = invasores.find(i => i.isShield && i.hp > 0);
 
-                    tiros.forEach((t, i) => { t.y -= t.s; if(t.y < -100) tiros.splice(i, 1); });
-                    tirosE.forEach((te, i) => { 
-                        te.y += 6; 
-                        if(te.x > player.x && te.x < player.x+player.w && te.y > player.y && te.y < player.y+player.h) {
-                            player.vidas--; player.danoTime = 30; tirosE.splice(i, 1);
-                            if(player.vidas <= 0) location.reload();
-                        }
-                        if(te.y > 600) tirosE.splice(i, 1);
-                    });
+                        invasores.forEach(inv => {
+                            if(inv.isBoss ? inv.hp <= 0 : (inv.isShield ? inv.hp <= 0 : !inv.vivo)) return;
+                            if(!inv.isShield) vivos++;
 
-                    let vivos = 0;
-                    let shield = invasores.find(i => i.isShield && i.hp > 0);
+                            if(inv.isShield && boss) { inv.x = boss.x - 50; inv.y = boss.y - 20; }
+                            else {
+                                inv.x += inv.vel * inv.dir;
+                                if(inv.x > 740 || inv.x < 10) { invasores.forEach(e => { if(!e.isShield) e.dir *= -1; if(!e.isBoss && !e.isShield) e.y += 15; }); }
+                                if(Math.random() < (inv.isBoss ? 0.04 : 0.007)) tirosE.push({x: inv.x + inv.w/2, y: inv.y + inv.h});
+                            }
 
-                    invasores.forEach(inv => {
-                        if(inv.isBoss ? inv.hp <= 0 : (inv.isShield ? inv.hp <= 0 : !inv.vivo)) return;
-                        if(!inv.isShield) vivos++;
+                            desenharEntidade(inv.isBoss ? skins.chefe : (inv.isShield ? skins.escudo : skins.alien), inv, 'red');
 
-                        if(inv.isShield && boss) { inv.x = boss.x - 50; inv.y = boss.y - 20; }
-                        else {
-                            inv.x += inv.vel * inv.dir;
-                            if(inv.x > 740 || inv.x < 10) { invasores.forEach(e => { if(!e.isShield) e.dir *= -1; if(!e.isBoss && !e.isShield) e.y += 15; }); }
-                            if(Math.random() < (inv.isBoss ? 0.04 : 0.007)) tirosE.push({x: inv.x + inv.w/2, y: inv.y + inv.h});
-                        }
-
-                        desenharEntidade(inv.isBoss ? skins.chefe : (inv.isShield ? skins.escudo : skins.alien), inv, 'red');
-
-                        tiros.forEach((t, ti) => {
-                            if(t.x < inv.x+inv.w && t.x+(t.w||6) > inv.x && t.y < inv.y+inv.h && t.y+(t.h||20) > inv.y) {
-                                let dmg = t.isFireball ? 150 : 50;
-                                if(inv.isShield) { inv.hp -= dmg; if(!t.isFireball) tiros.splice(ti, 1); }
-                                else if(inv.isBoss) {
-                                    if(!shield) {
-                                        inv.hp -= dmg;
-                                        document.getElementById('boss-hp-fill').style.width = (inv.hp/inv.maxHp*100)+'%';
-                                        if(!t.isFireball) tiros.splice(ti, 1);
-                                    } else if(!t.isFireball) tiros.splice(ti, 1);
-                                } else { inv.vivo = false; player.kills++; tiros.splice(ti, 1); }
+                            tiros.forEach((t, ti) => {
+                                if(t.x < inv.x+inv.w && t.x+(t.w||6) > inv.x && t.y < inv.y+inv.h && t.y+(t.h||20) > inv.y) {
+                                    let dmg = t.isFireball ? 150 : 50;
+                                    if(inv.isShield) { inv.hp -= dmg; if(!t.isFireball) tiros.splice(ti, 1); }
+                                    else if(inv.isBoss) {
+                                        if(!shield) {
+                                            inv.hp -= dmg;
+                                            document.getElementById('boss-hp-fill').style.width = (inv.hp/inv.maxHp*100)+'%';
+                                            if(!t.isFireball) tiros.splice(ti, 1);
+                                        } else if(!t.isFireball) tiros.splice(ti, 1);
+                                    } else { inv.vivo = false; player.kills++; tiros.splice(ti, 1); }
+                                }
+                            });
+                        });
+                        if(vivos === 0) { faseAtual++; criarFase(); }
+                    } else {
+                        // Quando o tempo para, apenas desenha os inimigos parados
+                        invasores.forEach(inv => {
+                            if(inv.isBoss ? inv.hp > 0 : (inv.isShield ? inv.hp > 0 : inv.vivo)) {
+                                desenharEntidade(inv.isBoss ? skins.chefe : (inv.isShield ? skins.escudo : skins.alien), inv, 'red');
                             }
                         });
+                    }
+                    
+                    // Desenha os tiros
+                    tiros.forEach(t => { 
+                        if(t.isFireball) desenharEntidade(skins.fireball, t, 'orange', true);
+                        else { ctx.fillStyle = 'white'; ctx.fillRect(t.x, t.y, t.w, t.h); }
                     });
-                    if(vivos === 0) { faseAtual++; criarFase(); }
-                }
-            }
-
-            if(modo !== 'menu') {
-                desenharEntidade(skins.player, player, 'green');
-                tiros.forEach(t => { 
-                    if(t.isFireball) desenharEntidade(skins.fireball, t, 'orange', true);
-                    else { ctx.fillStyle = 'white'; ctx.fillRect(t.x, t.y, t.w, t.h); }
-                });
-                tirosE.forEach(te => { ctx.fillStyle = '#ff0055'; ctx.fillRect(te.x, te.y, 5, 15); });
-                if(tempoParado) {
-                    invasores.forEach(inv => {
-                         if(inv.isBoss ? inv.hp > 0 : (inv.isShield ? inv.hp > 0 : inv.vivo)) {
-                             desenharEntidade(inv.isBoss ? skins.chefe : (inv.isShield ? skins.escudo : skins.alien), inv, 'red');
-                         }
-                    });
+                    tirosE.forEach(te => { ctx.fillStyle = '#ff0055'; ctx.fillRect(te.x, te.y, 5, 15); });
                 }
             }
             requestAnimationFrame(gameLoop);

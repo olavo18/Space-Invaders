@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Invaders - Menu Interativo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --neon-blue: #00d2ff;
+            --neon-pink: #ff0055;
+            --space-dark: #050510;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--space-dark);
+            background-image: 
+                radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 40px),
+                radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 30px);
+            background-size: 550px 550px, 350px 350px;
+            background-position: 0 0, 40px 60px;
+            font-family: 'Orbitron', sans-serif;
+            color: white;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* MENU CONTAINER */
+        .menu-container {
+            text-align: center;
+            background: rgba(10, 10, 30, 0.8);
+            padding: 50px;
+            border-radius: 30px;
+            border: 2px solid var(--neon-blue);
+            box-shadow: 0 0 30px rgba(0, 210, 255, 0.3);
+            backdrop-filter: blur(10px);
+            max-width: 500px;
+            width: 90%;
+            animation: floating 3s infinite ease-in-out;
+        }
+
+        @keyframes floating {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        h1 {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 22px;
+            color: var(--neon-blue);
+            text-shadow: 0 0 15px var(--neon-blue);
+            margin-bottom: 40px;
+            line-height: 1.5;
+        }
+
+        /* BOTÕES */
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .btn-menu {
+            padding: 18px 30px;
+            font-size: 14px;
+            font-family: 'Press Start 2P', cursive;
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.3s all;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-menu:hover {
+            background: var(--neon-blue);
+            border-color: var(--neon-blue);
+            color: var(--space-dark);
+            box-shadow: 0 0 25px var(--neon-blue);
+            transform: scale(1.05);
+        }
+
+        .btn-play {
+            background: var(--neon-pink);
+            border-color: var(--neon-pink);
+            box-shadow: 0 0 15px var(--neon-pink);
+        }
+
+        .btn-play:hover {
+            background: #ff3377;
+            box-shadow: 0 0 35px var(--neon-pink);
+        }
+
+        /* MODAIS (JANELAS DE INFO) */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: #101025;
+            border: 2px solid var(--neon-blue);
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 600px;
+            text-align: left;
+            position: relative;
+            animation: scaleUp 0.3s ease-out;
+        }
+
+        @keyframes scaleUp {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px; right: 20px;
+            font-size: 25px;
+            cursor: pointer;
+            color: var(--neon-pink);
+        }
+
+        h3 { 
+            color: var(--neon-blue); 
+            margin-bottom: 20px; 
+            font-family: 'Press Start 2P', cursive; 
+            font-size: 16px;
+        }
+
+        p { line-height: 1.6; margin-bottom: 15px; font-size: 14px; }
+
+        .keys { display: flex; gap: 10px; margin-top: 10px; }
+        .key-box { 
+            background: #333; padding: 5px 10px; border-radius: 5px; 
+            border-bottom: 3px solid #000; font-size: 12px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="menu-container">
+        <h1>SPACE<br>INVADERS<br><span style="font-size: 12px; color: white;">BY OLAVO MARCHIORI</span></h1>
+
+        <div class="btn-group">
+            <button class="btn-menu btn-play" onclick="alert('Iniciando o jogo... Em breve!')">
+                <i class="fa-solid fa-play"></i> JOGAR
+            </button>
+            
+            <button class="btn-menu" onclick="openModal('modalComo')">
+                <i class="fa-solid fa-gamepad"></i> COMO JOGAR
+            </button>
+            
+            <button class="btn-menu" onclick="openModal('modalHist')">
+                <i class="fa-solid fa-book-rocket"></i> HISTÓRIA
+            </button>
+        </div>
+    </div>
+
+    <div id="modalComo" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('modalComo')">&times;</span>
+            <h3>COMO JOGAR</h3>
+            <p>O objetivo é simples: destrua todos os aliens antes que eles cheguem à base!</p>
+            <div class="keys">
+                <span class="key-box">SETAS ← →</span> Mover a Nave
+            </div>
+            <div class="keys">
+                <span class="key-box">ESPAÇO</span> Atirar Laser
+            </div>
+            <p style="margin-top: 20px; color: var(--neon-pink);">DICA: Os aliens ficam mais rápidos a cada nível!</p>
+        </div>
+    </div>
+
+    <div id="modalHist" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('modalHist')">&times;</span>
+            <h3>NOSSA HISTÓRIA</h3>
+            <p>Este jogo é uma homenagem ao clássico de 1978, mas com um toque especial do <b>Olavo Dev</b>.</p>
+            <p>O <i>Space Invaders</i> original foi criado por Tomohiro Nishikado e mudou a história dos games. No Japão, ele causou até falta de moedas de 100 ienes!</p>
+            <p><b>A Modificação:</b> Nossa versão conta com visuais neon modernos, IA de aliens um pouco mais agressiva e mecânicas de movimento otimizadas para navegadores atuais.</p>
+        </div>
+    </div>
+
+    <script>
+        function openModal(id) {
+            document.getElementById(id).style.display = 'flex';
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        // Fechar modal ao clicar fora dele
+        window.onclick = function(event) {
+            if (event.target.className === 'modal') {
+                event.target.style.display = 'none';
+            }
+        }
+    </script>
+
+</body>
+</html>

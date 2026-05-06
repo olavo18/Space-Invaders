@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Space Invaders - Hunter Mission</title>
+    <title>Space Invaders - Hunter Mission Extreme</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Orbitron:wght@700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -30,345 +30,336 @@
         #menu-principal {
             text-align: center;
             background: rgba(10, 10, 30, 0.95);
-            padding: 50px;
+            padding: 60px;
             border-radius: 40px;
             border: 2px solid var(--neon-blue);
             backdrop-filter: blur(15px);
             z-index: 100;
-            max-width: 450px;
+            max-width: 500px;
             width: 90%;
             box-shadow: 0 0 50px rgba(0, 210, 255, 0.2);
-            animation: floating 4s infinite ease-in-out;
         }
 
-        @keyframes floating { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
-
-        h1 { font-family: 'Orbitron', sans-serif; font-size: 32px; color: var(--neon-blue); text-shadow: 0 0 20px var(--neon-blue); margin-bottom: 5px; }
-        .subtitle { font-size: 14px; margin-bottom: 40px; opacity: 0.9; letter-spacing: 2px; }
+        h1 { font-family: 'Orbitron', sans-serif; font-size: 36px; color: var(--neon-blue); text-shadow: 0 0 20px var(--neon-blue); margin-bottom: 10px; }
+        .subtitle { font-size: 14px; margin-bottom: 40px; opacity: 0.9; letter-spacing: 4px; text-transform: uppercase; }
 
         .btn-play {
-            padding: 16px 25px; font-size: 16px; font-weight: 800; background: var(--neon-pink);
-            color: white; border: none; border-radius: 15px;
+            padding: 20px 30px; font-size: 18px; font-weight: 800; background: var(--neon-pink);
+            color: white; border: none; border-radius: 20px;
             cursor: pointer; transition: 0.3s; width: 100%; text-transform: uppercase;
-            box-shadow: 0 0 20px rgba(255, 0, 85, 0.4);
+            box-shadow: 0 10px 20px rgba(255, 0, 85, 0.3);
         }
-        .btn-play:hover { transform: scale(1.05); background: #ff1a6b; }
+
+        .btn-play:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(255, 0, 85, 0.5); }
 
         #game-container { 
             display: none; position: relative; width: 800px; height: 600px; 
-            background: #000; border: 2px solid var(--neon-blue); overflow: hidden; 
+            background: #000; border: 3px solid var(--neon-blue); overflow: hidden;
+            box-shadow: 0 0 100px rgba(0, 210, 255, 0.1);
         }
 
         #ui-camada {
-            position: absolute; top: 15px; left: 20px; right: 20px;
+            position: absolute; top: 20px; left: 25px; right: 25px;
             display: flex; justify-content: space-between; font-family: 'Orbitron';
-            font-size: 16px; color: var(--neon-blue); pointer-events: none; z-index: 10;
+            font-size: 18px; color: var(--neon-blue); pointer-events: none; z-index: 10;
         }
-
-        #habilidade-ui { color: #ffcc00; text-shadow: 0 0 10px #ffcc00; }
 
         #dialogo-box {
             position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%);
-            background: white; color: black; padding: 20px 30px; border-radius: 20px;
-            font-weight: 800; display: none; z-index: 200; width: 450px; text-align: center;
-            border: 4px solid var(--neon-blue); font-size: 16px; transition: 0.4s; opacity: 0;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            background: white; color: black; padding: 25px 40px; border-radius: 25px;
+            font-weight: 800; display: none; z-index: 200; width: 500px; text-align: center;
+            border: 5px solid var(--neon-blue); font-size: 18px; box-shadow: 0 20px 50px rgba(0,0,0,0.9);
         }
 
-        #alerta-invasao {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            color: var(--neon-pink); font-family: 'Orbitron', sans-serif; font-size: 40px;
-            text-shadow: 0 0 30px var(--neon-pink); display: none; text-align: center; z-index: 300;
+        #efeito-tempo {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 150, 255, 0.3); display: none; z-index: 5;
+            pointer-events: none; mix-blend-mode: color-dodge;
         }
 
-        canvas { background: transparent; }
+        #boss-hp-bar {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: 600px; height: 12px; background: #222; border: 2px solid #fff;
+            display: none; border-radius: 10px; z-index: 15;
+        }
+
+        #boss-hp-fill { width: 100%; height: 100%; background: var(--neon-pink); transition: 0.3s; }
     </style>
 </head>
 <body>
 
     <div id="menu-principal">
-        <h1>SPACE INVADERS</h1>
-        <div class="subtitle">Hunter Mission</div>
-        <button class="btn-play" onclick="iniciarHistoria()">INICIAR JOGO</button>
+        <h1>SPACE HUNTER</h1>
+        <div class="subtitle">Ultimate Mission</div>
+        <button class="btn-play" onclick="iniciarHistoria()">INICIAR COMBATE</button>
     </div>
 
     <div id="game-container">
         <div id="ui-camada">
             <div>FASE: <span id="fase-txt">1</span></div>
-            <div id="habilidade-ui">BOLA DE FOGO (E): <span id="hab-txt">0</span>/3</div>
+            <div style="color: #ffcc00;">ESPECIAL (E): <span id="hab-txt">0</span>/3</div>
             <div>VIDAS: <span id="vidas-txt">3</span></div>
         </div>
+        <div id="boss-hp-bar"><div id="boss-hp-fill"></div></div>
+        <div id="efeito-tempo"></div>
         <div id="dialogo-box"></div>
-        <div id="alerta-invasao">A INVASÃO COMEÇOU!</div>
         <canvas id="gameCanvas"></canvas>
     </div>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        const dialBox = document.getElementById('dialogo-box');
-        const alerta = document.getElementById('alerta-invasao');
-
         canvas.width = 800; canvas.height = 600;
 
-        // --- CARREGAMENTO DE IMAGENS ---
         const skins = {
             player: new Image(), amigo: new Image(), alien: new Image(),
-            chefe: new Image(), fireball: new Image()
+            chefe: new Image(), fireball: new Image(), escudo: new Image()
         };
         skins.player.src = 'jogadorprincipal.png';
         skins.amigo.src = 'amigo.png';
         skins.alien.src = 'alien.png';
         skins.chefe.src = 'chefe1.png';
         skins.fireball.src = 'bola-defogo.png';
+        skins.escudo.src = 'escudo.png';
 
-        // --- VARIÁVEIS DE ESTADO ---
-        let modo = 'menu';
-        let faseAtual = 1;
-        let player = { x: 400, y: 450, w: 60, h: 60, tx: 400, ty: 450, rot: 0, vidas: 3, danoTime: 0, kills: 0 };
-        let amigo = { x: 250, y: 450, w: 60, h: 60, tx: 250, ty: 450, rot: 0 };
-        let tiros = [], tirosInimigos = [], invasores = [], particulas = [], keys = {};
-        let cam = { zoom: 1, tZoom: 1 };
+        let modo = 'menu', faseAtual = 1, tempoParado = false, contadorTempo = 0;
+        let player = { x: 370, y: 520, w: 60, h: 60, tx: 370, ty: 520, rot: 0, vidas: 3, danoTime: 0, kills: 0 };
+        let amigo = { x: 250, y: 450, w: 60, h: 60, tx: 250 };
+        let invasores = [], tiros = [], tirosE = [], particulas = [], keys = {};
+
+        const falasChefe = [
+            "ZA WARUDO! O tempo parou para você!",
+            "Hunter... tente se mover se for capaz!",
+            "6 segundos são uma eternidade no meu domínio!",
+            "O tempo é uma ilusão que eu controlo!",
+            "Inútil! Inútil! Inútil!"
+        ];
 
         function lerp(a, b, n) { return (1 - n) * a + n * b; }
 
         function falar(texto, tempo, callback) {
-            dialBox.innerText = texto; dialBox.style.display = 'block';
-            setTimeout(() => dialBox.style.opacity = 1, 50);
-            setTimeout(() => { 
-                dialBox.style.opacity = 0;
-                setTimeout(() => { dialBox.style.display = 'none'; if(callback) callback(); }, 400);
-            }, tempo);
+            const box = document.getElementById('dialogo-box');
+            box.innerText = texto; box.style.display = 'block';
+            setTimeout(() => { box.style.display = 'none'; if(callback) callback(); }, tempo);
         }
 
-        // --- SISTEMA DE FASES ---
-        function criarInvasores() {
-            invasores = [];
-            if (faseAtual % 5 === 0) {
-                // FASE DO CHEFE (CADA 5 FASES)
-                invasores.push({ x: 250, y: 60, w: 300, h: 200, hp: 200, maxHp: 200, vivo: true, isBoss: true, dir: 1, vel: 2 });
-                // 5 inimigos comuns de escolta
-                for(let i=0; i<5; i++) {
-                    invasores.push({ x: 100 + i*130, y: 280, w: 60, h: 60, vivo: true, dir: 1, vel: 1.5 });
-                }
-            } else {
-                // FASES NORMAIS (Início mais fácil)
-                let colunas = 4 + faseAtual; 
-                let linhas = 2;
-                for(let i=0; i < colunas * linhas; i++) {
-                    invasores.push({ 
-                        x: (i % colunas) * 80 + 80, 
-                        y: Math.floor(i / colunas) * 70 + 60, 
-                        w: 60, h: 60, vivo: true, dir: 1, 
-                        vel: 0.6 + (faseAtual * 0.2) 
-                    });
-                }
-            }
-        }
-
-        // --- CICLO DE HISTÓRIA ---
         function iniciarHistoria() {
             document.getElementById('menu-principal').style.display = 'none';
             document.getElementById('game-container').style.display = 'block';
             modo = 'historia';
-            setTimeout(() => {
-                cam.tZoom = 1.6;
-                falar("Hunter: Eu consigo derrotar esses alienígenas sozinho!", 3000, () => {
-                    amigo.tx = 330;
-                    falar("Amigo: Hunter, você enlouqueceu? São muitos!", 3000, () => {
-                        falar("Hunter: Vou mostrar do que sou capaz!", 2000, decolar);
+            falar("Hunter: Eu consigo derrotar esses alienígenas sozinho!", 2500, () => {
+                amigo.tx = 330;
+                falar("Amigo: Hunter, você enlouqueceu? São muitos!", 2500, () => {
+                    falar("Hunter: Vou mostrar do que sou capaz!", 1500, () => {
+                        modo = 'jogando';
+                        criarFase();
                     });
                 });
-            }, 500);
-        }
-
-        function decolar() {
-            cam.tZoom = 1;
-            let subida = setInterval(() => {
-                player.ty -= 8;
-                for(let i=0; i<3; i++) particulas.push({ x: player.x+30, y: player.y+50, vx: (Math.random()-0.5)*4, vy: 2, life: 1, c: '#00d2ff' });
-                if(player.y < -100) {
-                    clearInterval(subida);
-                    alerta.innerText = "FASE " + faseAtual;
-                    alerta.style.display = 'block';
-                    setTimeout(() => { alerta.style.display = 'none'; iniciarJogoReal(); }, 1500);
-                }
-            }, 16);
-        }
-
-        function iniciarJogoReal() {
-            modo = 'jogando';
-            player.x = 370; player.tx = 370; player.y = 520; player.ty = 520;
-            tiros = []; tirosInimigos = [];
-            criarInvasores();
-            window.addEventListener('keydown', e => { 
-                keys[e.code] = true; 
-                if(e.code === 'KeyE') usarHabilidade(); 
             });
-            window.addEventListener('keyup', e => keys[e.code] = false);
         }
+
+        function criarFase() {
+            invasores = []; tiros = []; tirosE = [];
+            document.getElementById('boss-hp-bar').style.display = 'none';
+            
+            if (faseAtual % 5 === 0) {
+                // LÓGICA DO CHEFE
+                document.getElementById('boss-hp-bar').style.display = 'block';
+                let boss = { x: 250, y: 80, w: 300, h: 180, hp: 400, maxHp: 400, isBoss: true, dir: 1, vel: 2 };
+                invasores.push(boss);
+                // ESCUDO DE 500 HP
+                invasores.push({ x: 200, y: 70, w: 400, h: 220, hp: 500, maxHp: 500, isShield: true, vivo: true });
+                // Escolta
+                for(let i=0; i<4; i++) {
+                    invasores.push({ x: 150 + i*160, y: 320, w: 60, h: 60, vivo: true, dir: 1, vel: 1.5 });
+                }
+                contadorTempo = 0;
+            } else {
+                let cols = 5;
+                for(let i=0; i<cols*3; i++) {
+                    invasores.push({ 
+                        x: (i%cols)*100 + 150, 
+                        y: Math.floor(i/cols)*80 + 60, 
+                        w: 60, h: 60, vivo: true, dir: 1, 
+                        vel: 0.8 + (faseAtual * 0.2) 
+                    });
+                }
+            }
+        }
+
+        window.addEventListener('keydown', e => { 
+            keys[e.code] = true; 
+            if(e.code === 'KeyE' && !tempoParado && modo === 'jogando') usarHabilidade(); 
+        });
+        window.addEventListener('keyup', e => keys[e.code] = false);
 
         function usarHabilidade() {
             if(player.kills >= 3) {
-                tiros.push({ x: player.x - 20, y: player.y - 40, s: 7, isFireball: true, w: 100, h: 100 });
+                tiros.push({ x: player.x - 20, y: player.y - 40, w: 100, h: 100, s: 8, isFireball: true });
                 player.kills -= 3;
             }
         }
 
-        // --- RENDERIZAÇÃO ---
-        function drawEntity(img, obj, fallback, isPlayer, isFireball) {
+        function criarExplosao(x, y, cor) {
+            for(let i=0; i<10; i++) {
+                particulas.push({
+                    x: x, y: y, 
+                    vx: (Math.random()-0.5)*10, 
+                    vy: (Math.random()-0.5)*10, 
+                    life: 1, cor: cor || '#ffcc00'
+                });
+            }
+        }
+
+        function desenharEntidade(img, obj, fallback, isFireball) {
             ctx.save();
-            ctx.translate(obj.x + obj.w/2, obj.y + obj.h/2);
+            if(isFireball) { ctx.shadowBlur = 40; ctx.shadowColor = "orange"; }
+            if(obj.isShield) { ctx.globalAlpha = 0.6; ctx.shadowBlur = 20; ctx.shadowColor = "cyan"; }
             
-            if(isPlayer) {
-                obj.rot = lerp(obj.rot, (obj.tx - obj.x) * 0.05, 0.1);
-                ctx.rotate(obj.rot * Math.PI / 180);
-                if(player.danoTime > 0) { ctx.globalAlpha = 0.5; player.danoTime--; }
-            }
-
-            if(isFireball) {
-                ctx.shadowBlur = 40;
-                ctx.shadowColor = "orange";
-            }
-
             if(img.complete && img.naturalWidth !== 0) {
-                ctx.drawImage(img, -obj.w/2, -obj.h/2, obj.w, obj.h);
+                ctx.drawImage(img, obj.x, obj.y, obj.w, obj.h);
             } else {
                 ctx.fillStyle = fallback;
-                ctx.fillRect(-obj.w/2, -obj.h/2, obj.w, obj.h);
+                ctx.fillRect(obj.x, obj.y, obj.w, obj.h);
             }
             ctx.restore();
         }
 
-        function gameLoop() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            cam.zoom = lerp(cam.zoom, cam.tZoom, 0.04);
-            
-            ctx.save();
-            if(modo === 'historia') {
-                ctx.translate(-(player.x * cam.zoom - 400), -(player.y * cam.zoom - 300));
-                ctx.scale(cam.zoom, cam.zoom);
+        function atualizar() {
+            if(modo !== 'jogando') return;
+
+            // MECÂNICA ZA WARUDO
+            let boss = invasores.find(i => i.isBoss && i.hp > 0);
+            if(boss && !tempoParado) {
+                contadorTempo += 1/60;
+                if(contadorTempo >= 5) {
+                    tempoParado = true;
+                    document.getElementById('efeito-tempo').style.display = 'block';
+                    falar(falasChefe[Math.floor(Math.random()*falasChefe.length)], 6000, () => {
+                        tempoParado = false;
+                        contadorTempo = 0;
+                        document.getElementById('efeito-tempo').style.display = 'none';
+                    });
+                }
             }
 
-            player.x = lerp(player.x, player.tx, 0.1);
-            player.y = lerp(player.y, player.ty, 0.1);
-            
-            // Partículas
-            particulas.forEach((p, i) => {
-                p.x += p.vx; p.y += p.vy; p.life -= 0.02;
-                ctx.fillStyle = p.c || `rgba(255, 100, 0, ${p.life})`;
-                ctx.fillRect(p.x, p.y, 4, 4);
-                if(p.life <= 0) particulas.splice(i, 1);
-            });
-
-            // Jogador e Amigo
-            drawEntity(skins.player, player, '#0f0', true);
-            if(modo === 'historia' && amigo.y < 700) {
-                amigo.x = lerp(amigo.x, amigo.tx, 0.1);
-                drawEntity(skins.amigo, amigo, '#00d2ff', false);
-            }
-
-            // Tiros do Hunter
-            tiros.forEach((t, i) => {
-                t.y -= t.s;
-                if(t.isFireball) {
-                    drawEntity(skins.fireball, t, 'orange', false, true);
-                } else {
-                    ctx.fillStyle = '#fff';
-                    ctx.fillRect(t.x + 28, t.y, 4, 15);
-                }
-                if(t.y < -100) tiros.splice(i, 1);
-            });
-
-            // Tiros Inimigos
-            tirosInimigos.forEach((t, i) => {
-                t.y += 6;
-                ctx.fillStyle = '#ff0055';
-                ctx.fillRect(t.x, t.y, 5, 15);
-                if(t.y > 600) tirosInimigos.splice(i, 1);
-
-                // Colisão com o Player
-                if(t.x > player.x && t.x < player.x + player.w && t.y > player.y && t.y < player.y + player.h) {
-                    player.vidas--;
-                    player.danoTime = 30;
-                    tirosInimigos.splice(i, 1);
-                    if(player.vidas <= 0) { alert("Hunter foi abatido!"); location.reload(); }
-                }
-            });
-
-            if(modo === 'jogando') {
-                document.getElementById('fase-txt').innerText = faseAtual;
-                document.getElementById('vidas-txt').innerText = player.vidas;
-                document.getElementById('hab-txt').innerText = Math.min(player.kills, 3);
-
-                // Controles
-                if(keys['ArrowLeft'] && player.tx > 10) player.tx -= 8;
-                if(keys['ArrowRight'] && player.tx < 730) player.tx += 8;
-                if(keys['Space'] && (tiros.length === 0 || (tiros[tiros.length-1].y < player.y - 150 && !tiros[tiros.length-1].isFireball))) {
-                    tiros.push({x: player.x, y: player.y, s: 12});
+            if(!tempoParado) {
+                // Movimento Player
+                if(keys['ArrowLeft'] && player.x > 10) player.x -= 8;
+                if(keys['ArrowRight'] && player.x < 730) player.x += 8;
+                if(keys['Space'] && (tiros.length === 0 || (tiros[tiros.length-1].y < player.y - 150))) {
+                    tiros.push({x: player.x + 25, y: player.y, w: 6, h: 20, s: 12});
                 }
 
+                // Tiros Player
+                tiros.forEach((t, i) => {
+                    t.y -= t.s;
+                    if(t.y < -100) tiros.splice(i, 1);
+                });
+
+                // Tiros Inimigos
+                tirosE.forEach((te, i) => {
+                    te.y += 6;
+                    if(te.y > 600) tirosE.splice(i, 1);
+                    if(te.x > player.x && te.x < player.x + player.w && te.y > player.y && te.y < player.y + player.h) {
+                        player.vidas--;
+                        player.danoTime = 30;
+                        tirosE.splice(i, 1);
+                        criarExplosao(player.x+30, player.y+30, 'red');
+                        if(player.vidas <= 0) location.reload();
+                    }
+                });
+
+                // Lógica Invasores
                 let vivos = 0;
+                let shield = invasores.find(i => i.isShield && i.hp > 0);
+
                 invasores.forEach(inv => {
-                    if(!inv.vivo) return;
-                    vivos++;
+                    if(inv.isBoss ? inv.hp <= 0 : (inv.isShield ? inv.hp <= 0 : !inv.vivo)) return;
+                    if(!inv.isShield) vivos++;
 
-                    // Movimento Inimigo
-                    inv.x += inv.vel * inv.dir;
-                    if(inv.x > (canvas.width - inv.w) || inv.x < 0) { 
-                        invasores.forEach(all => { 
-                            all.dir *= -1; 
-                            if(!all.isBoss) all.y += 15; 
-                        });
+                    if(inv.isShield) {
+                        if(boss) { inv.x = boss.x - 50; inv.y = boss.y - 20; }
+                    } else {
+                        inv.x += inv.vel * inv.dir;
+                        if(inv.x > 740 || inv.x < 10) {
+                            invasores.forEach(e => { if(!e.isShield) e.dir *= -1; if(!e.isBoss && !e.isShield) e.y += 20; });
+                        }
+                        if(Math.random() < (inv.isBoss ? 0.04 : 0.007)) tirosE.push({x: inv.x + inv.w/2, y: inv.y + inv.h});
                     }
 
-                    // Chance de atirar
-                    if(Math.random() < 0.006 + (faseAtual * 0.002)) {
-                        tirosInimigos.push({x: inv.x + inv.w/2, y: inv.y + inv.h});
-                    }
-
-                    // Desenhar Inimigo
-                    drawEntity(inv.isBoss ? skins.chefe : skins.alien, inv, inv.isBoss ? 'purple' : 'red', false);
-
-                    // Colisão Tiro do Hunter -> Inimigos
+                    // Colisão Tiro Player -> Inimigo
                     tiros.forEach((t, ti) => {
-                        let rect = {x: inv.x, y: inv.y, w: inv.w, h: inv.h};
-                        let hitX = t.isFireball ? t.x : t.x+28;
-                        if(hitX < rect.x + rect.w && hitX + (t.w||4) > rect.x && t.y < rect.y + rect.h && t.y + (t.h||15) > rect.y) {
-                            let dano = t.isFireball ? 150 : 50;
+                        if(t.x < inv.x + inv.w && t.x + (t.w||6) > inv.x && t.y < inv.y + inv.h && t.y + (t.h||20) > inv.y) {
+                            let dmg = t.isFireball ? 150 : 50;
                             
-                            if(inv.isBoss) {
-                                inv.hp -= dano;
+                            if(inv.isShield) {
+                                inv.hp -= dmg;
                                 if(!t.isFireball) tiros.splice(ti, 1);
-                                if(inv.hp <= 0) inv.vivo = false;
+                                criarExplosao(t.x, t.y, 'cyan');
+                            } else if(inv.isBoss) {
+                                if(!shield) {
+                                    inv.hp -= dmg;
+                                    document.getElementById('boss-hp-fill').style.width = (inv.hp / inv.maxHp * 100) + '%';
+                                    if(!t.isFireball) tiros.splice(ti, 1);
+                                    criarExplosao(t.x, t.y, 'white');
+                                } else {
+                                    if(!t.isFireball) tiros.splice(ti, 1); // Bloqueado
+                                }
                             } else {
                                 inv.vivo = false;
                                 player.kills++;
                                 tiros.splice(ti, 1);
+                                criarExplosao(inv.x+30, inv.y+30, '#ff0055');
                             }
-                            // Efeito de explosão
-                            for(let j=0; j<8; j++) particulas.push({x: hitX, y: t.y, vx: (Math.random()-0.5)*8, vy: (Math.random()-0.5)*8, life: 0.6});
                         }
                     });
                 });
 
-                // Próxima Fase
-                if(vivos === 0 && invasores.length > 0) {
-                    faseAtual++;
-                    alerta.innerText = "FASE " + faseAtual;
-                    alerta.style.display = 'block';
-                    modo = 'transicao';
-                    setTimeout(() => { 
-                        alerta.style.display = 'none'; 
-                        iniciarJogoReal(); 
-                    }, 1500);
-                }
+                if(vivos === 0) { faseAtual++; criarFase(); }
             }
-            ctx.restore();
+        }
+
+        function renderizar() {
+            ctx.clearRect(0, 0, 800, 600);
+            
+            // Partículas
+            particulas.forEach((p, i) => {
+                p.x += p.vx; p.y += p.vy; p.life -= 0.02;
+                ctx.fillStyle = p.cor; ctx.globalAlpha = p.life;
+                ctx.fillRect(p.x, p.y, 4, 4);
+                if(p.life <= 0) particulas.splice(i, 1);
+            });
+            ctx.globalAlpha = 1;
+
+            if(modo !== 'menu') {
+                document.getElementById('fase-txt').innerText = faseAtual;
+                document.getElementById('vidas-txt').innerText = player.vidas;
+                document.getElementById('hab-txt').innerText = Math.min(player.kills, 3);
+
+                desenharEntidade(skins.player, player, 'green');
+                
+                tiros.forEach(t => {
+                    if(t.isFireball) desenharEntidade(skins.fireball, t, 'orange', true);
+                    else { ctx.fillStyle = 'white'; ctx.fillRect(t.x, t.y, t.w, t.h); }
+                });
+
+                tirosE.forEach(te => { ctx.fillStyle = var(--neon-pink); ctx.fillRect(te.x, te.y, 5, 15); });
+
+                invasores.forEach(inv => {
+                    if(inv.isBoss ? inv.hp > 0 : (inv.isShield ? inv.hp > 0 : inv.vivo)) {
+                        desenharEntidade(inv.isBoss ? skins.chefe : (inv.isShield ? skins.escudo : skins.alien), inv, 'red');
+                    }
+                });
+            }
+        }
+
+        function gameLoop() {
+            atualizar();
+            renderizar();
             requestAnimationFrame(gameLoop);
         }
 
-        // Iniciar
         gameLoop();
     </script>
 </body>

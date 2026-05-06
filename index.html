@@ -29,7 +29,6 @@
             overflow: hidden;
         }
 
-        /* MENU PRINCIPAL */
         #menu-principal {
             text-align: center;
             background: rgba(10, 10, 30, 0.95);
@@ -63,7 +62,6 @@
         .btn-menu:hover { background: rgba(255,255,255,0.1); border-color: white; transform: scale(1.03); }
         .btn-play { background: var(--neon-pink); border-color: var(--neon-pink); box-shadow: 0 0 20px rgba(255, 0, 85, 0.3); }
 
-        /* GAME UI */
         #game-container { 
             display: none; position: relative; width: 800px; height: 600px; 
             background: #000; border: 2px solid var(--neon-blue); overflow: hidden; 
@@ -118,7 +116,7 @@
     <div id="modalComo" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal('modalComo')">&times;</span>
-            <h3>COMO JOGAR</h3>
+            <h3 style="color:var(--neon-blue); margin-bottom:20px; font-family:'Orbitron'">COMO JOGAR</h3>
             <p>Setas ← → para mover.</p>
             <p>Espaço para atirar.</p>
         </div>
@@ -132,7 +130,6 @@
 
         canvas.width = 800; canvas.height = 600;
 
-        // --- SKINS ---
         const skinPlayer = new Image(); skinPlayer.src = 'jogadorprincipal.png';
         const skinAmigo = new Image(); skinAmigo.src = 'amigo.png';
         const skinAlien = new Image(); skinAlien.src = 'alien.png';
@@ -142,7 +139,6 @@
         let amigo = { x: 250, y: 450, w: 60, h: 60, tx: 250, ty: 450, rot: 0 };
         let tiros = [], invasores = [], particulas = [], keys = {};
         
-        // --- SISTEMA DE FASES ---
         let faseAtual = 1;
         const totalFases = 5;
 
@@ -216,15 +212,11 @@
         function drawEntity(img, obj, fallback, isPlayer) {
             ctx.save();
             ctx.translate(obj.x + obj.w/2, obj.y + obj.h/2);
-            
-            // Inclinação lateral
             obj.rot = lerp(obj.rot, (obj.tx - obj.x) * 0.05, 0.1);
             ctx.rotate(obj.rot * Math.PI / 180);
 
-            // Efeito de Dano (Piscar vermelho)
             if(isPlayer && player.danoTime > 0) {
                 ctx.globalAlpha = 0.5;
-                ctx.shadowBlur = 20; ctx.shadowColor = 'red';
                 player.danoTime--;
             }
 
@@ -253,7 +245,6 @@
             amigo.x = lerp(amigo.x, amigo.tx, 0.1);
             amigo.y = lerp(amigo.y, amigo.ty, 0.1);
 
-            // Partículas de Decolagem
             particulas.forEach((p, i) => {
                 p.x += p.vx; p.y += p.vy; p.life -= 0.02;
                 ctx.fillStyle = `rgba(0, 210, 255, ${p.life})`;
@@ -264,11 +255,9 @@
             drawEntity(skinPlayer, player, '#0f0', true);
             if(modo === 'historia' && amigo.y < 700) drawEntity(skinAmigo, amigo, '#00d2ff', false);
 
-            // Tiros
             tiros.forEach((t, i) => {
                 t.y -= t.s;
                 ctx.fillStyle = '#fff';
-                ctx.shadowBlur = 10; ctx.shadowColor = var(--neon-blue);
                 ctx.fillRect(t.x, t.y, 4, 15);
                 if(t.y < -50) tiros.splice(i, 1);
             });
@@ -287,7 +276,6 @@
                 invasores.forEach(inv => {
                     if(inv.vivo) {
                         todosMortos = false;
-                        // Movimento Alien
                         inv.x += inv.vel * inv.dir;
                         if(inv.x > 750 || inv.x < 10) { 
                             invasores.forEach(all => { all.dir *= -1; all.y += 10; });
@@ -295,20 +283,17 @@
 
                         drawEntity(skinAlien, inv, '#ff0055', false);
 
-                        // Colisão Tiro -> Alien
                         tiros.forEach((t, ti) => {
                             if(t.x > inv.x && t.x < inv.x + inv.w && t.y > inv.y && t.y < inv.y + inv.h) {
                                 inv.vivo = false;
                                 tiros.splice(ti, 1);
-                                // Partículas de explosão
                                 for(let j=0; j<5; j++) particulas.push({x: inv.x+20, y: inv.y+20, vx: (Math.random()-0.5)*10, vy: (Math.random()-0.5)*10, life: 0.8});
                             }
                         });
 
-                        // Colisão Alien -> Player ou Alien chegou no fim
                         if((inv.x < player.x + player.w && inv.x + inv.w > player.x && inv.y < player.y + player.h && inv.y + inv.h > player.y) || inv.y > 550) {
                             player.vidas--;
-                            player.danoTime = 30; // Piscar
+                            player.danoTime = 30;
                             inv.vivo = false;
                             if(player.vidas <= 0) {
                                 alert("GAME OVER! A invasão venceu.");
@@ -318,7 +303,6 @@
                     }
                 });
 
-                // Passar de Fase
                 if(todosMortos && invasores.length > 0) {
                     if(faseAtual < totalFases) {
                         faseAtual++;
@@ -327,7 +311,7 @@
                         modo = 'transicao';
                         setTimeout(() => { alerta.style.display = 'none'; iniciarJogoReal(); }, 2000);
                     } else {
-                        alert("PARABÉNS! Olavo salvou o sistema de todas as ameaças!");
+                        alert("PARABÉNS! Olavo salvou o sistema!");
                         location.reload();
                     }
                 }

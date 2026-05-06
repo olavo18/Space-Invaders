@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Space Invaders - Olavo Marchiori</title>
+    <title>Space Invaders - Hunter Mission</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Orbitron:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     
@@ -43,83 +43,59 @@
             animation: floating 4s infinite ease-in-out;
         }
 
-        @keyframes floating {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-12px); }
-        }
+        @keyframes floating { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
 
-        h1 { font-family: 'Orbitron', sans-serif; font-size: 32px; color: var(--neon-blue); text-shadow: 0 0 20px var(--neon-blue); margin-bottom: 5px; }
+        h1 { font-family: 'Orbitron', sans-serif; font-size: 32px; color: var(--neon-blue); text-shadow: 0 0 20px var(--neon-blue); }
         .subtitle { font-size: 14px; margin-bottom: 40px; opacity: 0.9; letter-spacing: 2px; }
-
-        .btn-group { display: flex; flex-direction: column; gap: 15px; }
 
         .btn-menu {
             padding: 16px 25px; font-size: 16px; font-weight: 800; background: transparent;
             color: white; border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 15px;
-            cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 12px;
-            width: 100%; text-transform: uppercase;
+            cursor: pointer; transition: 0.3s; width: 100%; text-transform: uppercase; margin-bottom: 10px;
         }
-        .btn-menu:hover { background: rgba(255,255,255,0.1); border-color: white; transform: scale(1.03); }
-        .btn-play { background: var(--neon-pink); border-color: var(--neon-pink); box-shadow: 0 0 20px rgba(255, 0, 85, 0.3); }
+        .btn-play { background: var(--neon-pink); border-color: var(--neon-pink); }
 
-        #game-container { 
-            display: none; position: relative; width: 800px; height: 600px; 
-            background: #000; border: 2px solid var(--neon-blue); overflow: hidden; 
-        }
+        #game-container { display: none; position: relative; width: 800px; height: 600px; background: #000; border: 2px solid var(--neon-blue); overflow: hidden; }
 
         #ui-camada {
-            position: absolute; top: 20px; left: 20px; right: 20px;
+            position: absolute; top: 15px; left: 20px; right: 20px;
             display: flex; justify-content: space-between; font-family: 'Orbitron';
-            font-size: 18px; color: var(--neon-blue); pointer-events: none; z-index: 10;
+            font-size: 16px; color: var(--neon-blue); pointer-events: none; z-index: 10;
         }
+
+        #habilidade-ui { color: #ffcc00; text-shadow: 0 0 10px #ffcc00; }
 
         #dialogo-box {
             position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%);
             background: white; color: black; padding: 20px 30px; border-radius: 20px;
             font-weight: 800; display: none; z-index: 200; width: 450px; text-align: center;
-            border: 4px solid var(--neon-blue); box-shadow: 0 10px 40px rgba(0,0,0,0.8);
-            font-size: 16px; transition: 0.4s; opacity: 0;
+            border: 4px solid var(--neon-blue); font-size: 16px; transition: 0.4s; opacity: 0;
         }
 
         #alerta-invasao {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             color: var(--neon-pink); font-family: 'Orbitron', sans-serif; font-size: 40px;
-            text-shadow: 0 0 30px var(--neon-pink); display: none; text-align: center; z-index: 300;
+            display: none; text-align: center; z-index: 300;
         }
-
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center; }
-        .modal-content { background: #0a0a1a; border: 1px solid var(--neon-blue); padding: 40px; border-radius: 30px; max-width: 500px; position: relative; }
-        .close-btn { position: absolute; top: 15px; right: 25px; font-size: 30px; cursor: pointer; color: var(--neon-pink); }
     </style>
 </head>
 <body>
 
     <div id="menu-principal">
         <h1>SPACE INVADERS</h1>
-        <div class="subtitle">Olavo Marchiori</div>
-        <div class="btn-group">
-            <button class="btn-menu btn-play" onclick="iniciarHistoria()">JOGAR</button>
-            <button class="btn-menu" onclick="openModal('modalComo')">COMO JOGAR</button>
-        </div>
+        <div class="subtitle">Hunter Mission</div>
+        <button class="btn-menu btn-play" onclick="iniciarHistoria()">JOGAR</button>
     </div>
 
     <div id="game-container">
         <div id="ui-camada">
             <div>FASE: <span id="fase-txt">1</span></div>
+            <div id="habilidade-ui">BOLA DE FOGO (E): <span id="hab-txt">0</span>/3</div>
             <div>VIDAS: <span id="vidas-txt">3</span></div>
         </div>
         <div id="dialogo-box"></div>
         <div id="alerta-invasao">A INVASÃO COMEÇOU!</div>
         <canvas id="gameCanvas"></canvas>
-    </div>
-
-    <div id="modalComo" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closeModal('modalComo')">&times;</span>
-            <h3 style="color:var(--neon-blue); margin-bottom:20px; font-family:'Orbitron'">COMO JOGAR</h3>
-            <p>Setas ← → para mover.</p>
-            <p>Espaço para atirar.</p>
-        </div>
     </div>
 
     <script>
@@ -130,21 +106,24 @@
 
         canvas.width = 800; canvas.height = 600;
 
-        const skinPlayer = new Image(); skinPlayer.src = 'jogadorprincipal.png';
-        const skinAmigo = new Image(); skinAmigo.src = 'amigo.png';
-        const skinAlien = new Image(); skinAlien.src = 'alien.png';
+        const skins = {
+            player: new Image(), amigo: new Image(), alien: new Image(),
+            chefe: new Image(), escudo: new Image(), fireball: new Image()
+        };
+        skins.player.src = 'jogadorprincipal.png';
+        skins.amigo.src = 'amigo.png';
+        skins.alien.src = 'alien.png';
+        skins.chefe.src = 'chefe1.png';
+        skins.escudo.src = 'escudo.png';
+        skins.fireball.src = 'bola-defogo.png';
 
         let modo = 'menu', cam = { zoom: 1, tZoom: 1 };
-        let player = { x: 450, y: 450, w: 60, h: 60, tx: 450, ty: 450, rot: 0, vidas: 3, danoTime: 0 };
+        let player = { x: 400, y: 450, w: 60, h: 60, tx: 400, ty: 450, rot: 0, vidas: 3, danoTime: 0, kills: 0 };
         let amigo = { x: 250, y: 450, w: 60, h: 60, tx: 250, ty: 450, rot: 0 };
-        let tiros = [], invasores = [], particulas = [], keys = {};
-        
+        let tiros = [], tirosInimigos = [], invasores = [], particulas = [], keys = {};
         let faseAtual = 1;
-        const totalFases = 5;
 
         function lerp(a, b, n) { return (1 - n) * a + n * b; }
-        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
         function falar(texto, tempo, callback) {
             dialBox.innerText = texto; dialBox.style.display = 'block';
@@ -161,10 +140,10 @@
             modo = 'historia';
             setTimeout(() => {
                 cam.tZoom = 1.6;
-                falar("Olavo: Eu consigo derrotar esses alienígenas sozinho!", 3000, () => {
+                falar("Hunter: Eu consigo derrotar esses alienígenas sozinho!", 3000, () => {
                     amigo.tx = 330;
                     falar("Amigo: Você enlouqueceu? São muitos!", 3000, () => {
-                        falar("Olavo: Adeus... Vou mostrar do que sou capaz!", 2000, decolar);
+                        falar("Hunter: Adeus... Vou mostrar do que sou capaz!", 2000, decolar);
                     });
                 });
             }, 1000);
@@ -174,59 +153,58 @@
             cam.tZoom = 1;
             let subida = setInterval(() => {
                 player.ty -= 8;
-                for(let i=0; i<3; i++) {
-                    particulas.push({ x: player.x + 30, y: player.y + 50, vx: (Math.random()-0.5)*4, vy: 2+Math.random()*5, life: 1 });
-                }
+                for(let i=0; i<3; i++) particulas.push({ x: player.x+30, y: player.y+50, vx: (Math.random()-0.5)*4, vy: 2, life: 1, c: '#00d2ff' });
                 if(player.y < -100) {
                     clearInterval(subida);
                     alerta.innerText = "FASE " + faseAtual;
                     alerta.style.display = 'block';
-                    setTimeout(() => { alerta.style.display = 'none'; iniciarJogoReal(); }, 2000);
+                    setTimeout(() => { alerta.style.display = 'none'; iniciarJogoReal(); }, 1500);
                 }
             }, 16);
+        }
+
+        function criarInvasores() {
+            invasores = [];
+            if (faseAtual % 5 === 0) {
+                // BOSS LEVEL
+                invasores.push({ x: 250, y: 80, w: 300, h: 150, hp: 200, maxHp: 200, vivo: true, isBoss: true, dir: 1, vel: 2 });
+                invasores.push({ x: 200, y: 70, w: 400, h: 180, hp: 500, maxHp: 500, vivo: true, isShield: true });
+                for(let i=0; i<5; i++) invasores.push({ x: 100 + i*130, y: 280, w: 60, h: 60, vivo: true, dir: 1, vel: 1.5 });
+            } else {
+                let colunas = 5 + faseAtual;
+                let linhas = 2;
+                for(let i=0; i < colunas * linhas; i++) {
+                    invasores.push({ x: (i%colunas)*80 + 80, y: Math.floor(i/colunas)*70 + 60, w: 55, h: 55, vivo: true, dir: 1, vel: 0.8 + (faseAtual*0.2) });
+                }
+            }
         }
 
         function iniciarJogoReal() {
             modo = 'jogando';
             player.x = 370; player.tx = 370; player.y = 520; player.ty = 520;
+            tiros = []; tirosInimigos = [];
             criarInvasores();
-            window.addEventListener('keydown', e => keys[e.code] = true);
+            window.addEventListener('keydown', e => { keys[e.code] = true; if(e.code === 'KeyE') usarHabilidade(); });
             window.addEventListener('keyup', e => keys[e.code] = false);
         }
 
-        function criarInvasores() {
-            invasores = [];
-            let colunas = 8 + faseAtual; 
-            let linhas = 2 + Math.floor(faseAtual / 2);
-            for(let i=0; i < colunas * linhas; i++) {
-                invasores.push({
-                    x: (i % colunas) * 60 + 50,
-                    y: Math.floor(i / colunas) * 50 + 60,
-                    w: 40, h: 40, vivo: true,
-                    dir: 1, 
-                    vel: 1 + (faseAtual * 0.5)
-                });
+        function usarHabilidade() {
+            if(player.kills >= 3) {
+                tiros.push({ x: player.x, y: player.y - 40, s: 8, isFireball: true, w: 100, h: 100 });
+                player.kills -= 3;
             }
         }
 
         function drawEntity(img, obj, fallback, isPlayer) {
             ctx.save();
             ctx.translate(obj.x + obj.w/2, obj.y + obj.h/2);
-            obj.rot = lerp(obj.rot, (obj.tx - obj.x) * 0.05, 0.1);
-            ctx.rotate(obj.rot * Math.PI / 180);
-
-            if(isPlayer && player.danoTime > 0) {
-                ctx.globalAlpha = 0.5;
-                player.danoTime--;
+            if(isPlayer) {
+                obj.rot = lerp(obj.rot, (obj.tx - obj.x) * 0.05, 0.1);
+                ctx.rotate(obj.rot * Math.PI / 180);
+                if(player.danoTime > 0) { ctx.globalAlpha = 0.5; player.danoTime--; }
             }
-
-            let bob = Math.sin(Date.now() / 250) * 3;
-            if(img.complete && img.naturalWidth !== 0) {
-                ctx.drawImage(img, -obj.w/2, -obj.h/2 + bob, obj.w, obj.h);
-            } else {
-                ctx.fillStyle = fallback;
-                ctx.fillRect(-obj.w/2, -obj.h/2 + bob, obj.w, obj.h);
-            }
+            if(img.complete && img.naturalWidth !== 0) ctx.drawImage(img, -obj.w/2, -obj.h/2, obj.w, obj.h);
+            else { ctx.fillStyle = fallback; ctx.fillRect(-obj.w/2, -obj.h/2, obj.w, obj.h); }
             ctx.restore();
         }
 
@@ -240,80 +218,99 @@
                 ctx.scale(cam.zoom, cam.zoom);
             }
 
-            player.x = lerp(player.x, player.tx, 0.1);
-            player.y = lerp(player.y, player.ty, 0.1);
-            amigo.x = lerp(amigo.x, amigo.tx, 0.1);
-            amigo.y = lerp(amigo.y, amigo.ty, 0.1);
-
+            player.x = lerp(player.x, player.tx, 0.1); player.y = lerp(player.y, player.ty, 0.1);
+            
             particulas.forEach((p, i) => {
                 p.x += p.vx; p.y += p.vy; p.life -= 0.02;
-                ctx.fillStyle = `rgba(0, 210, 255, ${p.life})`;
+                ctx.fillStyle = p.c || `rgba(255, 100, 0, ${p.life})`;
                 ctx.fillRect(p.x, p.y, 4, 4);
                 if(p.life <= 0) particulas.splice(i, 1);
             });
 
-            drawEntity(skinPlayer, player, '#0f0', true);
-            if(modo === 'historia' && amigo.y < 700) drawEntity(skinAmigo, amigo, '#00d2ff', false);
+            drawEntity(skins.player, player, '#0f0', true);
+            if(modo === 'historia' && amigo.y < 700) {
+                amigo.x = lerp(amigo.x, amigo.tx, 0.1);
+                drawEntity(skins.amigo, amigo, '#00d2ff', false);
+            }
 
+            // Tiros Hunter
             tiros.forEach((t, i) => {
                 t.y -= t.s;
-                ctx.fillStyle = '#fff';
-                ctx.fillRect(t.x, t.y, 4, 15);
-                if(t.y < -50) tiros.splice(i, 1);
+                if(t.isFireball) drawEntity(skins.fireball, t, 'orange', false);
+                else { ctx.fillStyle = '#fff'; ctx.fillRect(t.x + 28, t.y, 4, 15); }
+                if(t.y < -100) tiros.splice(i, 1);
+            });
+
+            // Tiros Inimigos
+            tirosInimigos.forEach((t, i) => {
+                t.y += 5; ctx.fillStyle = '#ff0055'; ctx.fillRect(t.x, t.y, 4, 12);
+                if(t.y > 600) tirosInimigos.splice(i, 1);
+                if(t.x > player.x && t.x < player.x + player.w && t.y > player.y && t.y < player.y + player.h) {
+                    player.vidas--; player.danoTime = 30; tirosInimigos.splice(i, 1);
+                    if(player.vidas <= 0) { alert("Hunter foi abatido!"); location.reload(); }
+                }
             });
 
             if(modo === 'jogando') {
                 document.getElementById('fase-txt').innerText = faseAtual;
                 document.getElementById('vidas-txt').innerText = player.vidas;
+                document.getElementById('hab-txt').innerText = Math.min(player.kills, 3);
 
-                if(keys['ArrowLeft'] && player.tx > 20) player.tx -= 8;
-                if(keys['ArrowRight'] && player.tx < 720) player.tx += 8;
-                if(keys['Space'] && (tiros.length === 0 || tiros[tiros.length-1].y < player.y - 150)) {
-                    tiros.push({x: player.x + 28, y: player.y, s: 12});
-                }
+                if(keys['ArrowLeft'] && player.tx > 10) player.tx -= 8;
+                if(keys['ArrowRight'] && player.tx < 730) player.tx += 8;
+                if(keys['Space'] && (tiros.length === 0 || tiros[tiros.length-1].y < player.y - 150)) tiros.push({x: player.x, y: player.y, s: 12});
 
-                let todosMortos = true;
+                let boss = invasores.find(inv => inv.isBoss);
+                let shield = invasores.find(inv => inv.isShield);
+                let vivos = 0;
+
                 invasores.forEach(inv => {
-                    if(inv.vivo) {
-                        todosMortos = false;
+                    if(!inv.vivo) return;
+                    if(!inv.isShield) vivos++;
+
+                    // Movimento
+                    if(!inv.isShield) {
                         inv.x += inv.vel * inv.dir;
-                        if(inv.x > 750 || inv.x < 10) { 
-                            invasores.forEach(all => { all.dir *= -1; all.y += 10; });
+                        if(inv.x > 740 || inv.x < 10) { 
+                            invasores.forEach(all => { if(!all.isShield) all.dir *= -1; if(!all.isBoss && !all.isShield) all.y += 10; });
                         }
-
-                        drawEntity(skinAlien, inv, '#ff0055', false);
-
-                        tiros.forEach((t, ti) => {
-                            if(t.x > inv.x && t.x < inv.x + inv.w && t.y > inv.y && t.y < inv.y + inv.h) {
-                                inv.vivo = false;
-                                tiros.splice(ti, 1);
-                                for(let j=0; j<5; j++) particulas.push({x: inv.x+20, y: inv.y+20, vx: (Math.random()-0.5)*10, vy: (Math.random()-0.5)*10, life: 0.8});
-                            }
-                        });
-
-                        if((inv.x < player.x + player.w && inv.x + inv.w > player.x && inv.y < player.y + player.h && inv.y + inv.h > player.y) || inv.y > 550) {
-                            player.vidas--;
-                            player.danoTime = 30;
-                            inv.vivo = false;
-                            if(player.vidas <= 0) {
-                                alert("GAME OVER! A invasão venceu.");
-                                location.reload();
-                            }
-                        }
+                        // Tiro Inimigo (Raro no início, frequente depois)
+                        if(Math.random() < 0.005 + (faseAtual * 0.002)) tirosInimigos.push({x: inv.x + inv.w/2, y: inv.y + inv.h});
                     }
+
+                    // Desenho
+                    let skin = skins.alien;
+                    if(inv.isBoss) skin = skins.chefe;
+                    if(inv.isShield) { 
+                        skin = skins.escudo;
+                        if(boss) { inv.x = boss.x - 50; inv.y = boss.y - 10; }
+                    }
+                    drawEntity(skin, inv, inv.isBoss ? 'purple' : 'red', false);
+
+                    // Colisão Tiro Hunter -> Inimigo
+                    tiros.forEach((t, ti) => {
+                        let rect = {x: inv.x, y: inv.y, w: inv.w, h: inv.h};
+                        let hitX = t.isFireball ? t.x : t.x+28;
+                        if(hitX < rect.x + rect.w && hitX + (t.w||4) > rect.x && t.y < rect.y + rect.h && t.y + (t.h||15) > rect.y) {
+                            let dano = t.isFireball ? 150 : 50;
+                            if(inv.isBoss || inv.isShield) {
+                                inv.hp -= dano;
+                                if(!t.isFireball) tiros.splice(ti, 1);
+                                if(inv.hp <= 0) inv.vivo = false;
+                            } else {
+                                inv.vivo = false; player.kills++; tiros.splice(ti, 1);
+                            }
+                            for(let j=0; j<5; j++) particulas.push({x: hitX, y: t.y, vx: (Math.random()-0.5)*6, vy: (Math.random()-0.5)*6, life: 0.5});
+                        }
+                    });
                 });
 
-                if(todosMortos && invasores.length > 0) {
-                    if(faseAtual < totalFases) {
-                        faseAtual++;
-                        alerta.innerText = "FASE " + faseAtual;
-                        alerta.style.display = 'block';
-                        modo = 'transicao';
-                        setTimeout(() => { alerta.style.display = 'none'; iniciarJogoReal(); }, 2000);
-                    } else {
-                        alert("PARABÉNS! Olavo salvou o sistema!");
-                        location.reload();
-                    }
+                if(vivos === 0) {
+                    faseAtual++;
+                    alerta.innerText = "FASE " + faseAtual;
+                    alerta.style.display = 'block';
+                    modo = 'transicao';
+                    setTimeout(() => { alerta.style.display = 'none'; iniciarJogoReal(); }, 2000);
                 }
             }
             ctx.restore();

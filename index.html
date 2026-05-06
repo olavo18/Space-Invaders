@@ -29,7 +29,6 @@
             overflow: hidden;
         }
 
-        /* MENU PRINCIPAL */
         #menu-principal {
             text-align: center;
             background: rgba(10, 10, 30, 0.95);
@@ -40,11 +39,7 @@
             z-index: 100;
             max-width: 450px;
             width: 90%;
-            box-shadow: 0 0 40px rgba(0, 210, 255, 0.2);
         }
-
-        h1 { font-family: 'Orbitron', sans-serif; font-size: 32px; color: var(--neon-blue); text-shadow: 0 0 20px var(--neon-blue); margin-bottom: 5px; }
-        .subtitle { font-size: 14px; margin-bottom: 40px; opacity: 0.8; letter-spacing: 1px; }
 
         .btn-menu {
             padding: 16px 25px; font-size: 16px; font-weight: 800; background: transparent;
@@ -52,11 +47,8 @@
             cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 12px;
             width: 100%; margin-bottom: 15px; text-transform: uppercase;
         }
-        .btn-menu:hover { background: rgba(255,255,255,0.1); border-color: white; }
         .btn-play { background: var(--neon-pink); border-color: var(--neon-pink); }
-        .btn-play:hover { transform: scale(1.05); box-shadow: 0 0 30px var(--neon-pink); background: #ff2a6d; }
 
-        /* CONTAINER DO JOGO */
         #game-container { 
             display: none; 
             position: relative; 
@@ -64,72 +56,36 @@
             height: 600px; 
             background: #000; 
             border: 2px solid var(--neon-blue); 
-            box-shadow: 0 0 20px rgba(0, 210, 255, 0.3);
             overflow: hidden; 
         }
-        canvas { display: block; }
 
-        /* ELEMENTOS DA HISTÓRIA */
         #dialogo-box {
-            position: absolute; top: 120px; left: 50%; transform: translateX(-50%);
-            background: white; color: black; padding: 15px 25px; border-radius: 20px;
-            font-weight: 700; display: none; z-index: 200; width: 350px; text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            font-size: 15px; line-height: 1.4;
-        }
-        #dialogo-box::after {
-            content: ''; position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%);
-            border-left: 10px solid transparent; border-right: 10px solid transparent; border-top: 10px solid white;
+            position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95); color: black; padding: 15px 25px; border-radius: 15px;
+            font-weight: 800; display: none; z-index: 200; width: 400px; text-align: center;
+            border: 3px solid var(--neon-blue); font-size: 16px;
         }
 
         #alerta-invasao {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             color: var(--neon-pink); font-family: 'Orbitron', sans-serif; font-size: 45px;
             text-shadow: 0 0 25px var(--neon-pink); display: none; text-align: center; z-index: 300;
-            width: 100%;
         }
-
-        /* MODAIS */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center; }
-        .modal-content { background: #0a0a1a; border: 1px solid var(--neon-blue); padding: 40px; border-radius: 30px; max-width: 500px; position: relative; }
-        .close-btn { position: absolute; top: 10px; right: 20px; font-size: 30px; cursor: pointer; color: var(--neon-pink); }
-        h3 { color: var(--neon-blue); font-family: 'Orbitron', sans-serif; margin-bottom: 20px; }
     </style>
 </head>
 <body>
 
     <div id="menu-principal">
-        <h1>SPACE INVADERS</h1>
-        <div class="subtitle">Olavo Marchiori</div>
-        <button class="btn-menu btn-play" onclick="iniciarHistoria()">
-            <i class="fa-solid fa-rocket"></i> JOGAR
-        </button>
-        <button class="btn-menu" onclick="openModal('modalComo')">COMO JOGAR</button>
-        <button class="btn-menu" onclick="openModal('modalHist')">HISTÓRIA</button>
+        <h1 style="font-family: 'Orbitron'; color: var(--neon-blue);">SPACE INVADERS</h1>
+        <p style="margin-bottom: 30px;">Olavo Marchiori</p>
+        <button class="btn-menu btn-play" onclick="iniciarHistoria()">JOGAR</button>
+        <button class="btn-menu" onclick="location.reload()">REINICIAR</button>
     </div>
 
     <div id="game-container">
         <div id="dialogo-box"></div>
         <div id="alerta-invasao">A INVASÃO COMEÇOU!</div>
         <canvas id="gameCanvas"></canvas>
-    </div>
-
-    <div id="modalComo" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closeModal('modalComo')">&times;</span>
-            <h3>COMO JOGAR</h3>
-            <p>Use as <b>SETAS</b> do teclado para mover sua nave.</p>
-            <p>Pressione <b>ESPAÇO</b> para disparar seus lasers.</p>
-        </div>
-    </div>
-
-    <div id="modalHist" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closeModal('modalHist')">&times;</span>
-            <h3>SOBRE O PROJETO</h3>
-            <p>Uma releitura moderna do clássico de 1978.</p>
-            <p>Desenvolvido por Olavo, unindo nostalgia e tecnologia atual.</p>
-        </div>
     </div>
 
     <script>
@@ -140,13 +96,16 @@
 
         canvas.width = 800; canvas.height = 600;
 
-        // --- CARREGAMENTO DE SKINS ---
-        const skinPlayer = new Image();
-        skinPlayer.src = 'jogadorprincipal.png';
+        // --- SKINS ---
+        const skinPlayer = new Image(); skinPlayer.src = 'jogadorprincipal.png';
+        const skinAmigo = new Image(); skinAmigo.src = 'amigo.png';
 
         let modo = 'menu'; 
-        let player = { x: 375, y: 530, w: 50, h: 50 }; 
-        let amigo = { x: 200, y: 530, w: 50, h: 50, color: '#00d2ff' };
+        let camera = { x: 0, y: 0, zoom: 1 };
+        
+        let player = { x: 450, y: 450, w: 60, h: 60, targetX: 450, targetY: 450 };
+        let amigo = { x: 250, y: 450, w: 60, h: 60, targetX: 250, targetY: 450 };
+        
         let tiros = [];
         let invasores = [];
         const keys = {};
@@ -155,7 +114,19 @@
             document.getElementById('menu-principal').style.display = 'none';
             document.getElementById('game-container').style.display = 'block';
             modo = 'historia';
-            rodarCena();
+            
+            // Sequência da Cutscene mais lenta e fluida
+            setTimeout(() => {
+                camera.zoom = 1.5; // Aproxima a câmera
+                falar("Olavo: Eu consigo derrotar esses alienígenas sozinho!", 4000, () => {
+                    amigo.targetX = 300; // Amigo se aproxima para falar
+                    falar("Amigo: Você enlouqueceu? São muitos, você não vai conseguir!", 4000, () => {
+                        falar("Olavo: Eu posso sim! Olha o que eu sei fazer!", 3000, () => {
+                            demonstrarHabilidades();
+                        });
+                    });
+                });
+            }, 1000);
         }
 
         function falar(texto, tempo, callback) {
@@ -167,42 +138,31 @@
             }, tempo);
         }
 
-        function rodarCena() {
-            setTimeout(() => {
-                falar("Olavo: Eu consigo derrotar esses alienígenas sozinho!", 3000, () => {
-                    falar("Amigo: Você enlouqueceu? São muitos, você não vai conseguir!", 3000, () => {
-                        falar("Olavo: Eu posso sim! Olha o que eu sei fazer!", 2000, () => {
-                            demonstrarHabilidades();
-                        });
-                    });
-                });
-            }, 1000);
-        }
-
         function demonstrarHabilidades() {
-            let moveCount = 0;
-            let intervalo = setInterval(() => {
-                player.x += 10;
-                if(moveCount % 4 === 0) {
-                    tiros.push({x: player.x + 23, y: player.y, s: 12});
-                }
-                moveCount++;
-                if(moveCount > 25) {
-                    clearInterval(intervalo);
-                    falar("Olavo: Viu só? Eu dou conta!", 2500, () => {
-                        alerta.style.display = 'block';
-                        setTimeout(() => {
-                            alerta.style.display = 'none';
-                            amigo.y = 800; // Amigo sai de cena
-                            iniciarJogoReal();
-                        }, 2000);
-                    });
-                }
-            }, 50);
+            player.targetX = 600;
+            let disparos = setInterval(() => {
+                tiros.push({x: player.x + 28, y: player.y, s: 15});
+            }, 200);
+
+            setTimeout(() => {
+                clearInterval(disparos);
+                player.targetX = 400;
+                falar("Olavo: Viu só? Eu dou conta!", 3000, () => {
+                    camera.zoom = 1; // Volta a câmera ao normal
+                    alerta.style.display = 'block';
+                    setTimeout(() => {
+                        alerta.style.display = 'none';
+                        amigo.targetY = 800; // Amigo sai de cena
+                        iniciarJogoReal();
+                    }, 2500);
+                });
+            }, 2000);
         }
 
         function iniciarJogoReal() {
             modo = 'jogando';
+            player.x = 370; player.targetX = 370;
+            player.y = 520; player.targetY = 520;
             createAliens();
             window.addEventListener('keydown', e => keys[e.code] = true);
             window.addEventListener('keyup', e => keys[e.code] = false);
@@ -210,55 +170,64 @@
 
         function createAliens() {
             for(let i=0; i<30; i++) {
-                invasores.push({
-                    x: (i % 10) * 65 + 80, 
-                    y: Math.floor(i / 10) * 50 + 50, 
-                    w: 40, h: 30, vivo: true
-                });
+                invasores.push({x: (i%10)*65 + 80, y: Math.floor(i/10)*50 + 50, w: 40, h: 30, vivo: true});
             }
         }
 
+        // Função de Suavização (Lerp)
+        function lerp(start, end, amt) { return (1 - amt) * start + amt * end; }
+
         function gameLoop() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // DESENHAR JOGADOR (COM SKIN)
-            if (skinPlayer.complete && skinPlayer.naturalWidth !== 0) {
-                ctx.drawImage(skinPlayer, player.x, player.y, player.w, player.h);
-            } else {
-                ctx.fillStyle = '#00ff00'; // Fallback verde
-                ctx.fillRect(player.x, player.y, player.w, player.h);
-            }
-
-            // DESENHAR AMIGO (APENAS NA HISTÓRIA)
+            
+            ctx.save();
+            // Lógica de Câmera (Zoom e Foco)
+            let targetCamX = -(player.x * camera.zoom - canvas.width/2);
+            let targetCamY = -(player.y * camera.zoom - canvas.height/2);
+            
             if(modo === 'historia') {
-                ctx.fillStyle = amigo.color;
-                ctx.fillRect(amigo.x, amigo.y, amigo.w, amigo.h);
+                camera.x = lerp(camera.x, targetCamX, 0.05);
+                camera.y = lerp(camera.y, targetCamY, 0.05);
+                ctx.translate(camera.x, camera.y);
+                ctx.scale(camera.zoom, camera.zoom);
             }
 
-            // DESENHAR TIROS (COM BRILHO NEON)
+            // Movimentação Suave das Naves
+            player.x = lerp(player.x, player.targetX, 0.1);
+            player.y = lerp(player.y, player.targetY, 0.1);
+            amigo.x = lerp(amigo.x, amigo.targetX, 0.1);
+            amigo.y = lerp(amigo.y, amigo.targetY, 0.1);
+
+            // Flutuação constante (para não ficarem parados)
+            let flutuar = Math.sin(Date.now() / 200) * 2;
+
+            // Desenhar Jogador
+            if(skinPlayer.complete) ctx.drawImage(skinPlayer, player.x, player.y + flutuar, player.w, player.h);
+            
+            // Desenhar Amigo
+            if(modo === 'historia' || amigo.y < 600) {
+                if(skinAmigo.complete) ctx.drawImage(skinAmigo, amigo.x, amigo.y + flutuar, amigo.w, amigo.h);
+            }
+
+            // Tiros
+            ctx.fillStyle = '#fff';
             tiros.forEach((t, i) => {
                 t.y -= t.s;
-                ctx.fillStyle = '#fff';
                 ctx.fillRect(t.x, t.y, 4, 15);
-                if(t.y < -20) tiros.splice(i, 1);
+                if(t.y < -100) tiros.splice(i, 1);
             });
 
             if(modo === 'jogando') {
-                // Controles
-                if(keys['ArrowLeft'] && player.x > 0) player.x -= 7;
-                if(keys['ArrowRight'] && player.x < canvas.width - player.w) player.x += 7;
-                if(keys['Space'] && tiros.length < 10) {
-                    if(tiros.length === 0 || tiros[tiros.length-1].y < player.y - 100) {
-                        tiros.push({x: player.x + 23, y: player.y, s: 8});
-                    }
+                if(keys['ArrowLeft'] && player.targetX > 0) player.targetX -= 8;
+                if(keys['ArrowRight'] && player.targetX < canvas.width - player.w) player.targetX += 8;
+                if(keys['Space'] && tiros.length < 5) {
+                    if(tiros.length === 0 || tiros[tiros.length-1].y < player.y - 150)
+                        tiros.push({x: player.x + 28, y: player.y, s: 12});
                 }
 
-                // Invasores e Colisão
-                ctx.fillStyle = '#ff0055';
-                let todosMortos = true;
                 invasores.forEach(inv => {
                     if(inv.vivo) {
-                        todosMortos = false;
+                        ctx.fillStyle = var(--neon-pink);
                         ctx.fillRect(inv.x, inv.y, inv.w, inv.h);
                         tiros.forEach((t, ti) => {
                             if(t.x > inv.x && t.x < inv.x + inv.w && t.y > inv.y && t.y < inv.y + inv.h) {
@@ -268,18 +237,11 @@
                         });
                     }
                 });
-
-                if(todosMortos) {
-                    alert("VITÓRIA! Olavo salvou a Terra!");
-                    location.reload();
-                }
             }
-
+            
+            ctx.restore();
             requestAnimationFrame(gameLoop);
         }
-
-        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
         gameLoop();
     </script>

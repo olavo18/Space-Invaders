@@ -1,243 +1,480 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Space Invaders</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Orbitron:wght@700&display=swap" rel="stylesheet">
-    <style>
-        :root { --neon-blue: #00d2ff; --neon-pink: #ff0055; --space-dark: #050510; }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background-color: var(--space-dark); background-image: radial-gradient(white, rgba(255,255,255,.1) 1px, transparent 20px); background-size: 50px 50px; font-family: 'Plus Jakarta Sans', sans-serif; color: white; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        
-        #menu-principal { text-align: center; background: rgba(10, 10, 30, 0.95); padding: 60px; border-radius: 40px; border: 2px solid var(--neon-blue); z-index: 100; max-width: 500px; width: 90%; box-shadow: 0 0 50px rgba(0, 210, 255, 0.2); }
-        h1 { font-family: 'Orbitron', sans-serif; font-size: 36px; color: var(--neon-blue); text-shadow: 0 0 20px var(--neon-blue); margin-bottom: 10px; }
-        
-        .btn-play { padding: 20px 30px; font-size: 18px; font-weight: 800; background: var(--neon-pink); color: white; border: none; border-radius: 20px; cursor: pointer; width: 100%; text-transform: uppercase; box-shadow: 0 10px 20px rgba(255, 0, 85, 0.3); }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Space Invaders Neon</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root { --neon-blue:#00d2ff; --neon-pink:#ff0055; --neon-orange:#ffae3b; --space-dark:#050510; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    background:radial-gradient(ellipse at top,#0a0a25 0%,var(--space-dark) 70%);
+    font-family:'Plus Jakarta Sans',sans-serif;color:#fff;
+    min-height:100vh;display:flex;align-items:center;justify-content:center;
+    overflow:hidden;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, #fff, transparent),
+      radial-gradient(1px 1px at 70% 80%, #fff, transparent),
+      radial-gradient(2px 2px at 40% 60%, #aef, transparent),
+      radial-gradient(1px 1px at 85% 20%, #fff, transparent),
+      radial-gradient(1px 1px at 10% 90%, #fff, transparent);
+    background-size:600px 600px;opacity:.6;animation:drift 60s linear infinite;
+  }
+  @keyframes drift{from{background-position:0 0}to{background-position:600px 600px}}
 
-        #game-container { display: none; position: relative; width: 800px; height: 600px; background: #000; border: 3px solid var(--neon-blue); overflow: hidden; }
-        
-        #ui-camada { position: absolute; top: 20px; left: 25px; right: 25px; display: flex; justify-content: space-between; font-family: 'Orbitron'; font-size: 18px; color: var(--neon-blue); pointer-events: none; z-index: 50; }
-        
-        #dialogo-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; color: black; padding: 25px 40px; border-radius: 25px; font-weight: 800; display: none; z-index: 200; width: 550px; text-align: center; border: 6px solid var(--neon-blue); box-shadow: 0 0 100px rgba(0,0,0,1); font-size: 20px; }
+  #menu-principal{
+    text-align:center;background:rgba(10,10,30,.92);
+    padding:50px 60px;border-radius:30px;border:2px solid var(--neon-blue);
+    max-width:480px;width:90%;box-shadow:0 0 60px rgba(0,210,255,.35);
+    backdrop-filter:blur(8px);
+  }
+  h1{font-family:'Orbitron',sans-serif;font-size:42px;color:var(--neon-blue);
+    text-shadow:0 0 20px var(--neon-blue),0 0 40px var(--neon-blue);
+    margin-bottom:14px;letter-spacing:4px;animation:pulse 2.5s ease-in-out infinite}
+  @keyframes pulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.3)}}
+  #menu-principal p{opacity:.7;font-size:14px;margin-bottom:30px;line-height:1.6}
+  .btn-play{padding:18px 30px;font-size:18px;font-weight:800;
+    background:linear-gradient(135deg,var(--neon-pink),#ff3380);color:#fff;
+    border:none;border-radius:16px;cursor:pointer;width:100%;text-transform:uppercase;
+    letter-spacing:2px;box-shadow:0 10px 30px rgba(255,0,85,.4);
+    transition:transform .15s ease, box-shadow .2s ease;font-family:'Orbitron',sans-serif}
+  .btn-play:hover{transform:translateY(-2px);box-shadow:0 14px 40px rgba(255,0,85,.6)}
+  .btn-play:active{transform:translateY(0)}
 
-        #efeito-tempo { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 150, 255, 0.3); display: none; z-index: 5; pointer-events: none; }
-        #boss-hp-bar { position: absolute; top: 60px; left: 50%; transform: translateX(-50%); width: 400px; height: 10px; background: #222; border: 1px solid #fff; display: none; border-radius: 5px; z-index: 15; overflow: hidden; }
-        #boss-hp-fill { width: 100%; height: 100%; background: #ff0055; transition: 0.2s; }
-    </style>
+  #game-container{display:none;position:relative;width:800px;height:600px;
+    background:#000;border:3px solid var(--neon-blue);overflow:hidden;
+    border-radius:8px;box-shadow:0 0 80px rgba(0,210,255,.4)}
+
+  #ui-camada{position:absolute;top:14px;left:20px;right:20px;display:flex;
+    justify-content:space-between;font-family:'Orbitron',sans-serif;font-size:16px;
+    color:var(--neon-blue);pointer-events:none;z-index:50;text-shadow:0 0 10px var(--neon-blue)}
+  #ui-camada span{color:#fff}
+
+  #dialogo-box{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(.9);
+    background:rgba(255,255,255,.97);color:#000;padding:22px 36px;border-radius:18px;
+    font-weight:800;display:none;z-index:200;width:560px;max-width:90%;text-align:center;
+    border:4px solid var(--neon-blue);box-shadow:0 0 100px rgba(0,210,255,.6);font-size:18px;
+    opacity:0;transition:opacity .25s ease, transform .25s ease;font-family:'Plus Jakarta Sans'}
+  #dialogo-box.show{display:block;opacity:1;transform:translate(-50%,-50%) scale(1)}
+
+  #efeito-tempo{position:absolute;inset:0;background:radial-gradient(circle,rgba(0,150,255,.15),rgba(0,150,255,.45));
+    display:none;z-index:5;pointer-events:none;animation:timeWarp .6s ease}
+  @keyframes timeWarp{from{opacity:0}to{opacity:1}}
+
+  #boss-hp-bar{position:absolute;top:50px;left:50%;transform:translateX(-50%);
+    width:420px;height:14px;background:#222;border:1px solid #fff;display:none;
+    border-radius:8px;z-index:15;overflow:hidden;box-shadow:0 0 12px rgba(255,0,85,.5)}
+  #boss-hp-fill{width:100%;height:100%;
+    background:linear-gradient(90deg,#ff0055,#ffae3b);transition:width .25s ease}
+  #boss-hp-label{position:absolute;top:30px;left:50%;transform:translateX(-50%);
+    font-family:'Orbitron';font-size:12px;color:#ff5577;display:none;z-index:15;letter-spacing:2px}
+
+  #game-over{position:absolute;inset:0;background:rgba(0,0,0,.85);display:none;
+    flex-direction:column;align-items:center;justify-content:center;z-index:300;gap:20px}
+  #game-over.show{display:flex}
+  #game-over h2{font-family:'Orbitron';font-size:48px;color:var(--neon-pink);
+    text-shadow:0 0 30px var(--neon-pink);letter-spacing:6px}
+  #game-over p{font-size:16px;opacity:.8}
+</style>
 </head>
 <body>
 
-    <div id="menu-principal">
-        <h1>SPACE INVADERS</h1>
-        <button class="btn-play" onclick="iniciarHistoria()">INICIAR JOGO</button>
-    </div>
+<div id="menu-principal">
+  <h1>SPACE INVADERS</h1>
+  <p>← → mover · ESPAÇO atirar · E bola de fogo<br>Cuidado com o chefe a cada 5 fases</p>
+  <button class="btn-play" onclick="iniciarHistoria()">INICIAR JOGO</button>
+</div>
 
-    <div id="game-container">
-        <div id="ui-camada">
-            <div>FASE: <span id="fase-txt">1</span></div>
-            <div style="color: #ffcc00;">ESPECIAL (E): <span id="hab-txt">0</span>/3</div>
-            <div>VIDAS: <span id="vidas-txt">3</span></div>
-        </div>
-        <div id="boss-hp-bar"><div id="boss-hp-fill"></div></div>
-        <div id="efeito-tempo"></div>
-        <div id="dialogo-box"></div>
-        <canvas id="gameCanvas"></canvas>
-    </div>
+<div id="game-container">
+  <div id="ui-camada">
+    <div>FASE: <span id="fase-txt">1</span></div>
+    <div>ESPECIAL (E): <span id="hab-txt">0</span>/3</div>
+    <div>VIDAS: <span id="vidas-txt">3</span></div>
+  </div>
+  <div id="boss-hp-label">CHEFE</div>
+  <div id="boss-hp-bar"><div id="boss-hp-fill"></div></div>
+  <div id="efeito-tempo"></div>
+  <div id="dialogo-box"></div>
+  <div id="game-over">
+    <h2>GAME OVER</h2>
+    <p>Fase alcançada: <span id="fase-final">1</span></p>
+    <button class="btn-play" style="width:auto;padding:14px 30px" onclick="location.reload()">JOGAR DE NOVO</button>
+  </div>
+  <canvas id="gameCanvas" width="800" height="600"></canvas>
+</div>
 
-    <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = 800; canvas.height = 600;
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
 
-        const skins = { player: new Image(), amigo: new Image(), alien: new Image(), chefe: new Image(), fireball: new Image(), escudo: new Image() };
-        skins.player.src = 'jogadorprincipal.png';
-        skins.amigo.src = 'amigo.png';
-        skins.alien.src = 'alien.png';
-        skins.chefe.src = 'chefe1.png';
-        skins.fireball.src = 'bola-defogo.png';
-        skins.escudo.src = 'escudo.png';
+let modo = 'menu';
+let faseAtual = 1;
+let tempoParado = false;
+let contadorTempo = 0;
+let lastTime = performance.now();
 
-        let modo = 'menu', faseAtual = 1, tempoParado = false, contadorTempo = 0;
-        let player = { x: 370, y: 520, w: 60, h: 60, tx: 370, ty: 520, vidas: 3, danoTime: 0, kills: 0 };
-        let amigo = { x: -100, y: 450, w: 60, h: 60, tx: -100, ty: 450 };
-        let invasores = [], tiros = [], tirosE = [], keys = {};
-        let frameAnimacao = 0; 
+const player = { x:370, y:520, w:60, h:60, tx:370, vidas:3, danoTime:0, kills:0, cooldown:0 };
+const amigo  = { x:-150, y:450, w:60, h:60, tx:-150 };
 
-        const falasChefe = ["ZA WARUDO!", "O tempo é meu!", "Hunter, você não pode se mexer!", "Inútil! Inútil! Inútil!"];
+let invasores = [];
+let tiros = [];
+let tirosE = [];
+let particulas = [];
+const keys = {};
+let frameAnim = 0;
 
-        function falar(texto, tempo, callback) {
-            const box = document.getElementById('dialogo-box');
-            box.innerText = texto; box.style.display = 'block';
-            setTimeout(() => { box.style.display = 'none'; if(callback) callback(); }, tempo);
+const falasChefe = ["ZA WARUDO!", "O tempo é meu!", "Você não pode se mexer!", "Inútil! Inútil! Inútil!"];
+
+const $ = id => document.getElementById(id);
+function falar(texto, tempo, cb){
+  const box = $('dialogo-box');
+  box.innerText = texto;
+  box.classList.add('show');
+  setTimeout(()=>{ box.classList.remove('show'); cb && cb(); }, tempo);
+}
+
+function iniciarHistoria(){
+  $('menu-principal').style.display='none';
+  $('game-container').style.display='block';
+  modo='historia';
+  amigo.tx = 200; player.tx = 500;
+  falar("Hunter: Eu consigo derrotar esses alienígenas sozinho!", 2200, ()=>{
+    falar("Amigo: Hunter, você enlouqueceu? São muitos!", 2200, ()=>{
+      falar("Hunter: Vou mostrar do que sou capaz!", 1500, ()=>{
+        modo='jogando';
+        amigo.tx = -200; player.tx = 370;
+        criarFase();
+      });
+    });
+  });
+}
+
+function criarFase(){
+  invasores=[]; tiros=[]; tirosE=[]; particulas=[];
+  const bossBar = $('boss-hp-bar'), bossLabel = $('boss-hp-label');
+  bossBar.style.display='none'; bossLabel.style.display='none';
+
+  if(faseAtual % 5 === 0){
+    bossBar.style.display='block';
+    bossLabel.style.display='block';
+    $('boss-hp-fill').style.width='100%';
+    const bossHp = 350 + faseAtual*30;
+    invasores.push({ x:300, y:80, w:200, h:160, hp:bossHp, maxHp:bossHp, isBoss:true, dir:1, vel:1.4 });
+    const shieldHp = 200 + faseAtual*10;
+    invasores.push({ x:260, y:60, w:280, h:200, hp:shieldHp, maxHp:shieldHp, isShield:true });
+    for(let i=0;i<4;i++) invasores.push({ x:120 + i*170, y:330, w:55, h:55, vivo:true, dir:1, vel:1.2 });
+    contadorTempo=0;
+  } else {
+    const cols = 5;
+    const rows = 2 + Math.min(2, Math.floor(faseAtual/3));
+    for(let r=0;r<rows;r++){
+      for(let c=0;c<cols;c++){
+        invasores.push({
+          x: c*110 + 130, y: r*70 + 70, w:55, h:55,
+          vivo:true, dir:1, vel: 0.8 + faseAtual*0.15
+        });
+      }
+    }
+  }
+}
+
+window.addEventListener('keydown', e => {
+  keys[e.code] = true;
+  if(e.code === 'KeyE' && !tempoParado && modo==='jogando') usarHabilidade();
+  if(['ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault();
+});
+window.addEventListener('keyup', e => { keys[e.code] = false; });
+
+function usarHabilidade(){
+  if(player.kills >= 3){
+    tiros.push({ x: player.x + player.w/2 - 25, y: player.y - 20, w:50, h:50, s:9, isFireball:true });
+    player.kills -= 3;
+  }
+}
+
+function explodir(x,y,color){
+  for(let i=0;i<14;i++){
+    const a = Math.random()*Math.PI*2;
+    const sp = 1 + Math.random()*3;
+    particulas.push({ x, y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, life:30, color });
+  }
+}
+
+function desenharNave(obj, color, isPlayer){
+  ctx.save();
+  const cx = obj.x + obj.w/2, cy = obj.y + obj.h/2;
+  const flutua = Math.sin(frameAnim*0.08 + obj.x*0.05) * 3;
+  ctx.translate(cx, cy + flutua);
+  if(isPlayer && player.danoTime > 0 && Math.floor(player.danoTime/4)%2) ctx.globalAlpha = 0.4;
+
+  ctx.shadowBlur = 20; ctx.shadowColor = color;
+  ctx.fillStyle = color;
+
+  if(isPlayer){
+    ctx.beginPath();
+    ctx.moveTo(0, -obj.h/2);
+    ctx.lineTo(obj.w/2, obj.h/2);
+    ctx.lineTo(0, obj.h/3);
+    ctx.lineTo(-obj.w/2, obj.h/2);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.shadowBlur = 0;
+    ctx.fillRect(-3,-5,6,10);
+  } else {
+    ctx.beginPath();
+    ctx.ellipse(0,0,obj.w/2,obj.h/2.2,0,0,Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle='#fff'; ctx.shadowBlur=0;
+    ctx.beginPath(); ctx.arc(-obj.w/5,-2,4,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(obj.w/5,-2,4,0,Math.PI*2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+function desenharBoss(obj){
+  ctx.save();
+  const cx = obj.x + obj.w/2, cy = obj.y + obj.h/2;
+  const flutua = Math.sin(frameAnim*0.05) * 6;
+  ctx.translate(cx, cy + flutua);
+  ctx.shadowBlur = 30; ctx.shadowColor = '#ff0055';
+  ctx.fillStyle = '#8b0030';
+  ctx.beginPath();
+  ctx.ellipse(0,0,obj.w/2,obj.h/2,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#ff0055';
+  ctx.beginPath(); ctx.ellipse(0,-10,obj.w/3,obj.h/4,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#fff'; ctx.shadowBlur=0;
+  ctx.beginPath(); ctx.arc(-obj.w/4,0,7,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(obj.w/4,0,7,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#ff0055';
+  ctx.beginPath(); ctx.arc(-obj.w/4,0,3,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(obj.w/4,0,3,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+function desenharEscudo(obj){
+  ctx.save();
+  const cx = obj.x + obj.w/2, cy = obj.y + obj.h/2;
+  ctx.translate(cx, cy);
+  ctx.globalAlpha = 0.35 + Math.sin(frameAnim*0.1)*0.1;
+  ctx.shadowBlur = 25; ctx.shadowColor = '#00d2ff';
+  ctx.strokeStyle = '#00d2ff'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.ellipse(0,0,obj.w/2,obj.h/2,0,0,Math.PI*2); ctx.stroke();
+  ctx.globalAlpha = 0.1; ctx.fillStyle = '#00d2ff';
+  ctx.beginPath(); ctx.ellipse(0,0,obj.w/2,obj.h/2,0,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+function desenharFireball(t){
+  ctx.save();
+  const cx = t.x + t.w/2, cy = t.y + t.h/2;
+  ctx.translate(cx, cy);
+  ctx.rotate(frameAnim*0.3);
+  ctx.shadowBlur = 30; ctx.shadowColor = '#ff8800';
+  const grad = ctx.createRadialGradient(0,0,2,0,0,t.w/2);
+  grad.addColorStop(0,'#ffffaa');
+  grad.addColorStop(0.4,'#ffae3b');
+  grad.addColorStop(1,'#ff3300');
+  ctx.fillStyle = grad;
+  ctx.beginPath(); ctx.arc(0,0,t.w/2,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+function colide(a,b){
+  return a.x < b.x+b.w && a.x+(a.w||6) > b.x && a.y < b.y+b.h && a.y+(a.h||20) > b.y;
+}
+
+function gameLoop(now){
+  const dt = Math.min(32, now - lastTime);
+  lastTime = now;
+  frameAnim += dt * 0.06;
+
+  ctx.clearRect(0,0,800,600);
+
+  if(modo === 'menu') { requestAnimationFrame(gameLoop); return; }
+
+  const lerp = 1 - Math.pow(0.001, dt/1000);
+  player.x += (player.tx - player.x) * lerp;
+  amigo.x  += (amigo.tx  - amigo.x ) * lerp;
+
+  if(player.danoTime>0) player.danoTime -= dt/16;
+  if(player.cooldown>0) player.cooldown -= dt;
+
+  if(amigo.x > -100) desenharNave(amigo, '#00d2ff', false);
+  desenharNave(player, '#00ff88', true);
+
+  if(modo !== 'jogando'){
+    requestAnimationFrame(gameLoop); return;
+  }
+
+  $('fase-txt').innerText = faseAtual;
+  $('vidas-txt').innerText = player.vidas;
+  $('hab-txt').innerText = Math.min(player.kills,3);
+
+  const boss = invasores.find(i=>i.isBoss && i.hp>0);
+  const shield = invasores.find(i=>i.isShield && i.hp>0);
+
+  if(boss && !tempoParado){
+    contadorTempo += dt/1000;
+    if(contadorTempo >= 7){
+      tempoParado = true;
+      $('efeito-tempo').style.display='block';
+      falar(falasChefe[Math.floor(Math.random()*falasChefe.length)], 2500, ()=>{
+        tempoParado = false; contadorTempo = 0;
+        $('efeito-tempo').style.display='none';
+      });
+    }
+  }
+
+  if(!tempoParado){
+    const speed = 0.5 * dt;
+    if(keys['ArrowLeft']  && player.tx > 10)  player.tx -= speed;
+    if(keys['ArrowRight'] && player.tx < 740-player.w+10) player.tx += speed;
+    if(keys['Space'] && player.cooldown <= 0){
+      tiros.push({ x: player.x + player.w/2 - 3, y: player.y, w:6, h:18, s:11 });
+      player.cooldown = 220;
+    }
+
+    for(let i=tiros.length-1;i>=0;i--){
+      const t = tiros[i];
+      t.y -= t.s * (dt/16);
+      if(t.y < -100) tiros.splice(i,1);
+    }
+
+    for(let i=tirosE.length-1;i>=0;i--){
+      const te = tirosE[i];
+      te.y += 5 * (dt/16);
+      const hit = { x:te.x, y:te.y, w:5, h:15 };
+      if(colide(hit, player) && player.danoTime<=0){
+        player.vidas--; player.danoTime = 60;
+        tirosE.splice(i,1);
+        explodir(player.x+player.w/2, player.y+player.h/2, '#00ff88');
+        if(player.vidas <= 0){
+          $('fase-final').innerText = faseAtual;
+          $('game-over').classList.add('show');
+          modo = 'gameover';
         }
+        continue;
+      }
+      if(te.y > 620) tirosE.splice(i,1);
+    }
 
-        function iniciarHistoria() {
-            document.getElementById('menu-principal').style.display = 'none';
-            document.getElementById('game-container').style.display = 'block';
-            modo = 'historia';
-            amigo.tx = 200;
-            player.tx = 500;
-            
-            falar("Hunter: Eu consigo derrotar esses alienígenas sozinho!", 2500, () => {
-                falar("Amigo: Hunter, você enlouqueceu? São muitos!", 2500, () => {
-                    falar("Hunter: Vou mostrar do que sou capaz!", 1500, () => {
-                        modo = 'jogando';
-                        amigo.tx = -150;
-                        player.tx = 370;
-                        criarFase();
-                    });
-                });
-            });
+    let vivos = 0;
+    let edge = false;
+    invasores.forEach(inv=>{
+      if(inv.isBoss){ if(inv.hp<=0) return; }
+      else if(inv.isShield){ if(inv.hp<=0) return; }
+      else if(!inv.vivo) return;
+
+      if(!inv.isShield) vivos++;
+
+      if(inv.isShield && boss){
+        inv.x = boss.x + boss.w/2 - inv.w/2;
+        inv.y = boss.y + boss.h/2 - inv.h/2;
+      } else {
+        inv.x += inv.vel * inv.dir * (dt/16);
+        if(inv.x > 740 || inv.x < 10) edge = true;
+        const taxa = inv.isBoss ? 0.025 : 0.005;
+        if(Math.random() < taxa * (dt/16)){
+          tirosE.push({ x: inv.x + inv.w/2 - 2, y: inv.y + inv.h });
         }
+      }
+    });
+    if(edge){
+      invasores.forEach(e=>{
+        if(e.isShield) return;
+        e.dir *= -1;
+        if(!e.isBoss) e.y += 12;
+      });
+    }
 
-        function criarFase() {
-            invasores = []; tiros = []; tirosE = [];
-            document.getElementById('boss-hp-bar').style.display = 'none';
-            if (faseAtual % 5 === 0) {
-                document.getElementById('boss-hp-bar').style.display = 'block';
-                document.getElementById('boss-hp-fill').style.width = '100%';
-                invasores.push({ x: 250, y: 80, w: 300, h: 180, hp: 400, maxHp: 400, isBoss: true, dir: 1, vel: 2 });
-                invasores.push({ x: 200, y: 70, w: 400, h: 220, hp: 500, maxHp: 500, isShield: true, vivo: true });
-                for(let i=0; i<4; i++) invasores.push({ x: 150 + i*160, y: 320, w: 60, h: 60, vivo: true, dir: 1, vel: 1.5 });
-                contadorTempo = 0;
-            } else {
-                let cols = 5;
-                for(let i=0; i<cols*2; i++) {
-                    invasores.push({ x: (i%cols)*110 + 130, y: Math.floor(i/cols)*80 + 80, w: 60, h: 60, vivo: true, dir: 1, vel: 0.7 + (faseAtual * 0.2) });
-                }
-            }
+    for(let ti=tiros.length-1; ti>=0; ti--){
+      const t = tiros[ti];
+      let consumed = false;
+      for(const inv of invasores){
+        const alive = inv.isBoss ? inv.hp>0 : (inv.isShield ? inv.hp>0 : inv.vivo);
+        if(!alive) continue;
+        if(!colide(t, inv)) continue;
+        const dmg = t.isFireball ? 250 : 50;
+
+        if(inv.isShield){
+          inv.hp -= dmg;
+          explodir(t.x, t.y, '#00d2ff');
+          if(!t.isFireball){ tiros.splice(ti,1); consumed=true; }
+          break;
         }
-
-        window.addEventListener('keydown', e => { keys[e.code] = true; if(e.code === 'KeyE' && !tempoParado && modo === 'jogando') usarHabilidade(); });
-        window.addEventListener('keyup', e => keys[e.code] = false);
-
-        function usarHabilidade() {
-            if(player.kills >= 3) {
-                tiros.push({ x: player.x - 20, y: player.y - 40, w: 100, h: 100, s: 8, isFireball: true });
-                player.kills -= 3;
-            }
+        if(inv.isBoss){
+          if(shield && shield.hp>0){
+            if(!t.isFireball){ tiros.splice(ti,1); consumed=true; }
+            break;
+          }
+          inv.hp -= dmg;
+          $('boss-hp-fill').style.width = Math.max(0,(inv.hp/inv.maxHp)*100)+'%';
+          explodir(t.x, t.y, '#ff0055');
+          if(inv.hp <= 0){
+            explodir(inv.x+inv.w/2, inv.y+inv.h/2, '#ff0055');
+            explodir(inv.x+inv.w/2, inv.y+inv.h/2, '#ffae3b');
+            $('boss-hp-bar').style.display='none';
+            $('boss-hp-label').style.display='none';
+          }
+          if(!t.isFireball){ tiros.splice(ti,1); consumed=true; }
+          break;
         }
+        inv.vivo = false;
+        player.kills++;
+        explodir(inv.x+inv.w/2, inv.y+inv.h/2, '#ff0055');
+        if(!t.isFireball){ tiros.splice(ti,1); consumed=true; }
+        break;
+      }
+      if(consumed) continue;
+    }
 
-        function desenharEntidade(img, obj, fallback, isFireball) {
-            ctx.save();
-            frameAnimacao += 0.005;
-            let oscilacaoY = Math.sin(frameAnimacao * 5 + (obj.x * 0.1)) * 4;
-            let pulsarEscala = 1 + Math.sin(frameAnimacao * 5) * 0.02;
+    if(vivos === 0){ faseAtual++; criarFase(); }
+  }
 
-            ctx.translate(obj.x + obj.w / 2, obj.y + obj.h / 2 + oscilacaoY);
-            ctx.scale(pulsarEscala, pulsarEscala);
+  invasores.forEach(inv=>{
+    if(inv.isBoss){ if(inv.hp>0) desenharBoss(inv); }
+    else if(inv.isShield){ if(inv.hp>0) desenharEscudo(inv); }
+    else if(inv.vivo) desenharNave(inv, '#ff0055', false);
+  });
 
-            if (isFireball) { 
-                ctx.shadowBlur = 40; ctx.shadowColor = "orange"; 
-                ctx.rotate(frameAnimacao * 50); 
-            }
-            if (obj.isShield) { ctx.globalAlpha = 0.5; ctx.shadowBlur = 20; ctx.shadowColor = "cyan"; }
-            if (player.danoTime > 0 && obj === player) ctx.globalAlpha = 0.5;
+  tiros.forEach(t=>{
+    if(t.isFireball) desenharFireball(t);
+    else {
+      ctx.save();
+      ctx.shadowBlur=15; ctx.shadowColor='#00d2ff';
+      ctx.fillStyle='#fff';
+      ctx.fillRect(t.x, t.y, t.w, t.h);
+      ctx.restore();
+    }
+  });
+  tirosE.forEach(te=>{
+    ctx.save();
+    ctx.shadowBlur=10; ctx.shadowColor='#ff0055';
+    ctx.fillStyle='#ff0055';
+    ctx.fillRect(te.x, te.y, 5, 15);
+    ctx.restore();
+  });
 
-            if (img.complete && img.naturalWidth !== 0) {
-                ctx.drawImage(img, -obj.w / 2, -obj.h / 2, obj.w, obj.h);
-            } else {
-                ctx.fillStyle = fallback;
-                ctx.fillRect(-obj.w / 2, -obj.h / 2, obj.w, obj.h);
-            }
-            ctx.restore();
-        }
+  for(let i=particulas.length-1;i>=0;i--){
+    const p = particulas[i];
+    p.x += p.vx * (dt/16); p.y += p.vy * (dt/16); p.life -= dt/16;
+    if(p.life<=0){ particulas.splice(i,1); continue; }
+    ctx.save();
+    ctx.globalAlpha = Math.max(0,p.life/30);
+    ctx.fillStyle = p.color;
+    ctx.shadowBlur=8; ctx.shadowColor=p.color;
+    ctx.fillRect(p.x-2,p.y-2,4,4);
+    ctx.restore();
+  }
 
-        function gameLoop() {
-            ctx.clearRect(0, 0, 800, 600);
+  requestAnimationFrame(gameLoop);
+}
 
-            if(modo !== 'menu') {
-                player.x = (1 - 0.1) * player.x + 0.1 * player.tx;
-                amigo.x = (1 - 0.1) * amigo.x + 0.1 * amigo.tx;
-
-                desenharEntidade(skins.player, player, 'green');
-                if(amigo.x > -80) desenharEntidade(skins.amigo, amigo, 'blue');
-
-                if(modo === 'jogando') {
-                    document.getElementById('fase-txt').innerText = faseAtual;
-                    document.getElementById('vidas-txt').innerText = player.vidas;
-                    document.getElementById('hab-txt').innerText = Math.min(player.kills, 3);
-
-                    let boss = invasores.find(i => i.isBoss && i.hp > 0);
-                    if(boss && !tempoParado) {
-                        contadorTempo += 1/60;
-                        if(contadorTempo >= 5) {
-                            tempoParado = true;
-                            document.getElementById('efeito-tempo').style.display = 'block';
-                            falar(falasChefe[Math.floor(Math.random()*falasChefe.length)], 6000, () => {
-                                tempoParado = false; contadorTempo = 0;
-                                document.getElementById('efeito-tempo').style.display = 'none';
-                            });
-                        }
-                    }
-
-                    if(!tempoParado) {
-                        if(keys['ArrowLeft'] && player.tx > 10) player.tx -= 8;
-                        if(keys['ArrowRight'] && player.tx < 730) player.tx += 8;
-                        if(keys['Space'] && (tiros.length === 0 || tiros[tiros.length-1].y < player.y - 150)) {
-                            tiros.push({x: player.x + 25, y: player.y, w: 6, h: 20, s: 12});
-                        }
-
-                        tiros.forEach((t, i) => { t.y -= t.s; if(t.y < -100) tiros.splice(i, 1); });
-                        tirosE.forEach((te, i) => { 
-                            te.y += 6; 
-                            if(te.x > player.x && te.x < player.x+player.w && te.y > player.y && te.y < player.y+player.h) {
-                                player.vidas--; player.danoTime = 30; tirosE.splice(i, 1);
-                                if(player.vidas <= 0) location.reload();
-                            }
-                            if(te.y > 600) tirosE.splice(i, 1);
-                        });
-
-                        let vivos = 0;
-                        let shield = invasores.find(i => i.isShield && i.hp > 0);
-
-                        invasores.forEach(inv => {
-                            if(inv.isBoss ? inv.hp <= 0 : (inv.isShield ? inv.hp <= 0 : !inv.vivo)) return;
-                            if(!inv.isShield) vivos++;
-
-                            if(inv.isShield && boss) { inv.x = boss.x - 50; inv.y = boss.y - 20; }
-                            else {
-                                inv.x += inv.vel * inv.dir;
-                                if(inv.x > 740 || inv.x < 10) { invasores.forEach(e => { if(!e.isShield) e.dir *= -1; if(!e.isBoss && !e.isShield) e.y += 15; }); }
-                                if(Math.random() < (inv.isBoss ? 0.04 : 0.007)) tirosE.push({x: inv.x + inv.w/2, y: inv.y + inv.h});
-                            }
-
-                            desenharEntidade(inv.isBoss ? skins.chefe : (inv.isShield ? skins.escudo : skins.alien), inv, 'red');
-
-                            tiros.forEach((t, ti) => {
-                                if(t.x < inv.x+inv.w && t.x+(t.w||6) > inv.x && t.y < inv.y+inv.h && t.y+(t.h||20) > inv.y) {
-                                    let dmg = t.isFireball ? 150 : 50;
-                                    if(inv.isShield) { inv.hp -= dmg; if(!t.isFireball) tiros.splice(ti, 1); }
-                                    else if(inv.isBoss) {
-                                        if(!shield) {
-                                            inv.hp -= dmg;
-                                            document.getElementById('boss-hp-fill').style.width = (inv.hp/inv.maxHp*100)+'%';
-                                            if(!t.isFireball) tiros.splice(ti, 1);
-                                        } else if(!t.isFireball) tiros.splice(ti, 1);
-                                    } else { inv.vivo = false; player.kills++; tiros.splice(ti, 1); }
-                                }
-                            });
-                        });
-                        if(vivos === 0) { faseAtual++; criarFase(); }
-                    } else {
-                        invasores.forEach(inv => {
-                            if(inv.isBoss ? inv.hp > 0 : (inv.isShield ? inv.hp > 0 : inv.vivo)) {
-                                desenharEntidade(inv.isBoss ? skins.chefe : (inv.isShield ? skins.escudo : skins.alien), inv, 'red');
-                            }
-                        });
-                    }
-                    
-                    tiros.forEach(t => { 
-                        if(t.isFireball) desenharEntidade(skins.fireball, t, 'orange', true);
-                        else { ctx.fillStyle = 'white'; ctx.fillRect(t.x, t.y, t.w, t.h); }
-                    });
-                    tirosE.forEach(te => { ctx.fillStyle = '#ff0055'; ctx.fillRect(te.x, te.y, 5, 15); });
-                }
-            }
-            requestAnimationFrame(gameLoop);
-        }
-        gameLoop();
-    </script>
+requestAnimationFrame(gameLoop);
+</script>
 </body>
 </html>

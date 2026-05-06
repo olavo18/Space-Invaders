@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Space Invaders - Olavo</title>
+    <title>Space Invaders - Olavo Marchiori</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Orbitron:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     
@@ -18,10 +18,8 @@
 
         body {
             background-color: var(--space-dark);
-            background-image: 
-                radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 40px),
-                radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 30px);
-            background-size: 550px 550px, 350px 350px;
+            background-image: radial-gradient(white, rgba(255,255,255,.1) 1px, transparent 20px);
+            background-size: 50px 50px;
             font-family: 'Plus Jakarta Sans', sans-serif;
             color: white;
             height: 100vh;
@@ -31,201 +29,200 @@
             overflow: hidden;
         }
 
-        /* MENU CONTAINER */
-        .menu-container {
+        /* MENU */
+        #menu-principal {
             text-align: center;
             background: rgba(10, 10, 30, 0.9);
             padding: 50px;
             border-radius: 40px;
             border: 2px solid var(--neon-blue);
-            box-shadow: 0 0 40px rgba(0, 210, 255, 0.2);
             backdrop-filter: blur(15px);
-            max-width: 450px;
-            width: 90%;
-            animation: floating 4s infinite ease-in-out;
+            z-index: 100;
         }
 
-        @keyframes floating {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-12px); }
-        }
-
-        h1 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 32px;
-            color: var(--neon-blue);
-            text-shadow: 0 0 20px var(--neon-blue);
-            margin-bottom: 5px;
-            letter-spacing: 2px;
-        }
-
-        .subtitle {
-            font-size: 14px;
-            color: white;
-            font-weight: 400;
-            margin-bottom: 40px;
-            opacity: 0.9;
-            letter-spacing: 1px;
-        }
-
-        /* BOTÕES */
-        .btn-group {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
+        h1 { font-family: 'Orbitron', sans-serif; font-size: 32px; color: var(--neon-blue); text-shadow: 0 0 20px var(--neon-blue); }
+        .subtitle { font-size: 14px; margin-bottom: 40px; opacity: 0.8; }
 
         .btn-menu {
-            padding: 16px 25px;
-            font-size: 16px;
-            font-weight: 800;
-            background: transparent;
-            color: white;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 15px;
-            cursor: pointer;
-            transition: 0.3s all;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            text-transform: uppercase;
+            padding: 16px 25px; font-size: 16px; font-weight: 800; background: transparent;
+            color: white; border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 15px;
+            cursor: pointer; transition: 0.3s; display: block; width: 100%; margin-bottom: 15px;
+        }
+        .btn-play { background: var(--neon-pink); border-color: var(--neon-pink); }
+        .btn-play:hover { transform: scale(1.05); box-shadow: 0 0 30px var(--neon-pink); }
+
+        /* TELA DE HISTÓRIA E JOGO */
+        #game-container { display: none; position: relative; width: 800px; height: 600px; background: #000; border: 2px solid #333; overflow: hidden; }
+        canvas { width: 100%; height: 100%; }
+
+        /* BALÕES DE FALA */
+        #dialogo-box {
+            position: absolute; top: 100px; left: 50%; transform: translateX(-50%);
+            background: white; color: black; padding: 15px 25px; border-radius: 15px;
+            font-weight: 700; display: none; z-index: 200; width: 300px; text-align: center;
+        }
+        #dialogo-box::after {
+            content: ''; position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%);
+            border-left: 10px solid transparent; border-right: 10px solid transparent; border-top: 10px solid white;
         }
 
-        .btn-menu:hover {
-            background: white;
-            color: var(--space-dark);
-            transform: scale(1.03);
-            border-color: white;
-        }
-
-        .btn-play {
-            background: var(--neon-pink);
-            border-color: var(--neon-pink);
-            box-shadow: 0 0 20px rgba(255, 0, 85, 0.4);
-        }
-
-        .btn-play:hover {
-            background: #ff2a6d;
-            border-color: #ff2a6d;
-            color: white;
-            box-shadow: 0 0 30px rgba(255, 0, 85, 0.6);
+        #alerta-invasao {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: var(--neon-pink); font-family: 'Orbitron', sans-serif; font-size: 40px;
+            text-shadow: 0 0 20px var(--neon-pink); display: none; text-align: center; z-index: 300;
         }
 
         /* MODAIS */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            z-index: 3000;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .modal-content {
-            background: #0a0a1a;
-            border: 1px solid var(--neon-blue);
-            padding: 40px;
-            border-radius: 30px;
-            max-width: 550px;
-            text-align: left;
-            position: relative;
-            box-shadow: 0 0 50px rgba(0, 0, 0, 1);
-        }
-
-        .close-btn {
-            position: absolute;
-            top: 20px; right: 25px;
-            font-size: 28px;
-            cursor: pointer;
-            color: var(--neon-pink);
-        }
-
-        h3 { 
-            color: var(--neon-blue); 
-            margin-bottom: 25px; 
-            font-family: 'Orbitron', sans-serif;
-            font-size: 20px;
-        }
-
-        p { line-height: 1.7; margin-bottom: 15px; font-size: 16px; color: #cbd5e0; }
-
-        .keys { display: flex; align-items: center; gap: 15px; margin-top: 15px; }
-        .key-box { 
-            background: #1a202c; 
-            padding: 8px 12px; 
-            border-radius: 10px; 
-            border: 1px solid #4a5568;
-            font-size: 14px;
-            font-weight: 800;
-            color: var(--neon-blue);
-        }
-
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-content { background: #0a0a1a; border: 1px solid var(--neon-blue); padding: 40px; border-radius: 30px; max-width: 500px; position: relative; }
+        .close-btn { position: absolute; top: 10px; right: 20px; font-size: 30px; cursor: pointer; color: var(--neon-pink); }
     </style>
 </head>
 <body>
 
-    <div class="menu-container">
+    <div id="menu-principal">
         <h1>SPACE INVADERS</h1>
         <div class="subtitle">Olavo Marchiori</div>
-
-        <div class="btn-group">
-            <button class="btn-menu btn-play" onclick="alert('Preparando a história de abertura...')">
-                <i class="fa-solid fa-rocket"></i> JOGAR
-            </button>
-            
-            <button class="btn-menu" onclick="openModal('modalComo')">
-                <i class="fa-solid fa-gamepad"></i> COMO JOGAR
-            </button>
-            
-            <button class="btn-menu" onclick="openModal('modalHist')">
-                <i class="fa-solid fa-circle-info"></i> HISTÓRIA
-            </button>
-        </div>
+        <button class="btn-menu btn-play" onclick="iniciarHistoria()">
+            <i class="fa-solid fa-rocket"></i> JOGAR
+        </button>
+        <button class="btn-menu" onclick="openModal('modalComo')">COMO JOGAR</button>
+        <button class="btn-menu" onclick="openModal('modalHist')">HISTÓRIA</button>
     </div>
 
-    <div id="modalComo" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closeModal('modalComo')">&times;</span>
-            <h3>COMO JOGAR</h3>
-            <p>O destino da Terra está em suas mãos. Destrua a horda alienígena antes que eles pousem!</p>
-            <div class="keys">
-                <span class="key-box">SETAS ← →</span> <span>Movimentar Nave</span>
-            </div>
-            <div class="keys">
-                <span class="key-box">ESPAÇO</span> <span>Disparar Laser</span>
-            </div>
-            <p style="margin-top: 25px; font-weight: 600; color: var(--neon-pink);">DICA: Mantenha-se em movimento para evitar os disparos inimigos.</p>
-        </div>
+    <div id="game-container">
+        <div id="dialogo-box"></div>
+        <div id="alerta-invasao">A INVASÃO COMEÇOU!</div>
+        <canvas id="gameCanvas"></canvas>
     </div>
 
-    <div id="modalHist" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closeModal('modalHist')">&times;</span>
-            <h3>SOBRE O PROJETO</h3>
-            <p>Este jogo é uma releitura do clássico <i>Space Invaders</i> de 1978, desenvolvido por <b>Olavo</b> como um projeto de programação moderno.</p>
-            <p>Diferente do original, esta versão conta com mecânicas de aceleração progressiva, visuais em neon e uma narrativa própria que você conhecerá ao iniciar a partida.</p>
-            <p>Inspirado no real, modificado para o futuro.</p>
-        </div>
-    </div>
+    <div id="modalComo" class="modal"><div class="modal-content"><span class="close-btn" onclick="closeModal('modalComo')">&times;</span><h3>COMO JOGAR</h3><p>Setas para mover, Espaço para atirar.</p></div></div>
+    <div id="modalHist" class="modal"><div class="modal-content"><span class="close-btn" onclick="closeModal('modalHist')">&times;</span><h3>SOBRE</h3><p>Inspirado no real, modificado por Olavo.</p></div></div>
 
     <script>
-        function openModal(id) {
-            document.getElementById(id).style.display = 'flex';
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const dialBox = document.getElementById('dialogo-box');
+        const alerta = document.getElementById('alerta-invasao');
+
+        canvas.width = 800; canvas.height = 600;
+
+        let modo = 'menu'; // menu, historia, jogando
+        let player = { x: 400, y: 550, w: 40, h: 25, color: '#00ff00' };
+        let amigo = { x: 200, y: 550, w: 40, h: 25, color: '#00d2ff' };
+        let tiros = [];
+        let invasores = [];
+
+        function iniciarHistoria() {
+            document.getElementById('menu-principal').style.display = 'none';
+            document.getElementById('game-container').style.display = 'block';
+            modo = 'historia';
+            rodarCena();
         }
 
-        function closeModal(id) {
-            document.getElementById(id).style.display = 'none';
+        function falar(texto, tempo, callback) {
+            dialBox.innerText = texto;
+            dialBox.style.display = 'block';
+            setTimeout(() => {
+                dialBox.style.display = 'none';
+                if(callback) callback();
+            }, tempo);
         }
 
-        window.onclick = function(event) {
-            if (event.target.className === 'modal') {
-                event.target.style.display = 'none';
+        function rodarCena() {
+            // Sequência da conversa
+            setTimeout(() => {
+                falar("Olavo: Eu consigo derrotar esses alienígenas sozinho!", 3000, () => {
+                    falar("Amigo: Você enlouqueceu? São muitos, você não vai conseguir!", 3000, () => {
+                        falar("Olavo: Eu posso sim! Olha o que eu sei fazer!", 2000, () => {
+                            demonstrarHabilidades();
+                        });
+                    });
+                });
+            }, 1000);
+        }
+
+        function demonstrarHabilidades() {
+            // Animação da nave se movendo e atirando sozinha
+            let moveCount = 0;
+            let intervalo = setInterval(() => {
+                player.x += 10;
+                if(moveCount % 5 === 0) tiros.push({x: player.x + 18, y: player.y, s: 10});
+                moveCount++;
+                if(moveCount > 20) {
+                    clearInterval(intervalo);
+                    falar("Olavo: Viu só? Eu dou conta!", 2500, () => {
+                        alerta.style.display = 'block';
+                        setTimeout(() => {
+                            alerta.style.display = 'none';
+                            amigo.y = 800; // Amigo sai de cena
+                            iniciarJogoReal();
+                        }, 2000);
+                    });
+                }
+            }, 50);
+        }
+
+        function iniciarJogoReal() {
+            modo = 'jogando';
+            createAliens();
+            window.addEventListener('keydown', e => keys[e.code] = true);
+            window.addEventListener('keyup', e => keys[e.code] = false);
+        }
+
+        // Lógica de Jogo Simples
+        const keys = {};
+        function createAliens() {
+            for(let i=0; i<30; i++) invasores.push({x: (i%10)*60 + 100, y: Math.floor(i/10)*50 + 50, w: 30, h: 20, vivo: true});
+        }
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Desenhar Player (Olavo)
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x, player.y, player.w, player.h);
+
+            // Desenhar Amigo (só na história)
+            if(modo === 'historia') {
+                ctx.fillStyle = amigo.color;
+                ctx.fillRect(amigo.x, amigo.y, amigo.w, amigo.h);
             }
-        }
-    </script>
 
+            // Tiros
+            ctx.fillStyle = 'yellow';
+            tiros.forEach((t, i) => {
+                t.y -= t.s;
+                ctx.fillRect(t.x, t.y, 4, 10);
+                if(t.y < 0) tiros.splice(i, 1);
+            });
+
+            if(modo === 'jogando') {
+                if(keys['ArrowLeft'] && player.x > 0) player.x -= 7;
+                if(keys['ArrowRight'] && player.x < 760) player.x += 7;
+                if(keys['Space'] && tiros.length < 5) tiros.push({x: player.x + 18, y: player.y, s: 7});
+
+                ctx.fillStyle = '#ff0055';
+                invasores.forEach(inv => {
+                    if(inv.vivo) {
+                        ctx.fillRect(inv.x, inv.y, inv.w, inv.h);
+                        tiros.forEach((t, ti) => {
+                            if(t.x > inv.x && t.x < inv.x + inv.w && t.y > inv.y && t.y < inv.y + inv.h) {
+                                inv.vivo = false;
+                                tiros.splice(ti, 1);
+                            }
+                        });
+                    }
+                });
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        gameLoop();
+    </script>
 </body>
 </html>

@@ -29,7 +29,7 @@
             overflow: hidden;
         }
 
-        /* MENU PRINCIPAL RECOMPLETO */
+        /* MENU PRINCIPAL */
         #menu-principal {
             text-align: center;
             background: rgba(10, 10, 30, 0.95);
@@ -63,10 +63,16 @@
         .btn-menu:hover { background: rgba(255,255,255,0.1); border-color: white; transform: scale(1.03); }
         .btn-play { background: var(--neon-pink); border-color: var(--neon-pink); box-shadow: 0 0 20px rgba(255, 0, 85, 0.3); }
 
-        /* GAME */
+        /* GAME UI */
         #game-container { 
             display: none; position: relative; width: 800px; height: 600px; 
             background: #000; border: 2px solid var(--neon-blue); overflow: hidden; 
+        }
+
+        #ui-camada {
+            position: absolute; top: 20px; left: 20px; right: 20px;
+            display: flex; justify-content: space-between; font-family: 'Orbitron';
+            font-size: 18px; color: var(--neon-blue); pointer-events: none; z-index: 10;
         }
 
         #dialogo-box {
@@ -79,7 +85,7 @@
 
         #alerta-invasao {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            color: var(--neon-pink); font-family: 'Orbitron', sans-serif; font-size: 50px;
+            color: var(--neon-pink); font-family: 'Orbitron', sans-serif; font-size: 40px;
             text-shadow: 0 0 30px var(--neon-pink); display: none; text-align: center; z-index: 300;
         }
 
@@ -100,6 +106,10 @@
     </div>
 
     <div id="game-container">
+        <div id="ui-camada">
+            <div>FASE: <span id="fase-txt">1</span></div>
+            <div>VIDAS: <span id="vidas-txt">3</span></div>
+        </div>
         <div id="dialogo-box"></div>
         <div id="alerta-invasao">A INVASÃO COMEÇOU!</div>
         <canvas id="gameCanvas"></canvas>
@@ -122,13 +132,19 @@
 
         canvas.width = 800; canvas.height = 600;
 
+        // --- SKINS ---
         const skinPlayer = new Image(); skinPlayer.src = 'jogadorprincipal.png';
         const skinAmigo = new Image(); skinAmigo.src = 'amigo.png';
+        const skinAlien = new Image(); skinAlien.src = 'alien.png';
 
-        let modo = 'menu', cam = { x: 0, y: 0, zoom: 1, tZoom: 1 };
-        let player = { x: 450, y: 450, w: 65, h: 65, tx: 450, ty: 450, rot: 0 };
-        let amigo = { x: 250, y: 450, w: 65, h: 65, tx: 250, ty: 450, rot: 0 };
-        let tiros = [], invasores = [], keys = {}, particulas = [];
+        let modo = 'menu', cam = { zoom: 1, tZoom: 1 };
+        let player = { x: 450, y: 450, w: 60, h: 60, tx: 450, ty: 450, rot: 0, vidas: 3, danoTime: 0 };
+        let amigo = { x: 250, y: 450, w: 60, h: 60, tx: 250, ty: 450, rot: 0 };
+        let tiros = [], invasores = [], particulas = [], keys = {};
+        
+        // --- SISTEMA DE FASES ---
+        let faseAtual = 1;
+        const totalFases = 5;
 
         function lerp(a, b, n) { return (1 - n) * a + n * b; }
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
@@ -162,12 +178,12 @@
             cam.tZoom = 1;
             let subida = setInterval(() => {
                 player.ty -= 8;
-                // Partículas de propulsão
                 for(let i=0; i<3; i++) {
-                    particulas.push({ x: player.x + 30, y: player.y + 50, vx: (Math.random()-0.5)*4, vy: 2+Math.random()*5, life: 1, color: '#00d2ff' });
+                    particulas.push({ x: player.x + 30, y: player.y + 50, vx: (Math.random()-0.5)*4, vy: 2+Math.random()*5, life: 1 });
                 }
                 if(player.y < -100) {
                     clearInterval(subida);
+                    alerta.innerText = "FASE " + faseAtual;
                     alerta.style.display = 'block';
                     setTimeout(() => { alerta.style.display = 'none'; iniciarJogoReal(); }, 2000);
                 }
@@ -177,19 +193,48 @@
         function iniciarJogoReal() {
             modo = 'jogando';
             player.x = 370; player.tx = 370; player.y = 520; player.ty = 520;
-            for(let i=0; i<30; i++) invasores.push({x: (i%10)*65 + 85, y: Math.floor(i/10)*50 + 60, w: 45, h: 35, vivo: true});
+            criarInvasores();
             window.addEventListener('keydown', e => keys[e.code] = true);
             window.addEventListener('keyup', e => keys[e.code] = false);
         }
 
-        function drawShip(img, obj, fallback) {
+        function criarInvasores() {
+            invasores = [];
+            let colunas = 8 + faseAtual; 
+            let linhas = 2 + Math.floor(faseAtual / 2);
+            for(let i=0; i < colunas * linhas; i++) {
+                invasores.push({
+                    x: (i % colunas) * 60 + 50,
+                    y: Math.floor(i / colunas) * 50 + 60,
+                    w: 40, h: 40, vivo: true,
+                    dir: 1, 
+                    vel: 1 + (faseAtual * 0.5)
+                });
+            }
+        }
+
+        function drawEntity(img, obj, fallback, isPlayer) {
             ctx.save();
             ctx.translate(obj.x + obj.w/2, obj.y + obj.h/2);
+            
+            // Inclinação lateral
             obj.rot = lerp(obj.rot, (obj.tx - obj.x) * 0.05, 0.1);
             ctx.rotate(obj.rot * Math.PI / 180);
-            let bob = Math.sin(Date.now() / 250) * 4;
-            if(img.complete && img.naturalWidth !== 0) ctx.drawImage(img, -obj.w/2, -obj.h/2 + bob, obj.w, obj.h);
-            else { ctx.fillStyle = fallback; ctx.fillRect(-obj.w/2, -obj.h/2 + bob, obj.w, obj.h); }
+
+            // Efeito de Dano (Piscar vermelho)
+            if(isPlayer && player.danoTime > 0) {
+                ctx.globalAlpha = 0.5;
+                ctx.shadowBlur = 20; ctx.shadowColor = 'red';
+                player.danoTime--;
+            }
+
+            let bob = Math.sin(Date.now() / 250) * 3;
+            if(img.complete && img.naturalWidth !== 0) {
+                ctx.drawImage(img, -obj.w/2, -obj.h/2 + bob, obj.w, obj.h);
+            } else {
+                ctx.fillStyle = fallback;
+                ctx.fillRect(-obj.w/2, -obj.h/2 + bob, obj.w, obj.h);
+            }
             ctx.restore();
         }
 
@@ -203,10 +248,12 @@
                 ctx.scale(cam.zoom, cam.zoom);
             }
 
-            player.x = lerp(player.x, player.tx, 0.08); player.y = lerp(player.y, player.ty, 0.08);
-            amigo.x = lerp(amigo.x, amigo.tx, 0.08); amigo.y = lerp(amigo.y, amigo.ty, 0.08);
+            player.x = lerp(player.x, player.tx, 0.1);
+            player.y = lerp(player.y, player.ty, 0.1);
+            amigo.x = lerp(amigo.x, amigo.tx, 0.1);
+            amigo.y = lerp(amigo.y, amigo.ty, 0.1);
 
-            // Partículas
+            // Partículas de Decolagem
             particulas.forEach((p, i) => {
                 p.x += p.vx; p.y += p.vy; p.life -= 0.02;
                 ctx.fillStyle = `rgba(0, 210, 255, ${p.life})`;
@@ -214,28 +261,76 @@
                 if(p.life <= 0) particulas.splice(i, 1);
             });
 
-            drawShip(skinPlayer, player, '#00ff00');
-            if(modo === 'historia' && amigo.y < 700) drawShip(skinAmigo, amigo, '#00d2ff');
+            drawEntity(skinPlayer, player, '#0f0', true);
+            if(modo === 'historia' && amigo.y < 700) drawEntity(skinAmigo, amigo, '#00d2ff', false);
 
+            // Tiros
             tiros.forEach((t, i) => {
-                t.y -= t.s; ctx.fillStyle = '#fff'; ctx.fillRect(t.x, t.y, 4, 18);
-                if(t.y < -100) tiros.splice(i, 1);
+                t.y -= t.s;
+                ctx.fillStyle = '#fff';
+                ctx.shadowBlur = 10; ctx.shadowColor = var(--neon-blue);
+                ctx.fillRect(t.x, t.y, 4, 15);
+                if(t.y < -50) tiros.splice(i, 1);
             });
 
             if(modo === 'jogando') {
-                if(keys['ArrowLeft'] && player.tx > 0) player.tx -= 9;
-                if(keys['ArrowRight'] && player.tx < 740) player.tx += 9;
-                if(keys['Space'] && (tiros.length === 0 || tiros[tiros.length-1].y < player.y - 120)) {
-                    tiros.push({x: player.x + 30, y: player.y, s: 14});
+                document.getElementById('fase-txt').innerText = faseAtual;
+                document.getElementById('vidas-txt').innerText = player.vidas;
+
+                if(keys['ArrowLeft'] && player.tx > 20) player.tx -= 8;
+                if(keys['ArrowRight'] && player.tx < 720) player.tx += 8;
+                if(keys['Space'] && (tiros.length === 0 || tiros[tiros.length-1].y < player.y - 150)) {
+                    tiros.push({x: player.x + 28, y: player.y, s: 12});
                 }
+
+                let todosMortos = true;
                 invasores.forEach(inv => {
                     if(inv.vivo) {
-                        ctx.fillStyle = '#ff0055'; ctx.fillRect(inv.x, inv.y, inv.w, inv.h);
+                        todosMortos = false;
+                        // Movimento Alien
+                        inv.x += inv.vel * inv.dir;
+                        if(inv.x > 750 || inv.x < 10) { 
+                            invasores.forEach(all => { all.dir *= -1; all.y += 10; });
+                        }
+
+                        drawEntity(skinAlien, inv, '#ff0055', false);
+
+                        // Colisão Tiro -> Alien
                         tiros.forEach((t, ti) => {
-                            if(t.x > inv.x && t.x < inv.x + inv.w && t.y > inv.y && t.y < inv.y + inv.h) { inv.vivo = false; tiros.splice(ti, 1); }
+                            if(t.x > inv.x && t.x < inv.x + inv.w && t.y > inv.y && t.y < inv.y + inv.h) {
+                                inv.vivo = false;
+                                tiros.splice(ti, 1);
+                                // Partículas de explosão
+                                for(let j=0; j<5; j++) particulas.push({x: inv.x+20, y: inv.y+20, vx: (Math.random()-0.5)*10, vy: (Math.random()-0.5)*10, life: 0.8});
+                            }
                         });
+
+                        // Colisão Alien -> Player ou Alien chegou no fim
+                        if((inv.x < player.x + player.w && inv.x + inv.w > player.x && inv.y < player.y + player.h && inv.y + inv.h > player.y) || inv.y > 550) {
+                            player.vidas--;
+                            player.danoTime = 30; // Piscar
+                            inv.vivo = false;
+                            if(player.vidas <= 0) {
+                                alert("GAME OVER! A invasão venceu.");
+                                location.reload();
+                            }
+                        }
                     }
                 });
+
+                // Passar de Fase
+                if(todosMortos && invasores.length > 0) {
+                    if(faseAtual < totalFases) {
+                        faseAtual++;
+                        alerta.innerText = "FASE " + faseAtual;
+                        alerta.style.display = 'block';
+                        modo = 'transicao';
+                        setTimeout(() => { alerta.style.display = 'none'; iniciarJogoReal(); }, 2000);
+                    } else {
+                        alert("PARABÉNS! Olavo salvou o sistema de todas as ameaças!");
+                        location.reload();
+                    }
+                }
             }
             ctx.restore();
             requestAnimationFrame(gameLoop);

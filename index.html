@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Space Invaders - Hunter Mission</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Orbitron:wght@700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    
     <style>
         :root {
             --neon-blue: #00d2ff;
@@ -45,17 +43,21 @@
 
         @keyframes floating { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
 
-        h1 { font-family: 'Orbitron', sans-serif; font-size: 32px; color: var(--neon-blue); text-shadow: 0 0 20px var(--neon-blue); }
+        h1 { font-family: 'Orbitron', sans-serif; font-size: 32px; color: var(--neon-blue); text-shadow: 0 0 20px var(--neon-blue); margin-bottom: 5px; }
         .subtitle { font-size: 14px; margin-bottom: 40px; opacity: 0.9; letter-spacing: 2px; }
 
-        .btn-menu {
-            padding: 16px 25px; font-size: 16px; font-weight: 800; background: transparent;
-            color: white; border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 15px;
-            cursor: pointer; transition: 0.3s; width: 100%; text-transform: uppercase; margin-bottom: 10px;
+        .btn-play {
+            padding: 16px 25px; font-size: 16px; font-weight: 800; background: var(--neon-pink);
+            color: white; border: none; border-radius: 15px;
+            cursor: pointer; transition: 0.3s; width: 100%; text-transform: uppercase;
+            box-shadow: 0 0 20px rgba(255, 0, 85, 0.4);
         }
-        .btn-play { background: var(--neon-pink); border-color: var(--neon-pink); }
+        .btn-play:hover { transform: scale(1.05); background: #ff1a6b; }
 
-        #game-container { display: none; position: relative; width: 800px; height: 600px; background: #000; border: 2px solid var(--neon-blue); overflow: hidden; }
+        #game-container { 
+            display: none; position: relative; width: 800px; height: 600px; 
+            background: #000; border: 2px solid var(--neon-blue); overflow: hidden; 
+        }
 
         #ui-camada {
             position: absolute; top: 15px; left: 20px; right: 20px;
@@ -70,13 +72,16 @@
             background: white; color: black; padding: 20px 30px; border-radius: 20px;
             font-weight: 800; display: none; z-index: 200; width: 450px; text-align: center;
             border: 4px solid var(--neon-blue); font-size: 16px; transition: 0.4s; opacity: 0;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
         }
 
         #alerta-invasao {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             color: var(--neon-pink); font-family: 'Orbitron', sans-serif; font-size: 40px;
-            display: none; text-align: center; z-index: 300;
+            text-shadow: 0 0 30px var(--neon-pink); display: none; text-align: center; z-index: 300;
         }
+
+        canvas { background: transparent; }
     </style>
 </head>
 <body>
@@ -84,7 +89,7 @@
     <div id="menu-principal">
         <h1>SPACE INVADERS</h1>
         <div class="subtitle">Hunter Mission</div>
-        <button class="btn-menu btn-play" onclick="iniciarHistoria()">JOGAR</button>
+        <button class="btn-play" onclick="iniciarHistoria()">INICIAR JOGO</button>
     </div>
 
     <div id="game-container">
@@ -106,22 +111,24 @@
 
         canvas.width = 800; canvas.height = 600;
 
+        // --- CARREGAMENTO DE IMAGENS ---
         const skins = {
             player: new Image(), amigo: new Image(), alien: new Image(),
-            chefe: new Image(), escudo: new Image(), fireball: new Image()
+            chefe: new Image(), fireball: new Image()
         };
         skins.player.src = 'jogadorprincipal.png';
         skins.amigo.src = 'amigo.png';
         skins.alien.src = 'alien.png';
         skins.chefe.src = 'chefe1.png';
-        skins.escudo.src = 'escudo.png';
         skins.fireball.src = 'bola-defogo.png';
 
-        let modo = 'menu', cam = { zoom: 1, tZoom: 1 };
+        // --- VARIÁVEIS DE ESTADO ---
+        let modo = 'menu';
+        let faseAtual = 1;
         let player = { x: 400, y: 450, w: 60, h: 60, tx: 400, ty: 450, rot: 0, vidas: 3, danoTime: 0, kills: 0 };
         let amigo = { x: 250, y: 450, w: 60, h: 60, tx: 250, ty: 450, rot: 0 };
         let tiros = [], tirosInimigos = [], invasores = [], particulas = [], keys = {};
-        let faseAtual = 1;
+        let cam = { zoom: 1, tZoom: 1 };
 
         function lerp(a, b, n) { return (1 - n) * a + n * b; }
 
@@ -134,6 +141,32 @@
             }, tempo);
         }
 
+        // --- SISTEMA DE FASES ---
+        function criarInvasores() {
+            invasores = [];
+            if (faseAtual % 5 === 0) {
+                // FASE DO CHEFE (CADA 5 FASES)
+                invasores.push({ x: 250, y: 60, w: 300, h: 200, hp: 200, maxHp: 200, vivo: true, isBoss: true, dir: 1, vel: 2 });
+                // 5 inimigos comuns de escolta
+                for(let i=0; i<5; i++) {
+                    invasores.push({ x: 100 + i*130, y: 280, w: 60, h: 60, vivo: true, dir: 1, vel: 1.5 });
+                }
+            } else {
+                // FASES NORMAIS (Início mais fácil)
+                let colunas = 4 + faseAtual; 
+                let linhas = 2;
+                for(let i=0; i < colunas * linhas; i++) {
+                    invasores.push({ 
+                        x: (i % colunas) * 80 + 80, 
+                        y: Math.floor(i / colunas) * 70 + 60, 
+                        w: 60, h: 60, vivo: true, dir: 1, 
+                        vel: 0.6 + (faseAtual * 0.2) 
+                    });
+                }
+            }
+        }
+
+        // --- CICLO DE HISTÓRIA ---
         function iniciarHistoria() {
             document.getElementById('menu-principal').style.display = 'none';
             document.getElementById('game-container').style.display = 'block';
@@ -142,11 +175,11 @@
                 cam.tZoom = 1.6;
                 falar("Hunter: Eu consigo derrotar esses alienígenas sozinho!", 3000, () => {
                     amigo.tx = 330;
-                    falar("Amigo: Você enlouqueceu? São muitos!", 3000, () => {
-                        falar("Hunter: Adeus... Vou mostrar do que sou capaz!", 2000, decolar);
+                    falar("Amigo: Hunter, você enlouqueceu? São muitos!", 3000, () => {
+                        falar("Hunter: Vou mostrar do que sou capaz!", 2000, decolar);
                     });
                 });
-            }, 1000);
+            }, 500);
         }
 
         function decolar() {
@@ -163,48 +196,47 @@
             }, 16);
         }
 
-        function criarInvasores() {
-            invasores = [];
-            if (faseAtual % 5 === 0) {
-                // BOSS LEVEL
-                invasores.push({ x: 250, y: 80, w: 300, h: 150, hp: 200, maxHp: 200, vivo: true, isBoss: true, dir: 1, vel: 2 });
-                invasores.push({ x: 200, y: 70, w: 400, h: 180, hp: 500, maxHp: 500, vivo: true, isShield: true });
-                for(let i=0; i<5; i++) invasores.push({ x: 100 + i*130, y: 280, w: 60, h: 60, vivo: true, dir: 1, vel: 1.5 });
-            } else {
-                let colunas = 5 + faseAtual;
-                let linhas = 2;
-                for(let i=0; i < colunas * linhas; i++) {
-                    invasores.push({ x: (i%colunas)*80 + 80, y: Math.floor(i/colunas)*70 + 60, w: 55, h: 55, vivo: true, dir: 1, vel: 0.8 + (faseAtual*0.2) });
-                }
-            }
-        }
-
         function iniciarJogoReal() {
             modo = 'jogando';
             player.x = 370; player.tx = 370; player.y = 520; player.ty = 520;
             tiros = []; tirosInimigos = [];
             criarInvasores();
-            window.addEventListener('keydown', e => { keys[e.code] = true; if(e.code === 'KeyE') usarHabilidade(); });
+            window.addEventListener('keydown', e => { 
+                keys[e.code] = true; 
+                if(e.code === 'KeyE') usarHabilidade(); 
+            });
             window.addEventListener('keyup', e => keys[e.code] = false);
         }
 
         function usarHabilidade() {
             if(player.kills >= 3) {
-                tiros.push({ x: player.x, y: player.y - 40, s: 8, isFireball: true, w: 100, h: 100 });
+                tiros.push({ x: player.x - 20, y: player.y - 40, s: 7, isFireball: true, w: 100, h: 100 });
                 player.kills -= 3;
             }
         }
 
-        function drawEntity(img, obj, fallback, isPlayer) {
+        // --- RENDERIZAÇÃO ---
+        function drawEntity(img, obj, fallback, isPlayer, isFireball) {
             ctx.save();
             ctx.translate(obj.x + obj.w/2, obj.y + obj.h/2);
+            
             if(isPlayer) {
                 obj.rot = lerp(obj.rot, (obj.tx - obj.x) * 0.05, 0.1);
                 ctx.rotate(obj.rot * Math.PI / 180);
                 if(player.danoTime > 0) { ctx.globalAlpha = 0.5; player.danoTime--; }
             }
-            if(img.complete && img.naturalWidth !== 0) ctx.drawImage(img, -obj.w/2, -obj.h/2, obj.w, obj.h);
-            else { ctx.fillStyle = fallback; ctx.fillRect(-obj.w/2, -obj.h/2, obj.w, obj.h); }
+
+            if(isFireball) {
+                ctx.shadowBlur = 40;
+                ctx.shadowColor = "orange";
+            }
+
+            if(img.complete && img.naturalWidth !== 0) {
+                ctx.drawImage(img, -obj.w/2, -obj.h/2, obj.w, obj.h);
+            } else {
+                ctx.fillStyle = fallback;
+                ctx.fillRect(-obj.w/2, -obj.h/2, obj.w, obj.h);
+            }
             ctx.restore();
         }
 
@@ -218,8 +250,10 @@
                 ctx.scale(cam.zoom, cam.zoom);
             }
 
-            player.x = lerp(player.x, player.tx, 0.1); player.y = lerp(player.y, player.ty, 0.1);
+            player.x = lerp(player.x, player.tx, 0.1);
+            player.y = lerp(player.y, player.ty, 0.1);
             
+            // Partículas
             particulas.forEach((p, i) => {
                 p.x += p.vx; p.y += p.vy; p.life -= 0.02;
                 ctx.fillStyle = p.c || `rgba(255, 100, 0, ${p.life})`;
@@ -227,26 +261,37 @@
                 if(p.life <= 0) particulas.splice(i, 1);
             });
 
+            // Jogador e Amigo
             drawEntity(skins.player, player, '#0f0', true);
             if(modo === 'historia' && amigo.y < 700) {
                 amigo.x = lerp(amigo.x, amigo.tx, 0.1);
                 drawEntity(skins.amigo, amigo, '#00d2ff', false);
             }
 
-            // Tiros Hunter
+            // Tiros do Hunter
             tiros.forEach((t, i) => {
                 t.y -= t.s;
-                if(t.isFireball) drawEntity(skins.fireball, t, 'orange', false);
-                else { ctx.fillStyle = '#fff'; ctx.fillRect(t.x + 28, t.y, 4, 15); }
+                if(t.isFireball) {
+                    drawEntity(skins.fireball, t, 'orange', false, true);
+                } else {
+                    ctx.fillStyle = '#fff';
+                    ctx.fillRect(t.x + 28, t.y, 4, 15);
+                }
                 if(t.y < -100) tiros.splice(i, 1);
             });
 
             // Tiros Inimigos
             tirosInimigos.forEach((t, i) => {
-                t.y += 5; ctx.fillStyle = '#ff0055'; ctx.fillRect(t.x, t.y, 4, 12);
+                t.y += 6;
+                ctx.fillStyle = '#ff0055';
+                ctx.fillRect(t.x, t.y, 5, 15);
                 if(t.y > 600) tirosInimigos.splice(i, 1);
+
+                // Colisão com o Player
                 if(t.x > player.x && t.x < player.x + player.w && t.y > player.y && t.y < player.y + player.h) {
-                    player.vidas--; player.danoTime = 30; tirosInimigos.splice(i, 1);
+                    player.vidas--;
+                    player.danoTime = 30;
+                    tirosInimigos.splice(i, 1);
                     if(player.vidas <= 0) { alert("Hunter foi abatido!"); location.reload(); }
                 }
             });
@@ -256,66 +301,74 @@
                 document.getElementById('vidas-txt').innerText = player.vidas;
                 document.getElementById('hab-txt').innerText = Math.min(player.kills, 3);
 
+                // Controles
                 if(keys['ArrowLeft'] && player.tx > 10) player.tx -= 8;
                 if(keys['ArrowRight'] && player.tx < 730) player.tx += 8;
-                if(keys['Space'] && (tiros.length === 0 || tiros[tiros.length-1].y < player.y - 150)) tiros.push({x: player.x, y: player.y, s: 12});
+                if(keys['Space'] && (tiros.length === 0 || (tiros[tiros.length-1].y < player.y - 150 && !tiros[tiros.length-1].isFireball))) {
+                    tiros.push({x: player.x, y: player.y, s: 12});
+                }
 
-                let boss = invasores.find(inv => inv.isBoss);
-                let shield = invasores.find(inv => inv.isShield);
                 let vivos = 0;
-
                 invasores.forEach(inv => {
                     if(!inv.vivo) return;
-                    if(!inv.isShield) vivos++;
+                    vivos++;
 
-                    // Movimento
-                    if(!inv.isShield) {
-                        inv.x += inv.vel * inv.dir;
-                        if(inv.x > 740 || inv.x < 10) { 
-                            invasores.forEach(all => { if(!all.isShield) all.dir *= -1; if(!all.isBoss && !all.isShield) all.y += 10; });
-                        }
-                        // Tiro Inimigo (Raro no início, frequente depois)
-                        if(Math.random() < 0.005 + (faseAtual * 0.002)) tirosInimigos.push({x: inv.x + inv.w/2, y: inv.y + inv.h});
+                    // Movimento Inimigo
+                    inv.x += inv.vel * inv.dir;
+                    if(inv.x > (canvas.width - inv.w) || inv.x < 0) { 
+                        invasores.forEach(all => { 
+                            all.dir *= -1; 
+                            if(!all.isBoss) all.y += 15; 
+                        });
                     }
 
-                    // Desenho
-                    let skin = skins.alien;
-                    if(inv.isBoss) skin = skins.chefe;
-                    if(inv.isShield) { 
-                        skin = skins.escudo;
-                        if(boss) { inv.x = boss.x - 50; inv.y = boss.y - 10; }
+                    // Chance de atirar
+                    if(Math.random() < 0.006 + (faseAtual * 0.002)) {
+                        tirosInimigos.push({x: inv.x + inv.w/2, y: inv.y + inv.h});
                     }
-                    drawEntity(skin, inv, inv.isBoss ? 'purple' : 'red', false);
 
-                    // Colisão Tiro Hunter -> Inimigo
+                    // Desenhar Inimigo
+                    drawEntity(inv.isBoss ? skins.chefe : skins.alien, inv, inv.isBoss ? 'purple' : 'red', false);
+
+                    // Colisão Tiro do Hunter -> Inimigos
                     tiros.forEach((t, ti) => {
                         let rect = {x: inv.x, y: inv.y, w: inv.w, h: inv.h};
                         let hitX = t.isFireball ? t.x : t.x+28;
                         if(hitX < rect.x + rect.w && hitX + (t.w||4) > rect.x && t.y < rect.y + rect.h && t.y + (t.h||15) > rect.y) {
                             let dano = t.isFireball ? 150 : 50;
-                            if(inv.isBoss || inv.isShield) {
+                            
+                            if(inv.isBoss) {
                                 inv.hp -= dano;
                                 if(!t.isFireball) tiros.splice(ti, 1);
                                 if(inv.hp <= 0) inv.vivo = false;
                             } else {
-                                inv.vivo = false; player.kills++; tiros.splice(ti, 1);
+                                inv.vivo = false;
+                                player.kills++;
+                                tiros.splice(ti, 1);
                             }
-                            for(let j=0; j<5; j++) particulas.push({x: hitX, y: t.y, vx: (Math.random()-0.5)*6, vy: (Math.random()-0.5)*6, life: 0.5});
+                            // Efeito de explosão
+                            for(let j=0; j<8; j++) particulas.push({x: hitX, y: t.y, vx: (Math.random()-0.5)*8, vy: (Math.random()-0.5)*8, life: 0.6});
                         }
                     });
                 });
 
-                if(vivos === 0) {
+                // Próxima Fase
+                if(vivos === 0 && invasores.length > 0) {
                     faseAtual++;
                     alerta.innerText = "FASE " + faseAtual;
                     alerta.style.display = 'block';
                     modo = 'transicao';
-                    setTimeout(() => { alerta.style.display = 'none'; iniciarJogoReal(); }, 2000);
+                    setTimeout(() => { 
+                        alerta.style.display = 'none'; 
+                        iniciarJogoReal(); 
+                    }, 1500);
                 }
             }
             ctx.restore();
             requestAnimationFrame(gameLoop);
         }
+
+        // Iniciar
         gameLoop();
     </script>
 </body>

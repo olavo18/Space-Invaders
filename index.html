@@ -29,7 +29,6 @@
             overflow: hidden;
         }
 
-        /* MENU PRINCIPAL RECOMPLETO */
         #menu-principal {
             text-align: center;
             background: rgba(10, 10, 30, 0.95);
@@ -64,7 +63,6 @@
         .btn-play { background: var(--neon-pink); border-color: var(--neon-pink); box-shadow: 0 0 20px rgba(255, 0, 85, 0.3); }
         .btn-play:hover { background: #ff2a6d; box-shadow: 0 0 40px var(--neon-pink); }
 
-        /* JOGO E CUTSCENE */
         #game-container { 
             display: none; position: relative; width: 800px; height: 600px; 
             background: #000; border: 2px solid var(--neon-blue); overflow: hidden; 
@@ -84,7 +82,6 @@
             text-shadow: 0 0 30px var(--neon-pink); display: none; text-align: center; z-index: 300;
         }
 
-        /* MODAIS */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
         .modal-content { background: #0a0a1a; border: 1px solid var(--neon-blue); padding: 40px; border-radius: 30px; max-width: 550px; position: relative; }
         .close-btn { position: absolute; top: 15px; right: 25px; font-size: 30px; cursor: pointer; color: var(--neon-pink); }
@@ -94,162 +91,164 @@
 </head>
 <body>
 
-    <div id="menu-principal">
-        <h1>SPACE INVADERS</h1>
-        <div class="subtitle">Olavo Marchiori</div>
-        <div class="btn-group">
-            <button class="btn-menu btn-play" onclick="iniciarHistoria()">
-                <i class="fa-solid fa-rocket"></i> JOGAR
-            </button>
-            <button class="btn-menu" onclick="openModal('modalComo')">
-                <i class="fa-solid fa-gamepad"></i> COMO JOGAR
-            </button>
-            <button class="btn-menu" onclick="openModal('modalHist')">
-                <i class="fa-solid fa-circle-info"></i> HISTÓRIA
-            </button>
-        </div>
+<div id="menu-principal">
+    <h1>SPACE INVADERS</h1>
+    <div class="subtitle">Olavo Marchiori</div>
+    <div class="btn-group">
+        <button class="btn-menu btn-play" onclick="iniciarHistoria()">
+            <i class="fa-solid fa-rocket"></i> JOGAR
+        </button>
+        <button class="btn-menu" onclick="openModal('modalComo')">
+            <i class="fa-solid fa-gamepad"></i> COMO JOGAR
+        </button>
+        <button class="btn-menu" onclick="openModal('modalHist')">
+            <i class="fa-solid fa-circle-info"></i> HISTÓRIA
+        </button>
     </div>
+</div>
 
-    <div id="game-container">
-        <div id="dialogo-box"></div>
-        <div id="alerta-invasao">A INVASÃO COMEÇOU!</div>
-        <canvas id="gameCanvas"></canvas>
+<div id="game-container">
+    <div id="dialogo-box"></div>
+    <div id="alerta-invasao">A INVASÃO COMEÇOU!</div>
+    <canvas id="gameCanvas"></canvas>
+</div>
+
+<div id="modalComo" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal('modalComo')">&times;</span>
+        <h3>COMO JOGAR</h3>
+        <p>Use as <b>SETAS ← →</b> para movimentar sua nave pelo espaço.</p>
+        <p>Pressione a tecla <b>ESPAÇO</b> para disparar seus lasers neon.</p>
+        <p>Destrua todos os invasores antes que eles alcancem sua posição!</p>
     </div>
+</div>
 
-    <div id="modalComo" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closeModal('modalComo')">&times;</span>
-            <h3>COMO JOGAR</h3>
-            <p>Use as <b>SETAS ← →</b> para movimentar sua nave pelo espaço.</p>
-            <p>Pressione a tecla <b>ESPAÇO</b> para disparar seus lasers neon.</p>
-            <p>Destrua todos os invasores antes que eles alcancem sua posição!</p>
-        </div>
+<div id="modalHist" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal('modalHist')">&times;</span>
+        <h3>SOBRE O PROJETO</h3>
+        <p>Este jogo é uma releitura do clássico de 1978, desenvolvida por <b>Olavo Marchiori</b>.</p>
+        <p>Inspirado no jogo real, mas modificado com novas mecânicas.</p>
     </div>
+</div>
 
-    <div id="modalHist" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closeModal('modalHist')">&times;</span>
-            <h3>SOBRE O PROJETO</h3>
-            <p>Este jogo é uma releitura do clássico de 1978, desenvolvida por <b>Olavo Marchiori</b>.</p>
-            <p>Inspirado no jogo real, mas modificado com novas mecânicas de câmera, movimentos fluidos e um sistema de narrativa imersiva.</p>
-        </div>
-    </div>
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const dialBox = document.getElementById('dialogo-box');
+const alerta = document.getElementById('alerta-invasao');
 
-    <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const dialBox = document.getElementById('dialogo-box');
-        const alerta = document.getElementById('alerta-invasao');
+canvas.width = 800; canvas.height = 600;
 
-        canvas.width = 800; canvas.height = 600;
+const skinPlayer = new Image(); skinPlayer.src = 'jogadorprincipal.png';
+const skinAmigo = new Image(); skinAmigo.src = 'amigo.png';
 
-        const skinPlayer = new Image(); skinPlayer.src = 'jogadorprincipal.png';
-        const skinAmigo = new Image(); skinAmigo.src = 'amigo.png';
+let modo = 'menu'; 
+let cam = { x: 0, y: 0, zoom: 1, tZoom: 1 };
+let player = { x: 450, y: 450, w: 65, h: 65, tx: 450, ty: 450, rot: 0 };
+let amigo = { x: 250, y: 450, w: 65, h: 65, tx: 250, ty: 450, rot: 0 };
+let tiros = [], invasores = [], keys = {};
 
-        let modo = 'menu'; 
-        let cam = { x: 0, y: 0, zoom: 1, tZoom: 1 };
-        let player = { x: 450, y: 450, w: 65, h: 65, tx: 450, ty: 450, rot: 0 };
-        let amigo = { x: 250, y: 450, w: 65, h: 65, tx: 250, ty: 450, rot: 0 };
-        let tiros = [], invasores = [], keys = {};
+function lerp(a, b, n) { return (1 - n) * a + n * b; }
 
-        function lerp(a, b, n) { return (1 - n) * a + n * b; }
+function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-
-        function iniciarHistoria() {
-            document.getElementById('menu-principal').style.display = 'none';
-            document.getElementById('game-container').style.display = 'block';
-            modo = 'historia';
-            setTimeout(() => {
-                cam.tZoom = 1.6;
-                falar("Olavo: Eu consigo derrotar esses alienígenas sozinho!", 4000, () => {
-                    amigo.tx = 330;
-                    falar("Amigo: Você enlouqueceu? São muitos, você não vai conseguir!", 4000, () => {
-                        falar("Olavo: Eu posso sim! Olha o que eu sei fazer!", 3000, () => {
-                            demonstrarHabilidades();
-                        });
-                    });
+function iniciarHistoria() {
+    document.getElementById('menu-principal').style.display = 'none';
+    document.getElementById('game-container').style.display = 'block';
+    modo = 'historia';
+    setTimeout(() => {
+        cam.tZoom = 1.6;
+        falar("Hunter: Eu consigo derrotar esses alienígenas sozinho!", 4000, () => {
+            amigo.tx = 330;
+            falar("Riven: Você enlouqueceu? São muitos, você não vai conseguir!", 4000, () => {
+                falar("Hunter: Eu posso sim! Olha o que eu sei fazer!", 3000, () => {
+                    demonstrarHabilidades();
                 });
-            }, 1000);
-        }
-
-        function falar(texto, tempo, callback) {
-            dialBox.innerText = texto; dialBox.style.display = 'block';
-            setTimeout(() => { dialBox.style.display = 'none'; if(callback) callback(); }, tempo);
-        }
-
-        function demonstrarHabilidades() {
-            player.tx = 650;
-            let mtr = setInterval(() => { tiros.push({x: player.x + 30, y: player.y, s: 18}); }, 150);
-            setTimeout(() => {
-                clearInterval(mtr); player.tx = 400;
-                falar("Olavo: Viu só? Eu dou conta!", 3500, () => {
-                    cam.tZoom = 1;
-                    alerta.style.display = 'block';
-                    setTimeout(() => { alerta.style.display = 'none'; amigo.ty = 800; iniciarJogoReal(); }, 2500);
-                });
-            }, 2000);
-        }
-
-        function iniciarJogoReal() {
-            modo = 'jogando'; player.tx = 370; player.ty = 520;
-            for(let i=0; i<30; i++) invasores.push({x: (i%10)*65 + 85, y: Math.floor(i/10)*50 + 60, w: 45, h: 35, vivo: true});
-            window.addEventListener('keydown', e => keys[e.code] = true);
-            window.addEventListener('keyup', e => keys[e.code] = false);
-        }
-
-        function drawShip(img, obj, fallback) {
-            ctx.save();
-            ctx.translate(obj.x + obj.w/2, obj.y + obj.h/2);
-            let targetRot = (obj.tx - obj.x) * 0.05;
-            obj.rot = lerp(obj.rot, targetRot, 0.1);
-            ctx.rotate(obj.rot * Math.PI / 180);
-            let bob = Math.sin(Date.now() / 250) * 4;
-            if(img.complete) ctx.drawImage(img, -obj.w/2, -obj.h/2 + bob, obj.w, obj.h);
-            else { ctx.fillStyle = fallback; ctx.fillRect(-obj.w/2, -obj.h/2 + bob, obj.w, obj.h); }
-            ctx.restore();
-        }
-
-        function gameLoop() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            cam.zoom = lerp(cam.zoom, cam.tZoom, 0.04);
-            let camX = -(player.x * cam.zoom - canvas.width/2);
-            let camY = -(player.y * cam.zoom - canvas.height/2);
-            
-            ctx.save();
-            if(modo === 'historia') { ctx.translate(camX, camY); ctx.scale(cam.zoom, cam.zoom); }
-
-            player.x = lerp(player.x, player.tx, 0.08); player.y = lerp(player.y, player.ty, 0.08);
-            amigo.x = lerp(amigo.x, amigo.tx, 0.08); amigo.y = lerp(amigo.y, amigo.ty, 0.08);
-
-            drawShip(skinPlayer, player, '#00ff00');
-            if(amigo.y < 700) drawShip(skinAmigo, amigo, '#00d2ff');
-
-            tiros.forEach((t, i) => {
-                t.y -= t.s; ctx.fillStyle = '#fff'; ctx.shadowBlur = 10; ctx.shadowColor = '#00d2ff';
-                ctx.fillRect(t.x, t.y, 4, 18); ctx.shadowBlur = 0;
-                if(t.y < -100) tiros.splice(i, 1);
             });
+        });
+    }, 1000);
+}
 
-            if(modo === 'jogando') {
-                if(keys['ArrowLeft'] && player.tx > 0) player.tx -= 9;
-                if(keys['ArrowRight'] && player.tx < canvas.width - player.w) player.tx += 9;
-                if(keys['Space'] && (tiros.length === 0 || tiros[tiros.length-1].y < player.y - 120)) tiros.push({x: player.x + 30, y: player.y, s: 14});
+function falar(texto, tempo, callback) {
+    dialBox.innerText = texto; dialBox.style.display = 'block';
+    setTimeout(() => { dialBox.style.display = 'none'; if(callback) callback(); }, tempo);
+}
 
-                invasores.forEach(inv => {
-                    if(inv.vivo) {
-                        ctx.fillStyle = '#ff0055'; ctx.fillRect(inv.x, inv.y, inv.w, inv.h);
-                        tiros.forEach((t, ti) => {
-                            if(t.x > inv.x && t.x < inv.x + inv.w && t.y > inv.y && t.y < inv.y + inv.h) { inv.vivo = false; tiros.splice(ti, 1); }
-                        });
+function demonstrarHabilidades() {
+    player.tx = 650;
+    let mtr = setInterval(() => { tiros.push({x: player.x + 30, y: player.y, s: 18}); }, 150);
+    setTimeout(() => {
+        clearInterval(mtr); player.tx = 400;
+        falar("Hunter: Viu só? Eu dou conta!", 3500, () => {
+            cam.tZoom = 1;
+            alerta.style.display = 'block';
+            setTimeout(() => { alerta.style.display = 'none'; amigo.ty = 800; iniciarJogoReal(); }, 2500);
+        });
+    }, 2000);
+}
+
+function iniciarJogoReal() {
+    modo = 'jogando'; player.tx = 370; player.ty = 520;
+    for(let i=0; i<30; i++) invasores.push({x: (i%10)*65 + 85, y: Math.floor(i/10)*50 + 60, w: 45, h: 35, vivo: true});
+    window.addEventListener('keydown', e => keys[e.code] = true);
+    window.addEventListener('keyup', e => keys[e.code] = false);
+}
+
+function drawShip(img, obj, fallback) {
+    ctx.save();
+    ctx.translate(obj.x + obj.w/2, obj.y + obj.h/2);
+    let targetRot = (obj.tx - obj.x) * 0.05;
+    obj.rot = lerp(obj.rot, targetRot, 0.1);
+    ctx.rotate(obj.rot * Math.PI / 180);
+    let bob = Math.sin(Date.now() / 250) * 4;
+    if(img.complete) ctx.drawImage(img, -obj.w/2, -obj.h/2 + bob, obj.w, obj.h);
+    else { ctx.fillStyle = fallback; ctx.fillRect(-obj.w/2, -obj.h/2 + bob, obj.w, obj.h); }
+    ctx.restore();
+}
+
+function gameLoop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    cam.zoom = lerp(cam.zoom, cam.tZoom, 0.04);
+    let camX = -(player.x * cam.zoom - canvas.width/2);
+    let camY = -(player.y * cam.zoom - canvas.height/2);
+    
+    ctx.save();
+    if(modo === 'historia') { ctx.translate(camX, camY); ctx.scale(cam.zoom, cam.zoom); }
+
+    player.x = lerp(player.x, player.tx, 0.08); player.y = lerp(player.y, player.ty, 0.08);
+    amigo.x = lerp(amigo.x, amigo.tx, 0.08); amigo.y = lerp(amigo.y, amigo.ty, 0.08);
+
+    drawShip(skinPlayer, player, '#00ff00');
+    if(amigo.y < 700) drawShip(skinAmigo, amigo, '#00d2ff');
+
+    tiros.forEach((t, i) => {
+        t.y -= t.s; ctx.fillStyle = '#fff'; ctx.shadowBlur = 10; ctx.shadowColor = '#00d2ff';
+        ctx.fillRect(t.x, t.y, 4, 18); ctx.shadowBlur = 0;
+        if(t.y < -100) tiros.splice(i, 1);
+    });
+
+    if(modo === 'jogando') {
+        if(keys['ArrowLeft'] && player.tx > 0) player.tx -= 9;
+        if(keys['ArrowRight'] && player.tx < canvas.width - player.w) player.tx += 9;
+        if(keys['Space'] && (tiros.length === 0 || tiros[tiros.length-1].y < player.y - 120)) tiros.push({x: player.x + 30, y: player.y, s: 14});
+
+        invasores.forEach(inv => {
+            if(inv.vivo) {
+                ctx.fillStyle = '#ff0055'; ctx.fillRect(inv.x, inv.y, inv.w, inv.h);
+                tiros.forEach((t, ti) => {
+                    if(t.x > inv.x && t.x < inv.x + inv.w && t.y > inv.y && t.y < inv.y + inv.h) {
+                        inv.vivo = false; tiros.splice(ti, 1);
                     }
                 });
             }
-            ctx.restore();
-            requestAnimationFrame(gameLoop);
-        }
-        gameLoop();
-    </script>
+        });
+    }
+    ctx.restore();
+    requestAnimationFrame(gameLoop);
+}
+gameLoop();
+</script>
 </body>
 </html>

@@ -128,8 +128,8 @@ skins.chefe.src = 'chefe1.png';
 skins.fireball.src = 'bola-defogo.png';
 skins.escudo.src = 'escudo.png';
 
-// CARREGAMENTO DO SOM
-const somTempo = new Audio('tempo.png');
+// CARREGAMENTO DO SOM - CORRIGIDO PARA .mp3
+const somTempo = new Audio('tempo.mp3');
 
 let modo = 'menu';
 let faseAtual = 1;
@@ -183,7 +183,7 @@ function criarFase(){
     bossLabel.style.display='block';
     $('boss-hp-fill').style.width='100%';
     
-    // VIDA DO CHEFE AUMENTADA PARA 2000
+    // VIDA DO CHEFE AUMENTADA PARA 2000 PARA RESISTIR À BOLA DE FOGO
     const bossHp = 2000 + faseAtual*100; 
     invasores.push({ x:300, y:80, w:200, h:160, hp:bossHp, maxHp:bossHp, isBoss:true, dir:1, vel:1.4 });
     
@@ -340,7 +340,7 @@ function gameLoop(now){
     if(contadorTempo >= 7){
       tempoParado = true;
       
-      // TOCA O SOM DE TEMPO SOLICITADO
+      // TOCA O SOM 'tempo.mp3'
       somTempo.play();
       
       $('efeito-tempo').style.display='block';

@@ -29,7 +29,7 @@
             overflow: hidden;
         }
 
-        /* MENU */
+        /* MENU PRINCIPAL RECOMPLETO */
         #menu-principal {
             text-align: center;
             background: rgba(10, 10, 30, 0.95);
@@ -41,44 +41,55 @@
             max-width: 450px;
             width: 90%;
             box-shadow: 0 0 50px rgba(0, 210, 255, 0.2);
+            animation: floating 4s infinite ease-in-out;
         }
 
-        h1 { font-family: 'Orbitron', sans-serif; font-size: 32px; color: var(--neon-blue); text-shadow: 0 0 20px var(--neon-blue); }
-        .subtitle { font-size: 14px; margin-bottom: 40px; opacity: 0.8; letter-spacing: 2px; }
+        @keyframes floating {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+        }
+
+        h1 { font-family: 'Orbitron', sans-serif; font-size: 32px; color: var(--neon-blue); text-shadow: 0 0 20px var(--neon-blue); margin-bottom: 5px; }
+        .subtitle { font-size: 14px; margin-bottom: 40px; opacity: 0.9; letter-spacing: 2px; }
+
+        .btn-group { display: flex; flex-direction: column; gap: 15px; }
 
         .btn-menu {
-            padding: 18px 25px; font-size: 16px; font-weight: 800; background: transparent;
+            padding: 16px 25px; font-size: 16px; font-weight: 800; background: transparent;
             color: white; border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 15px;
             cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 12px;
-            width: 100%; margin-bottom: 15px; text-transform: uppercase;
+            width: 100%; text-transform: uppercase;
         }
+        .btn-menu:hover { background: rgba(255,255,255,0.1); border-color: white; transform: scale(1.03); }
         .btn-play { background: var(--neon-pink); border-color: var(--neon-pink); box-shadow: 0 0 20px rgba(255, 0, 85, 0.3); }
-        .btn-play:hover { transform: scale(1.05); background: #ff2a6d; box-shadow: 0 0 40px var(--neon-pink); }
+        .btn-play:hover { background: #ff2a6d; box-shadow: 0 0 40px var(--neon-pink); }
 
-        /* JOGO */
+        /* JOGO E CUTSCENE */
         #game-container { 
-            display: none; 
-            position: relative; 
-            width: 800px; 
-            height: 600px; 
-            background: #000; 
-            border: 2px solid var(--neon-blue); 
-            overflow: hidden; 
-            box-shadow: 0 0 30px rgba(0, 210, 255, 0.2);
+            display: none; position: relative; width: 800px; height: 600px; 
+            background: #000; border: 2px solid var(--neon-blue); overflow: hidden; 
         }
 
         #dialogo-box {
             position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%);
-            background: rgba(255, 255, 255, 0.95); color: black; padding: 20px 30px; border-radius: 20px;
+            background: white; color: black; padding: 20px 30px; border-radius: 20px;
             font-weight: 800; display: none; z-index: 200; width: 450px; text-align: center;
             border: 4px solid var(--neon-blue); box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            font-size: 16px;
         }
 
         #alerta-invasao {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             color: var(--neon-pink); font-family: 'Orbitron', sans-serif; font-size: 50px;
-            text-shadow: 0 0 30px var(--neon-pink); display: none; text-align: center; z-index: 300; width: 100%;
+            text-shadow: 0 0 30px var(--neon-pink); display: none; text-align: center; z-index: 300;
         }
+
+        /* MODAIS */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+        .modal-content { background: #0a0a1a; border: 1px solid var(--neon-blue); padding: 40px; border-radius: 30px; max-width: 550px; position: relative; }
+        .close-btn { position: absolute; top: 15px; right: 25px; font-size: 30px; cursor: pointer; color: var(--neon-pink); }
+        h3 { color: var(--neon-blue); font-family: 'Orbitron', sans-serif; margin-bottom: 25px; font-size: 20px; }
+        .modal-content p { line-height: 1.7; margin-bottom: 15px; color: #cbd5e0; font-size: 16px; }
     </style>
 </head>
 <body>
@@ -86,18 +97,42 @@
     <div id="menu-principal">
         <h1>SPACE INVADERS</h1>
         <div class="subtitle">Olavo Marchiori</div>
-        <button class="btn-menu btn-play" onclick="iniciarHistoria()">
-            <i class="fa-solid fa-play"></i> JOGAR
-        </button>
-        <button class="btn-menu" onclick="location.reload()">
-            <i class="fa-solid fa-rotate-right"></i> REINICIAR
-        </button>
+        <div class="btn-group">
+            <button class="btn-menu btn-play" onclick="iniciarHistoria()">
+                <i class="fa-solid fa-rocket"></i> JOGAR
+            </button>
+            <button class="btn-menu" onclick="openModal('modalComo')">
+                <i class="fa-solid fa-gamepad"></i> COMO JOGAR
+            </button>
+            <button class="btn-menu" onclick="openModal('modalHist')">
+                <i class="fa-solid fa-circle-info"></i> HISTÓRIA
+            </button>
+        </div>
     </div>
 
     <div id="game-container">
         <div id="dialogo-box"></div>
         <div id="alerta-invasao">A INVASÃO COMEÇOU!</div>
         <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <div id="modalComo" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('modalComo')">&times;</span>
+            <h3>COMO JOGAR</h3>
+            <p>Use as <b>SETAS ← →</b> para movimentar sua nave pelo espaço.</p>
+            <p>Pressione a tecla <b>ESPAÇO</b> para disparar seus lasers neon.</p>
+            <p>Destrua todos os invasores antes que eles alcancem sua posição!</p>
+        </div>
+    </div>
+
+    <div id="modalHist" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('modalHist')">&times;</span>
+            <h3>SOBRE O PROJETO</h3>
+            <p>Este jogo é uma releitura do clássico de 1978, desenvolvida por <b>Olavo Marchiori</b>.</p>
+            <p>Inspirado no jogo real, mas modificado com novas mecânicas de câmera, movimentos fluidos e um sistema de narrativa imersiva.</p>
+        </div>
     </div>
 
     <script>
@@ -108,35 +143,29 @@
 
         canvas.width = 800; canvas.height = 600;
 
-        // --- CARREGAMENTO DE IMAGENS ---
         const skinPlayer = new Image(); skinPlayer.src = 'jogadorprincipal.png';
         const skinAmigo = new Image(); skinAmigo.src = 'amigo.png';
 
         let modo = 'menu'; 
-        let cam = { x: 0, y: 0, zoom: 1, targetZoom: 1 };
-        
-        // Atributos das Naves (x, y atuais e target para movimento suave)
-        let player = { x: 450, y: 450, w: 65, h: 65, tx: 450, ty: 450 };
-        let amigo = { x: 250, y: 450, w: 65, h: 65, tx: 250, ty: 450, alpha: 1 };
-        
-        let tiros = [];
-        let invasores = [];
-        const keys = {};
+        let cam = { x: 0, y: 0, zoom: 1, tZoom: 1 };
+        let player = { x: 450, y: 450, w: 65, h: 65, tx: 450, ty: 450, rot: 0 };
+        let amigo = { x: 250, y: 450, w: 65, h: 65, tx: 250, ty: 450, rot: 0 };
+        let tiros = [], invasores = [], keys = {};
 
-        // Função de Suavização (Linear Interpolation)
         function lerp(a, b, n) { return (1 - n) * a + n * b; }
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
         function iniciarHistoria() {
             document.getElementById('menu-principal').style.display = 'none';
             document.getElementById('game-container').style.display = 'block';
             modo = 'historia';
-            
-            // Início da Cutscene
             setTimeout(() => {
-                cam.targetZoom = 1.6; // Zoom in suave
+                cam.tZoom = 1.6;
                 falar("Olavo: Eu consigo derrotar esses alienígenas sozinho!", 4000, () => {
-                    amigo.tx = 320; // Amigo se aproxima
-                    falar("Amigo: Você enlouqueceu? São muitos, você não vai conseguir!", 4500, () => {
+                    amigo.tx = 330;
+                    falar("Amigo: Você enlouqueceu? São muitos, você não vai conseguir!", 4000, () => {
                         falar("Olavo: Eu posso sim! Olha o que eu sei fazer!", 3000, () => {
                             demonstrarHabilidades();
                         });
@@ -146,113 +175,80 @@
         }
 
         function falar(texto, tempo, callback) {
-            dialBox.innerText = texto;
-            dialBox.style.display = 'block';
-            setTimeout(() => {
-                dialBox.style.display = 'none';
-                if(callback) callback();
-            }, tempo);
+            dialBox.innerText = texto; dialBox.style.display = 'block';
+            setTimeout(() => { dialBox.style.display = 'none'; if(callback) callback(); }, tempo);
         }
 
         function demonstrarHabilidades() {
-            player.tx = 650; // Nave vai para a direita
-            let metralhadora = setInterval(() => {
-                tiros.push({x: player.x + 30, y: player.y, s: 18});
-            }, 150);
-
+            player.tx = 650;
+            let mtr = setInterval(() => { tiros.push({x: player.x + 30, y: player.y, s: 18}); }, 150);
             setTimeout(() => {
-                clearInterval(metralhadora);
-                player.tx = 400; // Nave volta ao centro
+                clearInterval(mtr); player.tx = 400;
                 falar("Olavo: Viu só? Eu dou conta!", 3500, () => {
-                    cam.targetZoom = 1; // Zoom out
+                    cam.tZoom = 1;
                     alerta.style.display = 'block';
-                    setTimeout(() => {
-                        alerta.style.display = 'none';
-                        amigo.ty = 800; // Amigo sai por baixo
-                        iniciarJogoReal();
-                    }, 2500);
+                    setTimeout(() => { alerta.style.display = 'none'; amigo.ty = 800; iniciarJogoReal(); }, 2500);
                 });
             }, 2000);
         }
 
         function iniciarJogoReal() {
-            modo = 'jogando';
-            player.tx = 370; player.ty = 520;
-            createAliens();
+            modo = 'jogando'; player.tx = 370; player.ty = 520;
+            for(let i=0; i<30; i++) invasores.push({x: (i%10)*65 + 85, y: Math.floor(i/10)*50 + 60, w: 45, h: 35, vivo: true});
             window.addEventListener('keydown', e => keys[e.code] = true);
             window.addEventListener('keyup', e => keys[e.code] = false);
         }
 
-        function createAliens() {
-            for(let i=0; i<30; i++) {
-                invasores.push({x: (i%10)*65 + 85, y: Math.floor(i/10)*50 + 60, w: 45, h: 35, vivo: true});
-            }
+        function drawShip(img, obj, fallback) {
+            ctx.save();
+            ctx.translate(obj.x + obj.w/2, obj.y + obj.h/2);
+            let targetRot = (obj.tx - obj.x) * 0.05;
+            obj.rot = lerp(obj.rot, targetRot, 0.1);
+            ctx.rotate(obj.rot * Math.PI / 180);
+            let bob = Math.sin(Date.now() / 250) * 4;
+            if(img.complete) ctx.drawImage(img, -obj.w/2, -obj.h/2 + bob, obj.w, obj.h);
+            else { ctx.fillStyle = fallback; ctx.fillRect(-obj.w/2, -obj.h/2 + bob, obj.w, obj.h); }
+            ctx.restore();
         }
 
         function gameLoop() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // LÓGICA DE CÂMERA
-            cam.zoom = lerp(cam.zoom, cam.targetZoom, 0.03);
+            cam.zoom = lerp(cam.zoom, cam.tZoom, 0.04);
             let camX = -(player.x * cam.zoom - canvas.width/2);
             let camY = -(player.y * cam.zoom - canvas.height/2);
             
             ctx.save();
-            if(modo === 'historia') {
-                ctx.translate(camX, camY);
-                ctx.scale(cam.zoom, cam.zoom);
-            }
+            if(modo === 'historia') { ctx.translate(camX, camY); ctx.scale(cam.zoom, cam.zoom); }
 
-            // MOVIMENTAÇÃO SUAVE (LERP)
-            player.x = lerp(player.x, player.tx, 0.08);
-            player.y = lerp(player.y, player.ty, 0.08);
-            amigo.x = lerp(amigo.x, amigo.tx, 0.08);
-            amigo.y = lerp(amigo.y, amigo.ty, 0.08);
+            player.x = lerp(player.x, player.tx, 0.08); player.y = lerp(player.y, player.ty, 0.08);
+            amigo.x = lerp(amigo.x, amigo.tx, 0.08); amigo.y = lerp(amigo.y, amigo.ty, 0.08);
 
-            // EFEITO DE FLUTUAÇÃO (SENO)
-            let bobbing = Math.sin(Date.now() / 250) * 4;
+            drawShip(skinPlayer, player, '#00ff00');
+            if(amigo.y < 700) drawShip(skinAmigo, amigo, '#00d2ff');
 
-            // DESENHAR NAVES
-            if(skinPlayer.complete) ctx.drawImage(skinPlayer, player.x, player.y + bobbing, player.w, player.h);
-            if(amigo.y < 700 && skinAmigo.complete) ctx.drawImage(skinAmigo, amigo.x, amigo.y + bobbing, amigo.w, amigo.h);
-
-            // DESENHAR TIROS
             tiros.forEach((t, i) => {
-                t.y -= t.s;
-                ctx.fillStyle = '#fff';
-                ctx.shadowBlur = 10; ctx.shadowColor = '#00d2ff';
-                ctx.fillRect(t.x, t.y, 4, 18);
-                ctx.shadowBlur = 0;
+                t.y -= t.s; ctx.fillStyle = '#fff'; ctx.shadowBlur = 10; ctx.shadowColor = '#00d2ff';
+                ctx.fillRect(t.x, t.y, 4, 18); ctx.shadowBlur = 0;
                 if(t.y < -100) tiros.splice(i, 1);
             });
 
-            // LÓGICA DE JOGO
             if(modo === 'jogando') {
                 if(keys['ArrowLeft'] && player.tx > 0) player.tx -= 9;
                 if(keys['ArrowRight'] && player.tx < canvas.width - player.w) player.tx += 9;
-                if(keys['Space']) {
-                    if(tiros.length === 0 || tiros[tiros.length-1].y < player.y - 120)
-                        tiros.push({x: player.x + 30, y: player.y, s: 14});
-                }
+                if(keys['Space'] && (tiros.length === 0 || tiros[tiros.length-1].y < player.y - 120)) tiros.push({x: player.x + 30, y: player.y, s: 14});
 
                 invasores.forEach(inv => {
                     if(inv.vivo) {
-                        ctx.fillStyle = '#ff0055';
-                        ctx.fillRect(inv.x, inv.y, inv.w, inv.h);
+                        ctx.fillStyle = '#ff0055'; ctx.fillRect(inv.x, inv.y, inv.w, inv.h);
                         tiros.forEach((t, ti) => {
-                            if(t.x > inv.x && t.x < inv.x + inv.w && t.y > inv.y && t.y < inv.y + inv.h) {
-                                inv.vivo = false;
-                                tiros.splice(ti, 1);
-                            }
+                            if(t.x > inv.x && t.x < inv.x + inv.w && t.y > inv.y && t.y < inv.y + inv.h) { inv.vivo = false; tiros.splice(ti, 1); }
                         });
                     }
                 });
             }
-            
             ctx.restore();
             requestAnimationFrame(gameLoop);
         }
-
         gameLoop();
     </script>
 </body>

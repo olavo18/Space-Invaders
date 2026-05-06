@@ -128,6 +128,9 @@ skins.chefe.src = 'chefe1.png';
 skins.fireball.src = 'bola-defogo.png';
 skins.escudo.src = 'escudo.png';
 
+// CARREGAMENTO DO SOM
+const somTempo = new Audio('tempo.png');
+
 let modo = 'menu';
 let faseAtual = 1;
 let tempoParado = false;
@@ -179,8 +182,11 @@ function criarFase(){
     bossBar.style.display='block';
     bossLabel.style.display='block';
     $('boss-hp-fill').style.width='100%';
-    const bossHp = 350 + faseAtual*30;
+    
+    // VIDA DO CHEFE AUMENTADA PARA 2000
+    const bossHp = 2000 + faseAtual*100; 
     invasores.push({ x:300, y:80, w:200, h:160, hp:bossHp, maxHp:bossHp, isBoss:true, dir:1, vel:1.4 });
+    
     const shieldHp = 200 + faseAtual*10;
     invasores.push({ x:260, y:60, w:280, h:200, hp:shieldHp, maxHp:shieldHp, isShield:true });
     for(let i=0;i<4;i++) invasores.push({ x:120 + i*170, y:330, w:55, h:55, vivo:true, dir:1, vel:1.2 });
@@ -333,6 +339,10 @@ function gameLoop(now){
     contadorTempo += dt/1000;
     if(contadorTempo >= 7){
       tempoParado = true;
+      
+      // TOCA O SOM DE TEMPO SOLICITADO
+      somTempo.play();
+      
       $('efeito-tempo').style.display='block';
       falar(falasChefe[Math.floor(Math.random()*falasChefe.length)], 2500, ()=>{
         tempoParado = false; contadorTempo = 0;

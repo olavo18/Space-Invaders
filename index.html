@@ -1,264 +1,246 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Space Invaders - Hunter Protocol</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Orbitron:wght@700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-<style>
-:root {
-    --neon-blue: #00d2ff;
-    --neon-pink: #ff0055;
-    --space-dark: #050510;
-}
-
-* { margin:0; padding:0; box-sizing:border-box; }
-
-body {
-    background: var(--space-dark);
-    background-image: radial-gradient(white, rgba(255,255,255,.1) 1px, transparent 20px);
-    background-size: 50px 50px;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    color:white;
-    height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    overflow:hidden;
-}
-
-/* MENU NOVO */
-#menu-principal {
-    position: absolute;
-    width:100%;
-    height:100%;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-}
-
-.menu-card {
-    background: rgba(10,10,30,0.85);
-    padding:60px;
-    border-radius:30px;
-    backdrop-filter:blur(20px);
-    border:1px solid rgba(0,210,255,0.3);
-    box-shadow:0 0 60px rgba(0,210,255,0.15);
-    text-align:center;
-    animation:floatMenu 5s infinite ease-in-out;
-}
-
-@keyframes floatMenu {
-    0%,100%{transform:translateY(0);}
-    50%{transform:translateY(-15px);}
-}
-
-h1 {
-    font-family:'Orbitron';
-    font-size:38px;
-    color:var(--neon-blue);
-    text-shadow:0 0 25px var(--neon-blue);
-}
-
-.subtitle {
-    margin:20px 0 40px;
-    opacity:0.7;
-}
-
-.btn-menu {
-    display:block;
-    margin:10px 0;
-    padding:15px;
-    width:220px;
-    border-radius:12px;
-    border:1px solid rgba(255,255,255,0.2);
-    background:transparent;
-    color:white;
-    cursor:pointer;
-    transition:0.3s;
-}
-
-.btn-menu:hover {
-    transform:scale(1.05);
-    background:rgba(255,255,255,0.08);
-}
-
-.btn-play {
-    background:var(--neon-pink);
-    border:none;
-    box-shadow:0 0 25px rgba(255,0,85,0.4);
-}
-
-/* GAME */
-#game-container {
-    display:none;
-    position:relative;
-    width:800px;
-    height:600px;
-    background:black;
-    border:2px solid var(--neon-blue);
-}
-
-/* LEGENDA */
-#dialogo-box {
-    position:absolute;
-    bottom:20px;
-    left:50%;
-    transform:translateX(-50%);
-    background:rgba(0,0,0,0.7);
-    padding:15px;
-    border-radius:10px;
-    opacity:0;
-    display:none;
-    transition:0.4s;
-}
-
-/* ALERTA */
-#alerta-invasao {
-    position:absolute;
-    top:50%;
-    left:50%;
-    transform:translate(-50%,-50%);
-    font-size:40px;
-    color:var(--neon-pink);
-    display:none;
-}
-</style>
-</head>
-
-<body>
-
-<!-- MENU -->
-<div id="menu-principal">
-    <div class="menu-card">
-        <h1>SPACE INVADERS</h1>
-        <div class="subtitle">Missão Hunter</div>
-
-        <button class="btn-menu btn-play" onclick="iniciarHistoria()">JOGAR</button>
-    </div>
-</div>
-
-<!-- GAME -->
-<div id="game-container">
-    <div id="dialogo-box"></div>
-    <div id="alerta-invasao">A INVASÃO COMEÇOU!</div>
-    <canvas id="gameCanvas"></canvas>
-</div>
-
-<script>
-const canvas=document.getElementById('gameCanvas');
-const ctx=canvas.getContext('2d');
-const dialBox=document.getElementById('dialogo-box');
-const alerta=document.getElementById('alerta-invasao');
-
-canvas.width=800;
-canvas.height=600;
-
-const skinPlayer=new Image(); skinPlayer.src='jogadorprincipal.png';
-const skinAmigo=new Image(); skinAmigo.src='amigo.png';
-
-let player={x:400,y:450,tx:400,ty:450,w:60,h:60};
-let amigo={x:250,y:450,tx:250,ty:450,w:60,h:60};
-
-let tiros=[],invasores=[],keys={};
-let particulas=[],subindo=false;
-let modo='menu';
-
-function lerp(a,b,n){return(1-n)*a+n*b;}
-
-/* LEGENDA */
-function falar(t,tempo,cb){
-    dialBox.innerText=t;
-    dialBox.style.display='block';
-    setTimeout(()=>dialBox.style.opacity=1,10);
-
-    setTimeout(()=>{
-        dialBox.style.opacity=0;
-        setTimeout(()=>{
-            dialBox.style.display='none';
-            if(cb)cb();
-        },400);
-    },tempo);
-}
-
-/* HISTORIA */
-function iniciarHistoria(){
-    document.getElementById('menu-principal').style.display='none';
-    document.getElementById('game-container').style.display='block';
-
-    falar("Hunter: Eu consigo derrotar eles!",3000,()=>{
-        falar("Riven: Você não vai sobreviver!",3000,()=>{
-            falar("Hunter: Adeus...",2000,()=>{
-                decolar();
-            });
-        });
-    });
-}
-
-/* DECOLAGEM */
-function decolar(){
-    subindo=true;
-
-    let subida=setInterval(()=>{
-        player.ty-=6;
-
-        particulas.push({
-            x:player.x+30,
-            y:player.y+60,
-            size:5,
-            life:50
-        });
-
-        if(player.y<-100){
-            clearInterval(subida);
-            alerta.style.display='block';
-
-            setTimeout(()=>{
-                alerta.style.display='none';
-                iniciarJogo();
-            },2000);
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Invaders - Olavo Marchiori</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --neon-blue: #00d2ff;
+            --neon-pink: #ff0055;
+            --space-dark: #050510;
         }
 
-    },16);
-}
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-/* JOGO */
-function iniciarJogo(){
-    modo='jogo';
+        body {
+            background-color: var(--space-dark);
+            background-image: radial-gradient(white, rgba(255,255,255,.1) 1px, transparent 20px);
+            background-size: 50px 50px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color: white;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
 
-    for(let i=0;i<20;i++){
-        invasores.push({x:50+i*30,y:50});
-    }
+        /* MENU PRINCIPAL RECOMPLETO */
+        #menu-principal {
+            text-align: center;
+            background: rgba(10, 10, 30, 0.95);
+            padding: 50px;
+            border-radius: 40px;
+            border: 2px solid var(--neon-blue);
+            backdrop-filter: blur(15px);
+            z-index: 100;
+            max-width: 450px;
+            width: 90%;
+            box-shadow: 0 0 50px rgba(0, 210, 255, 0.2);
+            animation: floating 4s infinite ease-in-out;
+        }
 
-    window.addEventListener('keydown',e=>keys[e.code]=true);
-    window.addEventListener('keyup',e=>keys[e.code]=false);
-}
+        @keyframes floating {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+        }
 
-/* LOOP */
-function loop(){
-    ctx.clearRect(0,0,800,600);
+        h1 { font-family: 'Orbitron', sans-serif; font-size: 32px; color: var(--neon-blue); text-shadow: 0 0 20px var(--neon-blue); margin-bottom: 5px; }
+        .subtitle { font-size: 14px; margin-bottom: 40px; opacity: 0.9; letter-spacing: 2px; }
 
-    player.x=lerp(player.x,player.tx,0.1);
-    player.y=lerp(player.y,player.ty,0.1);
+        .btn-group { display: flex; flex-direction: column; gap: 15px; }
 
-    ctx.fillStyle='#0f0';
-    ctx.fillRect(player.x,player.y,60,60);
+        .btn-menu {
+            padding: 16px 25px; font-size: 16px; font-weight: 800; background: transparent;
+            color: white; border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 15px;
+            cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 12px;
+            width: 100%; text-transform: uppercase;
+        }
+        .btn-menu:hover { background: rgba(255,255,255,0.1); border-color: white; transform: scale(1.03); }
+        .btn-play { background: var(--neon-pink); border-color: var(--neon-pink); box-shadow: 0 0 20px rgba(255, 0, 85, 0.3); }
 
-    particulas.forEach((p,i)=>{
-        p.y+=2;
-        p.life--;
-        ctx.fillStyle=`rgba(200,200,255,${p.life/50})`;
-        ctx.fillRect(p.x,p.y,p.size,p.size);
-        if(p.life<=0) particulas.splice(i,1);
-    });
+        /* GAME */
+        #game-container { 
+            display: none; position: relative; width: 800px; height: 600px; 
+            background: #000; border: 2px solid var(--neon-blue); overflow: hidden; 
+        }
 
-    requestAnimationFrame(loop);
-}
-loop();
-</script>
+        #dialogo-box {
+            position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%);
+            background: white; color: black; padding: 20px 30px; border-radius: 20px;
+            font-weight: 800; display: none; z-index: 200; width: 450px; text-align: center;
+            border: 4px solid var(--neon-blue); box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            font-size: 16px; transition: 0.4s; opacity: 0;
+        }
 
+        #alerta-invasao {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: var(--neon-pink); font-family: 'Orbitron', sans-serif; font-size: 50px;
+            text-shadow: 0 0 30px var(--neon-pink); display: none; text-align: center; z-index: 300;
+        }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-content { background: #0a0a1a; border: 1px solid var(--neon-blue); padding: 40px; border-radius: 30px; max-width: 500px; position: relative; }
+        .close-btn { position: absolute; top: 15px; right: 25px; font-size: 30px; cursor: pointer; color: var(--neon-pink); }
+    </style>
+</head>
+<body>
+
+    <div id="menu-principal">
+        <h1>SPACE INVADERS</h1>
+        <div class="subtitle">Olavo Marchiori</div>
+        <div class="btn-group">
+            <button class="btn-menu btn-play" onclick="iniciarHistoria()">JOGAR</button>
+            <button class="btn-menu" onclick="openModal('modalComo')">COMO JOGAR</button>
+        </div>
+    </div>
+
+    <div id="game-container">
+        <div id="dialogo-box"></div>
+        <div id="alerta-invasao">A INVASÃO COMEÇOU!</div>
+        <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <div id="modalComo" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('modalComo')">&times;</span>
+            <h3>COMO JOGAR</h3>
+            <p>Setas ← → para mover.</p>
+            <p>Espaço para atirar.</p>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const dialBox = document.getElementById('dialogo-box');
+        const alerta = document.getElementById('alerta-invasao');
+
+        canvas.width = 800; canvas.height = 600;
+
+        const skinPlayer = new Image(); skinPlayer.src = 'jogadorprincipal.png';
+        const skinAmigo = new Image(); skinAmigo.src = 'amigo.png';
+
+        let modo = 'menu', cam = { x: 0, y: 0, zoom: 1, tZoom: 1 };
+        let player = { x: 450, y: 450, w: 65, h: 65, tx: 450, ty: 450, rot: 0 };
+        let amigo = { x: 250, y: 450, w: 65, h: 65, tx: 250, ty: 450, rot: 0 };
+        let tiros = [], invasores = [], keys = {}, particulas = [];
+
+        function lerp(a, b, n) { return (1 - n) * a + n * b; }
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        function falar(texto, tempo, callback) {
+            dialBox.innerText = texto; dialBox.style.display = 'block';
+            setTimeout(() => dialBox.style.opacity = 1, 50);
+            setTimeout(() => { 
+                dialBox.style.opacity = 0;
+                setTimeout(() => { dialBox.style.display = 'none'; if(callback) callback(); }, 400);
+            }, tempo);
+        }
+
+        function iniciarHistoria() {
+            document.getElementById('menu-principal').style.display = 'none';
+            document.getElementById('game-container').style.display = 'block';
+            modo = 'historia';
+            setTimeout(() => {
+                cam.tZoom = 1.6;
+                falar("Olavo: Eu consigo derrotar esses alienígenas sozinho!", 3000, () => {
+                    amigo.tx = 330;
+                    falar("Amigo: Você enlouqueceu? São muitos!", 3000, () => {
+                        falar("Olavo: Adeus... Vou mostrar do que sou capaz!", 2000, decolar);
+                    });
+                });
+            }, 1000);
+        }
+
+        function decolar() {
+            cam.tZoom = 1;
+            let subida = setInterval(() => {
+                player.ty -= 8;
+                // Partículas de propulsão
+                for(let i=0; i<3; i++) {
+                    particulas.push({ x: player.x + 30, y: player.y + 50, vx: (Math.random()-0.5)*4, vy: 2+Math.random()*5, life: 1, color: '#00d2ff' });
+                }
+                if(player.y < -100) {
+                    clearInterval(subida);
+                    alerta.style.display = 'block';
+                    setTimeout(() => { alerta.style.display = 'none'; iniciarJogoReal(); }, 2000);
+                }
+            }, 16);
+        }
+
+        function iniciarJogoReal() {
+            modo = 'jogando';
+            player.x = 370; player.tx = 370; player.y = 520; player.ty = 520;
+            for(let i=0; i<30; i++) invasores.push({x: (i%10)*65 + 85, y: Math.floor(i/10)*50 + 60, w: 45, h: 35, vivo: true});
+            window.addEventListener('keydown', e => keys[e.code] = true);
+            window.addEventListener('keyup', e => keys[e.code] = false);
+        }
+
+        function drawShip(img, obj, fallback) {
+            ctx.save();
+            ctx.translate(obj.x + obj.w/2, obj.y + obj.h/2);
+            obj.rot = lerp(obj.rot, (obj.tx - obj.x) * 0.05, 0.1);
+            ctx.rotate(obj.rot * Math.PI / 180);
+            let bob = Math.sin(Date.now() / 250) * 4;
+            if(img.complete && img.naturalWidth !== 0) ctx.drawImage(img, -obj.w/2, -obj.h/2 + bob, obj.w, obj.h);
+            else { ctx.fillStyle = fallback; ctx.fillRect(-obj.w/2, -obj.h/2 + bob, obj.w, obj.h); }
+            ctx.restore();
+        }
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            cam.zoom = lerp(cam.zoom, cam.tZoom, 0.04);
+            
+            ctx.save();
+            if(modo === 'historia') {
+                ctx.translate(-(player.x * cam.zoom - 400), -(player.y * cam.zoom - 300));
+                ctx.scale(cam.zoom, cam.zoom);
+            }
+
+            player.x = lerp(player.x, player.tx, 0.08); player.y = lerp(player.y, player.ty, 0.08);
+            amigo.x = lerp(amigo.x, amigo.tx, 0.08); amigo.y = lerp(amigo.y, amigo.ty, 0.08);
+
+            // Partículas
+            particulas.forEach((p, i) => {
+                p.x += p.vx; p.y += p.vy; p.life -= 0.02;
+                ctx.fillStyle = `rgba(0, 210, 255, ${p.life})`;
+                ctx.fillRect(p.x, p.y, 4, 4);
+                if(p.life <= 0) particulas.splice(i, 1);
+            });
+
+            drawShip(skinPlayer, player, '#00ff00');
+            if(modo === 'historia' && amigo.y < 700) drawShip(skinAmigo, amigo, '#00d2ff');
+
+            tiros.forEach((t, i) => {
+                t.y -= t.s; ctx.fillStyle = '#fff'; ctx.fillRect(t.x, t.y, 4, 18);
+                if(t.y < -100) tiros.splice(i, 1);
+            });
+
+            if(modo === 'jogando') {
+                if(keys['ArrowLeft'] && player.tx > 0) player.tx -= 9;
+                if(keys['ArrowRight'] && player.tx < 740) player.tx += 9;
+                if(keys['Space'] && (tiros.length === 0 || tiros[tiros.length-1].y < player.y - 120)) {
+                    tiros.push({x: player.x + 30, y: player.y, s: 14});
+                }
+                invasores.forEach(inv => {
+                    if(inv.vivo) {
+                        ctx.fillStyle = '#ff0055'; ctx.fillRect(inv.x, inv.y, inv.w, inv.h);
+                        tiros.forEach((t, ti) => {
+                            if(t.x > inv.x && t.x < inv.x + inv.w && t.y > inv.y && t.y < inv.y + inv.h) { inv.vivo = false; tiros.splice(ti, 1); }
+                        });
+                    }
+                });
+            }
+            ctx.restore();
+            requestAnimationFrame(gameLoop);
+        }
+        gameLoop();
+    </script>
 </body>
 </html>

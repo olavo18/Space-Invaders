@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Space Invaders - Hunter Mission Extreme</title>
+    <title>Space Invaders</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Orbitron:wght@700&display=swap" rel="stylesheet">
     <style>
         :root { --neon-blue: #00d2ff; --neon-pink: #ff0055; --space-dark: #050510; }
@@ -19,8 +19,8 @@
         
         #ui-camada { position: absolute; top: 20px; left: 25px; right: 25px; display: flex; justify-content: space-between; font-family: 'Orbitron'; font-size: 18px; color: var(--neon-blue); pointer-events: none; z-index: 50; }
         
-        /* Ajuste da Legenda para não cobrir as naves no topo */
-        #dialogo-box { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); background: white; color: black; padding: 20px 30px; border-radius: 20px; font-weight: 800; display: none; z-index: 100; width: 500px; text-align: center; border: 4px solid var(--neon-blue); box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
+        /* Legenda centralizada para não cobrir as naves no topo durante o diálogo */
+        #dialogo-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; color: black; padding: 25px 40px; border-radius: 25px; font-weight: 800; display: none; z-index: 200; width: 550px; text-align: center; border: 6px solid var(--neon-blue); box-shadow: 0 0 100px rgba(0,0,0,1); font-size: 20px; }
 
         #efeito-tempo { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 150, 255, 0.3); display: none; z-index: 5; pointer-events: none; }
         #boss-hp-bar { position: absolute; top: 60px; left: 50%; transform: translateX(-50%); width: 400px; height: 10px; background: #222; border: 1px solid #fff; display: none; border-radius: 5px; z-index: 15; overflow: hidden; }
@@ -30,8 +30,8 @@
 <body>
 
     <div id="menu-principal">
-        <h1>SPACE HUNTER</h1>
-        <button class="btn-play" onclick="iniciarHistoria()">INICIAR COMBATE</button>
+        <h1>SPACE INVADERS</h1>
+        <button class="btn-play" onclick="iniciarHistoria()">INICIAR JOGO</button>
     </div>
 
     <div id="game-container">
@@ -61,10 +61,10 @@
 
         let modo = 'menu', faseAtual = 1, tempoParado = false, contadorTempo = 0;
         let player = { x: 370, y: 520, w: 60, h: 60, tx: 370, ty: 520, vidas: 3, danoTime: 0, kills: 0 };
-        let amigo = { x: 100, y: 520, w: 60, h: 60, tx: 100, ty: 520 };
+        let amigo = { x: -100, y: 450, w: 60, h: 60, tx: -100, ty: 450 }; // Começa fora da tela
         let invasores = [], tiros = [], tirosE = [], keys = {};
 
-        const falasChefe = ["ZA WARUDO!", "O tempo é meu!", "Hunter, você não pode fugir!", "Tudo para agora!"];
+        const falasChefe = ["ZA WARUDO!", "O tempo é meu!", "Hunter, você não pode se mexer!", "Inútil! Inútil! Inútil!"];
 
         function falar(texto, tempo, callback) {
             const box = document.getElementById('dialogo-box');
@@ -76,12 +76,15 @@
             document.getElementById('menu-principal').style.display = 'none';
             document.getElementById('game-container').style.display = 'block';
             modo = 'historia';
+            amigo.tx = 200; // Amigo entra na tela para falar
+            player.tx = 500;
+            
             falar("Hunter: Eu consigo derrotar esses alienígenas sozinho!", 2500, () => {
-                amigo.tx = 250;
-                falar("Amigo: Hunter, você enlouqueceu?", 2500, () => {
+                falar("Amigo: Hunter, você enlouqueceu? São muitos!", 2500, () => {
                     falar("Hunter: Vou mostrar do que sou capaz!", 1500, () => {
                         modo = 'jogando';
-                        amigo.tx = 50; // Amigo vai para o canto dar suporte
+                        amigo.tx = -150; // Amigo vai embora após a fala
+                        player.tx = 370; // Hunter volta para o centro
                         criarFase();
                     });
                 });
@@ -106,7 +109,7 @@
             }
         }
 
-        window.addEventListener('keydown', e => { keys[e.code] = true; if(e.code === 'KeyE' && !tempoParado) usarHabilidade(); });
+        window.addEventListener('keydown', e => { keys[e.code] = true; if(e.code === 'KeyE' && !tempoParado && modo === 'jogando') usarHabilidade(); });
         window.addEventListener('keyup', e => keys[e.code] = false);
 
         function usarHabilidade() {
@@ -130,12 +133,14 @@
         function gameLoop() {
             ctx.clearRect(0, 0, 800, 600);
 
-            if(modo === 'jogando' || modo === 'historia') {
+            if(modo !== 'menu') {
+                // Suavização de movimento para Hunter e Amigo
                 player.x = (1 - 0.1) * player.x + 0.1 * player.tx;
                 amigo.x = (1 - 0.1) * amigo.x + 0.1 * amigo.tx;
 
                 desenharEntidade(skins.player, player, 'green');
-                desenharEntidade(skins.amigo, amigo, 'blue'); // Amigo sempre desenhado!
+                // Amigo só aparece se estiver dentro de uma margem visível
+                if(amigo.x > -80) desenharEntidade(skins.amigo, amigo, 'blue');
 
                 if(modo === 'jogando') {
                     document.getElementById('fase-txt').innerText = faseAtual;
@@ -204,7 +209,7 @@
                         });
                         if(vivos === 0) { faseAtual++; criarFase(); }
                     } else {
-                        // Quando o tempo para, apenas desenha os inimigos parados
+                        // Tempo Parado: Desenha inimigos sem mover
                         invasores.forEach(inv => {
                             if(inv.isBoss ? inv.hp > 0 : (inv.isShield ? inv.hp > 0 : inv.vivo)) {
                                 desenharEntidade(inv.isBoss ? skins.chefe : (inv.isShield ? skins.escudo : skins.alien), inv, 'red');
@@ -212,7 +217,6 @@
                         });
                     }
                     
-                    // Desenha os tiros
                     tiros.forEach(t => { 
                         if(t.isFireball) desenharEntidade(skins.fireball, t, 'orange', true);
                         else { ctx.fillStyle = 'white'; ctx.fillRect(t.x, t.y, t.w, t.h); }

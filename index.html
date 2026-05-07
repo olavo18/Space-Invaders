@@ -2,27 +2,21 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Space Invaders - Isulpar</title>
+    <title>Space Invaders - Versão Estável</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-<div id="overlay-start" onclick="iniciarJogo()">
-    <h1>CLIQUE PARA INICIAR</h1>
-    <p>Arquivos detectados: Jogador, Alien, Chefes e Sons</p>
-</div>
-
-<div id="game-container" style="display:none;">
-    <div id="ui">
-        FASE: <span id="fase-txt">1</span> | 
-        VIDAS: <span id="vidas-txt">3</span> | 
-        KILLS: <span id="kills-txt">0</span>
+    <div id="overlay-start" onclick="iniciarJogo()">
+        <h1>CLIQUE AQUI PARA CARREGAR</h1>
+        <p>Se não iniciar, verifique o Console (F12)</p>
     </div>
-    <div id="boss-bar"><div id="boss-fill"></div></div>
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
-</div>
 
-<script src="script.js"></script>
+    <div id="game-container" style="display:none;">
+        <div id="ui">
+            FASE: <span id="fase-txt">1</span> | VIDAS: <span id="vidas-txt">3</span>
+        </div>
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+    </div>
+    <script src="script.js"></script>
 </body>
 </html>

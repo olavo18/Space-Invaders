@@ -1,30 +1,143 @@
-:root { --neon-blue:#00d2ff; --neon-pink:#ff0055; --space-dark:#050510; }
-*{margin:0;padding:0;box-sizing:border-box}
-body{
+:root { 
+    --neon-blue: #00d2ff; 
+    --neon-pink: #ff0055; 
+    --space-dark: #050510; 
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
     background: radial-gradient(circle at center, #1a1a3a 0%, var(--space-dark) 100%);
-    font-family:'Plus Jakarta Sans',sans-serif; color:#fff;
-    height:100vh; display:flex; align-items:center; justify-content:center; overflow:hidden;
+    font-family: 'Plus Jakarta Sans', sans-serif; 
+    color: #fff;
+    height: 100vh; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    overflow: hidden;
 }
+
+/* Overlay de Início - Centralizado */
 #overlay-start {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer;
+    position: fixed; 
+    inset: 0; 
+    background: rgba(0,0,0,0.95); 
+    z-index: 1000;
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: center; 
+    cursor: pointer;
+    text-align: center;
 }
-#menu-principal{
-    text-align:center; background:rgba(5, 5, 20, 0.85); padding:60px; border-radius:40px; 
-    border:3px solid var(--neon-blue); display: none; backdrop-filter:blur(15px);
+
+/* Menu Principal - Ajustado */
+#menu-principal {
+    text-align: center; 
+    background: rgba(5, 5, 20, 0.9); 
+    padding: 50px; 
+    border-radius: 30px; 
+    border: 3px solid var(--neon-blue); 
+    display: none; 
+    backdrop-filter: blur(15px);
+    box-shadow: 0 0 30px rgba(0, 210, 255, 0.3);
 }
-h1{font-family:'Orbitron'; font-size:48px; color:var(--neon-blue); text-shadow:0 0 15px var(--neon-blue); margin-bottom:20px;}
-.btn-play{
-    padding:20px 40px; font-size:20px; font-weight:800; font-family:'Orbitron';
-    background: linear-gradient(135deg, var(--neon-pink), #ff0080); color:#fff;
-    border:none; border-radius:20px; cursor:pointer;
+
+/* Container do Jogo - Onde tudo acontece */
+#game-container {
+    display: none; 
+    position: relative; 
+    width: 800px; 
+    height: 600px; 
+    background: #000; 
+    border: 4px solid var(--neon-blue); 
+    border-radius: 10px; 
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
 }
-#game-container{display:none; position:relative; width:800px; height:600px; background:#000; border:3px solid var(--neon-blue); border-radius:15px; overflow:hidden;}
-#ui-camada{position:absolute; top:14px; left:20px; right:20px; display:flex; justify-content:space-between; font-family:'Orbitron'; font-size:14px; color:var(--neon-blue); z-index:50;}
-#boss-hp-bar{position:absolute; top:50px; left:50%; transform:translateX(-50%); width:420px; height:16px; background:#111; border:2px solid #fff; display:none; border-radius:10px; overflow:hidden;}
-#boss-hp-fill{width:100%; height:100%; background:linear-gradient(90deg,#ff0055,#ffae3b); transition:width .25s;}
-#dialogo-box{position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; color:#000; padding:25px; border-radius:20px; display:none; z-index:200; border:4px solid var(--neon-blue);}
-#dialogo-box.show{display:block;}
-#game-over{position:absolute; inset:0; background:rgba(0,0,0,0.9); display:none; flex-direction:column; align-items:center; justify-content:center; z-index:300;}
-.shake { animation: shake 0.1s infinite; }
-@keyframes shake { 0% { transform: translate(2px, 2px); } 50% { transform: translate(-2px, -2px); } }
+
+/* Canvas - Forçando o alinhamento */
+canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* UI (Vida, Fase, etc) - Fixada no topo */
+#ui-camada {
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    width: 100%;
+    padding: 15px 25px;
+    display: flex; 
+    justify-content: space-between; 
+    font-family: 'Orbitron', sans-serif; 
+    font-size: 16px; 
+    color: var(--neon-blue); 
+    text-shadow: 0 0 5px var(--neon-blue);
+    z-index: 100;
+    pointer-events: none; /* Não atrapalha o clique */
+}
+
+/* Barra de Vida do Chefe */
+#boss-hp-bar {
+    position: absolute; 
+    top: 60px; 
+    left: 50%; 
+    transform: translateX(-50%); 
+    width: 500px; 
+    height: 12px; 
+    background: #111; 
+    border: 2px solid #fff; 
+    display: none; 
+    border-radius: 6px; 
+    overflow: hidden;
+    z-index: 90;
+}
+
+#boss-hp-fill {
+    width: 100%; 
+    height: 100%; 
+    background: linear-gradient(90deg, #ff0055, #ffae3b); 
+    transition: width 0.3s ease;
+}
+
+/* Caixa de Diálogos - Centralizada no meio da tela */
+#dialogo-box {
+    position: absolute; 
+    bottom: 50px; 
+    left: 50%; 
+    transform: translateX(-50%); 
+    background: #fff; 
+    color: #000; 
+    padding: 20px 40px; 
+    border-radius: 15px; 
+    display: none; 
+    z-index: 200; 
+    border: 4px solid var(--neon-blue);
+    font-weight: 800;
+    text-align: center;
+    min-width: 300px;
+}
+
+#dialogo-box.show { display: block; }
+
+/* Botão de Jogar */
+.btn-play {
+    padding: 15px 35px; 
+    font-size: 18px; 
+    font-weight: 800; 
+    font-family: 'Orbitron';
+    background: linear-gradient(135deg, var(--neon-pink), #ff0080); 
+    color: #fff;
+    border: none; 
+    border-radius: 15px; 
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.btn-play:hover { transform: scale(1.05); }

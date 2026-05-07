@@ -1,21 +1,6 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { 
-    background: #000; color: #fff; font-family: sans-serif;
-    display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden;
-}
-#overlay-start {
-    position: fixed; inset: 0; background: #050510; z-index: 1000;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    cursor: pointer; border: 4px solid #00d2ff;
-}
+body { background: #000; color: #fff; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; font-family: sans-serif; }
+#overlay-start { position: fixed; inset: 0; background: #050510; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; z-index: 100; border: 3px solid #00d2ff; }
 #game-container { position: relative; border: 2px solid #00d2ff; }
-#ui {
-    position: absolute; top: 10px; width: 100%; text-align: center;
-    color: #00d2ff; font-weight: bold; font-size: 18px; pointer-events: none;
-}
-#boss-bar {
-    position: absolute; top: 40px; left: 50%; transform: translateX(-50%);
-    width: 400px; height: 10px; background: #222; border: 1px solid #fff; display: none;
-}
-#boss-fill { width: 100%; height: 100%; background: #ff0055; }
-canvas { display: block; }
+#ui { position: absolute; top: 10px; width: 100%; text-align: center; color: #00d2ff; font-weight: bold; }
+canvas { display: block; background: #000; }

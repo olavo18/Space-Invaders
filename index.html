@@ -112,14 +112,9 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// CARREGAMENTO DAS IMAGENS
 const skins = {
-    player: new Image(),
-    amigo: new Image(),
-    alien: new Image(),
-    chefe: new Image(),
-    fireball: new Image(),
-    escudo: new Image()
+    player: new Image(), amigo: new Image(), alien: new Image(),
+    chefe: new Image(), fireball: new Image(), escudo: new Image()
 };
 skins.player.src = 'jogadorprincipal.png';
 skins.amigo.src = 'amigo.png';
@@ -128,7 +123,6 @@ skins.chefe.src = 'chefe1.png';
 skins.fireball.src = 'bola-defogo.png';
 skins.escudo.src = 'escudo.png';
 
-// CARREGAMENTO DO SOM - CORRIGIDO PARA .mp3
 const somTempo = new Audio('tempo.mp3');
 
 let modo = 'menu';
@@ -179,15 +173,14 @@ function criarFase(){
   bossBar.style.display='none'; bossLabel.style.display='none';
 
   if(faseAtual % 5 === 0){
-    bossBar.style.display='block';
-    bossLabel.style.display='block';
+    bossBar.style.display='block'; bossLabel.style.display='block';
     $('boss-hp-fill').style.width='100%';
     
-    // VIDA DO CHEFE AUMENTADA PARA 2000 PARA RESISTIR À BOLA DE FOGO
-    const bossHp = 2000 + faseAtual*100; 
+    // VIDA DO CHEFE AUMENTADA PARA 5000 (Sendo bem resistente agora)
+    const bossHp = 5000 + faseAtual*200; 
     invasores.push({ x:300, y:80, w:200, h:160, hp:bossHp, maxHp:bossHp, isBoss:true, dir:1, vel:1.4 });
     
-    const shieldHp = 200 + faseAtual*10;
+    const shieldHp = 400 + faseAtual*20;
     invasores.push({ x:260, y:60, w:280, h:200, hp:shieldHp, maxHp:shieldHp, isShield:true });
     for(let i=0;i<4;i++) invasores.push({ x:120 + i*170, y:330, w:55, h:55, vivo:true, dir:1, vel:1.2 });
     contadorTempo=0;
@@ -233,13 +226,10 @@ function desenharNave(obj, color, isPlayer){
   const flutua = Math.sin(frameAnim*0.08 + obj.x*0.05) * 3;
   ctx.translate(cx, cy + flutua);
   if(isPlayer && player.danoTime > 0 && Math.floor(player.danoTime/4)%2) ctx.globalAlpha = 0.4;
-
   const img = isPlayer ? skins.player : (obj.x === amigo.x ? skins.amigo : skins.alien);
-  
   if (img.complete && img.naturalWidth !== 0) {
       ctx.drawImage(img, -obj.w/2, -obj.h/2, obj.w, obj.h);
   } else {
-      ctx.shadowBlur = 20; ctx.shadowColor = color;
       ctx.fillStyle = color;
       if(isPlayer){
         ctx.beginPath(); ctx.moveTo(0, -obj.h/2); ctx.lineTo(obj.w/2, obj.h/2); ctx.lineTo(0, obj.h/3); ctx.lineTo(-obj.w/2, obj.h/2); ctx.closePath(); ctx.fill();
@@ -255,13 +245,10 @@ function desenharBoss(obj){
   const cx = obj.x + obj.w/2, cy = obj.y + obj.h/2;
   const flutua = Math.sin(frameAnim*0.05) * 6;
   ctx.translate(cx, cy + flutua);
-  
   if (skins.chefe.complete && skins.chefe.naturalWidth !== 0) {
       ctx.drawImage(skins.chefe, -obj.w/2, -obj.h/2, obj.w, obj.h);
   } else {
-      ctx.shadowBlur = 30; ctx.shadowColor = '#ff0055';
-      ctx.fillStyle = '#8b0030';
-      ctx.beginPath(); ctx.ellipse(0,0,obj.w/2,obj.h/2,0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#8b0030'; ctx.beginPath(); ctx.ellipse(0,0,obj.w/2,obj.h/2,0,0,Math.PI*2); ctx.fill();
   }
   ctx.restore();
 }
@@ -270,14 +257,11 @@ function desenharEscudo(obj){
   ctx.save();
   const cx = obj.x + obj.w/2, cy = obj.y + obj.h/2;
   ctx.translate(cx, cy);
-  
   if (skins.escudo.complete && skins.escudo.naturalWidth !== 0) {
       ctx.globalAlpha = 0.5 + Math.sin(frameAnim*0.1)*0.2;
       ctx.drawImage(skins.escudo, -obj.w/2, -obj.h/2, obj.w, obj.h);
   } else {
-      ctx.globalAlpha = 0.35 + Math.sin(frameAnim*0.1)*0.1;
-      ctx.shadowBlur = 25; ctx.shadowColor = '#00d2ff';
-      ctx.strokeStyle = '#00d2ff'; ctx.lineWidth = 3;
+      ctx.globalAlpha = 0.35; ctx.strokeStyle = '#00d2ff'; ctx.lineWidth = 3;
       ctx.beginPath(); ctx.ellipse(0,0,obj.w/2,obj.h/2,0,0,Math.PI*2); ctx.stroke();
   }
   ctx.restore();
@@ -285,18 +269,11 @@ function desenharEscudo(obj){
 
 function desenharFireball(t){
   ctx.save();
-  const cx = t.x + t.w/2, cy = t.y + t.h/2;
-  ctx.translate(cx, cy);
-  ctx.rotate(frameAnim*0.3);
-  
+  ctx.translate(t.x + t.w/2, t.y + t.h/2); ctx.rotate(frameAnim*0.3);
   if (skins.fireball.complete && skins.fireball.naturalWidth !== 0) {
       ctx.drawImage(skins.fireball, -t.w/2, -t.h/2, t.w, t.h);
   } else {
-      ctx.shadowBlur = 30; ctx.shadowColor = '#ff8800';
-      const grad = ctx.createRadialGradient(0,0,2,0,0,t.w/2);
-      grad.addColorStop(0,'#ffffaa'); grad.addColorStop(0.4,'#ffae3b'); grad.addColorStop(1,'#ff3300');
-      ctx.fillStyle = grad;
-      ctx.beginPath(); ctx.arc(0,0,t.w/2,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#ffae3b'; ctx.beginPath(); ctx.arc(0,0,t.w/2,0,Math.PI*2); ctx.fill();
   }
   ctx.restore();
 }
@@ -307,9 +284,7 @@ function colide(a,b){
 
 function gameLoop(now){
   const dt = Math.min(32, now - lastTime);
-  lastTime = now;
-  frameAnim += dt * 0.06;
-
+  lastTime = now; frameAnim += dt * 0.06;
   ctx.clearRect(0,0,800,600);
 
   if(modo === 'menu') { requestAnimationFrame(gameLoop); return; }
@@ -324,9 +299,7 @@ function gameLoop(now){
   if(amigo.x > -100) desenharNave(amigo, '#00d2ff', false);
   desenharNave(player, '#00ff88', true);
 
-  if(modo !== 'jogando'){
-    requestAnimationFrame(gameLoop); return;
-  }
+  if(modo !== 'jogando'){ requestAnimationFrame(gameLoop); return; }
 
   $('fase-txt').innerText = faseAtual;
   $('vidas-txt').innerText = player.vidas;
@@ -338,11 +311,7 @@ function gameLoop(now){
   if(boss && !tempoParado){
     contadorTempo += dt/1000;
     if(contadorTempo >= 7){
-      tempoParado = true;
-      
-      // TOCA O SOM 'tempo.mp3'
-      somTempo.play();
-      
+      tempoParado = true; somTempo.play();
       $('efeito-tempo').style.display='block';
       falar(falasChefe[Math.floor(Math.random()*falasChefe.length)], 2500, ()=>{
         tempoParado = false; contadorTempo = 0;
@@ -361,99 +330,62 @@ function gameLoop(now){
     }
 
     for(let i=tiros.length-1;i>=0;i--){
-      const t = tiros[i];
-      t.y -= t.s * (dt/16);
+      const t = tiros[i]; t.y -= t.s * (dt/16);
       if(t.y < -100) tiros.splice(i,1);
     }
 
     for(let i=tirosE.length-1;i>=0;i--){
-      const te = tirosE[i];
-      te.y += 5 * (dt/16);
-      const hit = { x:te.x, y:te.y, w:5, h:15 };
-      if(colide(hit, player) && player.danoTime<=0){
-        player.vidas--; player.danoTime = 60;
-        tirosE.splice(i,1);
+      const te = tirosE[i]; te.y += 5 * (dt/16);
+      if(colide({x:te.x, y:te.y, w:5, h:15}, player) && player.danoTime<=0){
+        player.vidas--; player.danoTime = 60; tirosE.splice(i,1);
         explodir(player.x+player.w/2, player.y+player.h/2, '#00ff88');
-        if(player.vidas <= 0){
-          $('fase-final').innerText = faseAtual;
-          $('game-over').classList.add('show');
-          modo = 'gameover';
-        }
-        continue;
-      }
-      if(te.y > 620) tirosE.splice(i,1);
+        if(player.vidas <= 0){ modo = 'gameover'; $('fase-final').innerText = faseAtual; $('game-over').classList.add('show'); }
+      } else if(te.y > 620) tirosE.splice(i,1);
     }
 
-    let vivos = 0;
-    let edge = false;
+    let vivos = 0; let edge = false;
     invasores.forEach(inv=>{
-      if(inv.isBoss){ if(inv.hp<=0) return; }
-      else if(inv.isShield){ if(inv.hp<=0) return; }
-      else if(!inv.vivo) return;
-
+      if(inv.isBoss ? inv.hp<=0 : (inv.isShield ? inv.hp<=0 : !inv.vivo)) return;
       if(!inv.isShield) vivos++;
-
-      if(inv.isShield && boss){
-        inv.x = boss.x + boss.w/2 - inv.w/2;
-        inv.y = boss.y + boss.h/2 - inv.h/2;
-      } else {
+      if(inv.isShield && boss){ inv.x = boss.x + boss.w/2 - inv.w/2; inv.y = boss.y + boss.h/2 - inv.h/2; }
+      else {
         inv.x += inv.vel * inv.dir * (dt/16);
         if(inv.x > 740 || inv.x < 10) edge = true;
-        const taxa = inv.isBoss ? 0.025 : 0.005;
-        if(Math.random() < taxa * (dt/16)){
-          tirosE.push({ x: inv.x + inv.w/2 - 2, y: inv.y + inv.h });
-        }
+        if(Math.random() < (inv.isBoss ? 0.025 : 0.005) * (dt/16)) tirosE.push({ x: inv.x + inv.w/2 - 2, y: inv.y + inv.h });
       }
     });
-    if(edge){
-      invasores.forEach(e=>{
-        if(e.isShield) return;
-        e.dir *= -1;
-        if(!e.isBoss) e.y += 12;
-      });
-    }
+    if(edge) invasores.forEach(e=>{ if(!e.isShield){ e.dir *= -1; if(!e.isBoss) e.y += 12; } });
 
     for(let ti=tiros.length-1; ti>=0; ti--){
-      const t = tiros[ti];
-      let consumed = false;
+      const t = tiros[ti]; let consumed = false;
       for(const inv of invasores){
         const alive = inv.isBoss ? inv.hp>0 : (inv.isShield ? inv.hp>0 : inv.vivo);
-        if(!alive) continue;
-        if(!colide(t, inv)) continue;
-        const dmg = t.isFireball ? 250 : 50;
+        if(!alive || !colide(t, inv)) continue;
 
-        if(inv.isShield){
-          inv.hp -= dmg;
-          explodir(t.x, t.y, '#00d2ff');
-          if(!t.isFireball){ tiros.splice(ti,1); consumed=true; }
-          break;
-        }
-        if(inv.isBoss){
-          if(shield && shield.hp>0){
-            if(!t.isFireball){ tiros.splice(ti,1); consumed=true; }
-            break;
+        // --- LÓGICA DE DANO DA BOLA DE FOGO ---
+        if(t.isFireball){
+          if(inv.isBoss || inv.isShield){
+            inv.hp -= 40; // Dano muito reduzido no Boss/Escudo para não dar Hit Kill
+            explodir(t.x+t.w/2, t.y+t.h/2, inv.isBoss ? '#ff0055' : '#00d2ff');
+            // Nota: Não damos tiros.splice aqui para a bola continuar atravessando, mas o dano é baixo.
+          } else {
+            inv.vivo = false; // Hit Kill nos bots normais
+            player.kills++; explodir(inv.x+inv.w/2, inv.y+inv.h/2, '#ff0055');
           }
-          inv.hp -= dmg;
-          $('boss-hp-fill').style.width = Math.max(0,(inv.hp/inv.maxHp)*100)+'%';
-          explodir(t.x, t.y, '#ff0055');
-          if(inv.hp <= 0){
-            explodir(inv.x+inv.w/2, inv.y+inv.h/2, '#ff0055');
-            explodir(inv.x+inv.w/2, inv.y+inv.h/2, '#ffae3b');
-            $('boss-hp-bar').style.display='none';
-            $('boss-hp-label').style.display='none';
+        } else {
+          // Tiro normal
+          if(inv.isShield) { inv.hp -= 50; consumed = true; }
+          else if(inv.isBoss) { 
+            if(!(shield && shield.hp>0)) inv.hp -= 50; 
+            consumed = true; 
           }
-          if(!t.isFireball){ tiros.splice(ti,1); consumed=true; }
-          break;
+          else { inv.vivo = false; player.kills++; consumed = true; }
+          
+          if(consumed) { explodir(t.x, t.y, '#fff'); tiros.splice(ti,1); break; }
         }
-        inv.vivo = false;
-        player.kills++;
-        explodir(inv.x+inv.w/2, inv.y+inv.h/2, '#ff0055');
-        if(!t.isFireball){ tiros.splice(ti,1); consumed=true; }
-        break;
       }
-      if(consumed) continue;
+      if(boss) $('boss-hp-fill').style.width = Math.max(0,(boss.hp/boss.maxHp)*100)+'%';
     }
-
     if(vivos === 0){ faseAtual++; criarFase(); }
   }
 
@@ -462,40 +394,16 @@ function gameLoop(now){
     else if(inv.isShield){ if(inv.hp>0) desenharEscudo(inv); }
     else if(inv.vivo) desenharNave(inv, '#ff0055', false);
   });
-
-  tiros.forEach(t=>{
-    if(t.isFireball) desenharFireball(t);
-    else {
-      ctx.save();
-      ctx.shadowBlur=15; ctx.shadowColor='#00d2ff';
-      ctx.fillStyle='#fff';
-      ctx.fillRect(t.x, t.y, t.w, t.h);
-      ctx.restore();
-    }
-  });
-  tirosE.forEach(te=>{
-    ctx.save();
-    ctx.shadowBlur=10; ctx.shadowColor='#ff0055';
-    ctx.fillStyle='#ff0055';
-    ctx.fillRect(te.x, te.y, 5, 15);
-    ctx.restore();
-  });
-
-  for(let i=particulas.length-1;i>=0;i--){
-    const p = particulas[i];
+  tiros.forEach(t=> t.isFireball ? desenharFireball(t) : (ctx.fillStyle='#fff', ctx.fillRect(t.x, t.y, t.w, t.h)));
+  tirosE.forEach(te=>(ctx.fillStyle='#ff0055', ctx.fillRect(te.x, te.y, 5, 15)));
+  particulas.forEach((p,i)=>{
     p.x += p.vx * (dt/16); p.y += p.vy * (dt/16); p.life -= dt/16;
-    if(p.life<=0){ particulas.splice(i,1); continue; }
-    ctx.save();
-    ctx.globalAlpha = Math.max(0,p.life/30);
-    ctx.fillStyle = p.color;
-    ctx.shadowBlur=8; ctx.shadowColor=p.color;
-    ctx.fillRect(p.x-2,p.y-2,4,4);
-    ctx.restore();
-  }
+    if(p.life<=0) particulas.splice(i,1);
+    else { ctx.globalAlpha = p.life/30; ctx.fillStyle = p.color; ctx.fillRect(p.x-2,p.y-2,4,4); ctx.globalAlpha = 1; }
+  });
 
   requestAnimationFrame(gameLoop);
 }
-
 requestAnimationFrame(gameLoop);
 </script>
 </body>

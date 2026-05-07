@@ -5,13 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Space Invaders Neon - Ultra Edition</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+    <!-- LINK PARA O CSS -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div id="overlay-start" onclick="permitirAudio()">
     <h2>CLIQUE PARA ATIVAR O NEON</h2>
-    <p>(Habilita trilha sonora e efeitos visuais)</p>
+    <p>(Habilita trilha sonora e efeitos)</p>
 </div>
 
 <div id="menu-principal">
@@ -22,30 +23,30 @@
 
 <div id="game-container">
     <div id="ui-camada">
-        <div id="fase-ui">FASE: <span id="fase-txt">1</span></div>
+        <div>FASE: <span id="fase-txt">1</span></div>
         <div>BOLA FOGO (E): <span id="hab-txt">0</span>/3</div>
         <div>ESCUDO (R): <span id="escudo-txt">0</span>/2</div>
         <div>VIDAS: <span id="vidas-txt">3</span></div>
     </div>
-
+    
     <div id="boss-hp-label">CHEFE SUPREMO</div>
     <div id="boss-hp-bar"><div id="boss-hp-fill"></div></div>
     
-    <!-- Elemento para o Boss 3 (GIF) -->
-    <img id="boss3-gif" src="chefe3.gif" alt="Boss 3">
+    <!-- Imagem do Boss 3 (Só aparece na fase 15) -->
+    <img id="boss3-gif" src="chefe3.gif" style="position: absolute; display: none; z-index: 45;">
 
     <div id="efeito-tempo"></div>
     <div id="dialogo-box"></div>
     
     <div id="game-over">
         <h2>FALHA NA MISSÃO</h2>
-        <p>Fase alcançada: <span id="fase-final">1</span></p>
-        <button class="btn-play" style="width:auto;padding:14px 30px" onclick="location.reload()">REINICIAR SISTEMA</button>
+        <button class="btn-play" style="width:auto;padding:14px 30px" onclick="location.reload()">REINICIAR</button>
     </div>
     
     <canvas id="gameCanvas" width="800" height="600"></canvas>
 </div>
 
+<!-- LINK PARA O JAVASCRIPT -->
 <script src="script.js"></script>
 </body>
 </html>

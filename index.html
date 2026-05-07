@@ -235,9 +235,8 @@ function criarFase(){
     bossBar.style.display='block'; bossLabel.style.display='block';
     bossLabel.innerText = "MK-II: O ANULADOR";
     $('boss-hp-fill').style.width='100%';
-    // Vida reduzida para 5000 para ser mais rápido
-    invasores.push({ x:300, y:80, w:180, h:150, hp:5000, maxHp:5000, isBoss:true, tipo:2, dir:1, vel:3.2 });
-    invasores.push({ x:260, y:60, w:250, h:190, hp:400, maxHp:400, isShield:true });
+    invasores.push({ x:300, y:80, w:180, h:150, hp:8000, maxHp:8000, isBoss:true, tipo:2, dir:1, vel:2.8 });
+    invasores.push({ x:260, y:60, w:250, h:190, hp:600, maxHp:600, isShield:true });
   } 
   else if(faseAtual % 5 === 0){
     bossBar.style.display='block'; bossLabel.style.display='block';
@@ -280,7 +279,7 @@ function usarHabilidadeE(){
 function usarHabilidadeR(){
     if(player.kills >= 2 && !player.escudoAtivo){
         player.escudoAtivo = true;
-        player.escudoTimer = 2000;
+        player.escudoTimer = 2000; // 2 segundos
         player.kills -= 2;
     }
 }
@@ -314,6 +313,7 @@ function desenharNave(obj, color, isPlayer){
       }
   }
 
+  // DESENHAR ESCUDO DO JOGADOR
   if(isPlayer && player.escudoAtivo) {
       ctx.restore(); ctx.save();
       ctx.translate(cx, cy + flutua);
@@ -387,6 +387,7 @@ function gameLoop(now){
   if(player.danoTime>0) player.danoTime -= dt/16;
   if(player.cooldown>0) player.cooldown -= dt;
   
+  // LÓGICA TEMPO ESCUDO
   if(player.escudoAtivo){
       player.escudoTimer -= dt;
       if(player.escudoTimer <= 0) player.escudoAtivo = false;
@@ -405,7 +406,9 @@ function gameLoop(now){
   const boss = invasores.find(i=>i.isBoss && i.hp>0);
   const shield = invasores.find(i=>i.isShield && i.hp>0);
 
-  if(bossMortoCheck = invasores.find(i=>i.isBoss && i.hp <= 0 && i.tipo === 2 && !bossMorrendo)){
+  // ANIMAÇÃO DE DERROTA MK-II
+  const bossMortoCheck = invasores.find(i=>i.isBoss && i.hp <= 0 && i.tipo === 2 && !bossMorrendo);
+  if(bossMortoCheck){
       bossMorrendo = true;
       $('game-container').classList.add('shake');
       falar("MK-II: Nos veremos novamente mortal...", 3500, () => {
@@ -415,28 +418,35 @@ function gameLoop(now){
       });
   }
 
-  // BOSS 2 - IA DE DESVIO INTELIGENTE
+  // BOSS 1 (ZA WARUDO)
+  if(boss && boss.tipo === 1 && !tempoParado && !avisandoHabilidade){
+    contadorTempo += dt/1000;
+    if(contadorTempo >= 7){
+      avisandoHabilidade = true;
+      falar(falasChefe[Math.floor(Math.random()*falasChefe.length)], 1000, ()=>{
+        tempoParado = true; 
+        somTempo.currentTime = 0; somTempo.play();
+        $('efeito-tempo').style.display='block';
+        setTimeout(()=>{
+          tempoParado = false; 
+          contadorTempo = 0;
+          avisandoHabilidade = false;
+          $('efeito-tempo').style.display='none';
+        }, 2500);
+      });
+    }
+  }
+
+  // BOSS 2
   if(boss && boss.tipo === 2 && !tempoParado && !bossMorrendo){
       tiros.forEach(t => {
-          if(!t.isFireball && Math.abs(t.x - (boss.x + boss.w/2)) < 110 && t.y > boss.y && t.y < boss.y + 450){
-              const centroTela = 400;
-              const forcaEsquiva = 7.5;
-              
-              // Se estiver no canto esquerdo, só foge pra direita
-              if(boss.x < 100) boss.x += forcaEsquiva;
-              // Se estiver no canto direito, só foge pra esquerda
-              else if(boss.x > 520) boss.x -= forcaEsquiva;
-              // No meio, foge do tiro normalmente
-              else {
-                  boss.x += (t.x < boss.x + boss.w/2) ? forcaEsquiva : -forcaEsquiva;
-              }
+          if(!t.isFireball && Math.abs(t.x - (boss.x + boss.w/2)) < 100 && t.y > boss.y && t.y < boss.y + 450){
+              const forcaEsquiva = 6;
+              boss.x += (t.x < boss.x + boss.w/2) ? forcaEsquiva : -forcaEsquiva;
           }
       });
-      // Movimento errático sutil para não ser estático
-      boss.x += Math.sin(frameAnim * 0.05) * 2;
-      
       if(boss.x < 15) boss.x = 15;
-      if(boss.x > 800 - boss.w - 15) boss.x = 800 - boss.w - 15;
+      if(boss.x > 785 - boss.w) boss.x = 785 - boss.w;
   }
 
   if(!tempoParado && !bossMorrendo){
@@ -486,9 +496,11 @@ function gameLoop(now){
     }); 
   }
 
+  // COLISÃO TIRO INIMIGO -> PLAYER
   for(let i=tirosE.length-1;i>=0;i--){
     const te = tirosE[i]; te.y += 5 * (dt/16);
     const hitBoxTiro = {x:te.x, y:te.y, w:5, h:15};
+    
     if(colide(hitBoxTiro, player)){
         if(player.escudoAtivo) {
             explodir(te.x, te.y, '#00d2ff');

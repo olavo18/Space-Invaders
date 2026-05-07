@@ -1,9 +1,9 @@
-// Utilitários e Inicialização
+// Utilitários e Inicialização [cite: 24, 36]
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const $ = id => document.getElementById(id);
 
-// Carregamento de Skins
+// Carregamento de Skins [cite: 25, 26]
 const skins = {
     player: new Image(), amigo: new Image(), alien: new Image(),
     chefe: new Image(), chefe2: new Image(), fireball: new Image(), escudo: new Image()
@@ -16,7 +16,7 @@ skins.chefe2.src = 'chefe2.png';
 skins.fireball.src = 'bola-defogo.png';
 skins.escudo.src = 'escudo.png';
 
-// Sons
+// Sons [cite: 27]
 const somMenu = new Audio('menu.mp3');
 const somTempo = new Audio('tempo.mp3');
 const somTiroPlayer = new Audio('nave1.mp3');
@@ -28,7 +28,7 @@ somTempo.volume = 0.4;
 somTiroPlayer.volume = 0.3;
 somTiroInimigo.volume = 0.2;
 
-// Variáveis de Estado
+// Variáveis de Estado [cite: 31, 32, 33]
 let modo = 'menu';
 let faseAtual = 1;
 let tempoParado = false;
@@ -52,7 +52,7 @@ const keys = {};
 let frameAnim = 0;
 const falasChefe = ["ZA WARUDO!", "O tempo é meu!", "Você não pode se mexer!", "Inútil! Inútil! Inútil!"];
 
-// Funções Globais (Chamadas pelo HTML)
+// Funções Globais (Chamadas pelo HTML) [cite: 28, 38]
 window.permitirAudio = function() {
     $('overlay-start').style.display = 'none';
     $('menu-principal').style.display = 'block';
@@ -79,7 +79,7 @@ window.iniciarHistoria = function(){
   });
 };
 
-// Lógica de Jogo
+// Lógica de Jogo [cite: 37, 40, 50, 77]
 function falar(texto, tempo, cb){
   const box = $('dialogo-box');
   box.innerText = texto;
@@ -117,7 +117,7 @@ function criarFase(){
   }
 }
 
-// Controles e Habilidades
+// Controles e Habilidades [cite: 51, 52]
 window.addEventListener('keydown', e => {
   keys[e.code] = true;
   if(!tempoParado && modo==='jogando' && !bossMorrendo) {
@@ -128,7 +128,7 @@ window.addEventListener('keydown', e => {
 });
 window.addEventListener('keyup', e => { keys[e.code] = false; });
 
-// Renderização e Explosões Detalhadas
+// Renderização [cite: 55, 63, 67, 74]
 function explodir(x,y,color){
   for(let i=0;i<14;i++){
     const a = Math.random()*Math.PI*2;
@@ -144,7 +144,6 @@ function desenharNave(obj, color, isPlayer){
   ctx.translate(cx, cy + flutua);
   if(!isPlayer && obj.dir) ctx.rotate(obj.dir * 0.1);
   if(isPlayer && player.danoTime > 0 && Math.floor(player.danoTime/4)%2) ctx.globalAlpha = 0.4;
-  
   const img = isPlayer ? skins.player : (obj.x === amigo.x ? skins.amigo : skins.alien);
   if (img.complete && img.naturalWidth !== 0) ctx.drawImage(img, -obj.w/2, -obj.h/2, obj.w, obj.h);
   else {
@@ -152,15 +151,10 @@ function desenharNave(obj, color, isPlayer){
       if(isPlayer){ ctx.beginPath(); ctx.moveTo(0, -obj.h/2); ctx.lineTo(obj.w/2, obj.h/2); ctx.lineTo(0, obj.h/3); ctx.lineTo(-obj.w/2, obj.h/2); ctx.closePath(); ctx.fill(); }
       else { ctx.beginPath(); ctx.ellipse(0,0,obj.w/2,obj.h/2.2,0,0,Math.PI*2); ctx.fill(); }
   }
-  
   if(isPlayer && player.escudoAtivo) {
       ctx.restore(); ctx.save(); ctx.translate(cx, cy + flutua); ctx.rotate(frameAnim * 0.1);
-      if (skins.escudo.complete && skins.escudo.naturalWidth !== 0) { 
-          ctx.globalAlpha = 0.6 + Math.sin(frameAnim*0.2)*0.2; 
-          ctx.drawImage(skins.escudo, -obj.w*0.8, -obj.h*0.8, obj.w*1.6, obj.h*1.6); 
-      } else { 
-          ctx.strokeStyle = '#00d2ff'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(0,0, obj.w*0.8, 0, Math.PI*2); ctx.stroke(); 
-      }
+      if (skins.escudo.complete && skins.escudo.naturalWidth !== 0) { ctx.globalAlpha = 0.6 + Math.sin(frameAnim*0.2)*0.2; ctx.drawImage(skins.escudo, -obj.w*0.8, -obj.h*0.8, obj.w*1.6, obj.h*1.6); }
+      else { ctx.strokeStyle = '#00d2ff'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(0,0, obj.w*0.8, 0, Math.PI*2); ctx.stroke(); }
   }
   ctx.restore();
 }
@@ -178,12 +172,8 @@ function desenharBoss(obj){
 
 function desenharEscudoBoss(obj){
   ctx.save(); ctx.translate(obj.x + obj.w/2, obj.y + obj.h/2);
-  if (skins.escudo.complete && skins.escudo.naturalWidth !== 0) { 
-      ctx.globalAlpha = 0.5 + Math.sin(frameAnim*0.1)*0.2; 
-      ctx.drawImage(skins.escudo, -obj.w/2, -obj.h/2, obj.w, obj.h); 
-  } else { 
-      ctx.globalAlpha = 0.35; ctx.strokeStyle = '#00d2ff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(0,0,obj.w/2,obj.h/2,0,0,Math.PI*2); ctx.stroke(); 
-  }
+  if (skins.escudo.complete && skins.escudo.naturalWidth !== 0) { ctx.globalAlpha = 0.5 + Math.sin(frameAnim*0.1)*0.2; ctx.drawImage(skins.escudo, -obj.w/2, -obj.h/2, obj.w, obj.h); }
+  else { ctx.globalAlpha = 0.35; ctx.strokeStyle = '#00d2ff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(0,0,obj.w/2,obj.h/2,0,0,Math.PI*2); ctx.stroke(); }
   ctx.restore();
 }
 
@@ -196,7 +186,7 @@ function desenharFireball(t){
 
 function colide(a,b){ return a.x < b.x+b.w && a.x+(a.w||6) > b.x && a.y < b.y+b.h && a.y+(a.h||20) > b.y; }
 
-// Game Loop Completo
+// Game Loop [cite: 78, 89, 97, 106, 119, 122]
 function gameLoop(now){
   const dt = Math.min(32, now - lastTime);
   lastTime = now; frameAnim += dt * 0.06;
@@ -228,7 +218,6 @@ function gameLoop(now){
       falar("MK-II: Nos veremos novamente mortal...", 3500, () => { invasores = invasores.filter(i => !i.isBoss); faseAtual++; criarFase(); });
   }
 
-  // IA do Chefe 1 (Tempo)
   if(boss && boss.tipo === 1 && !tempoParado && !avisandoHabilidade){
     contadorTempo += dt/1000;
     if(contadorTempo >= 7){
@@ -241,16 +230,8 @@ function gameLoop(now){
     }
   }
 
-  // IA do Chefe 2 (Esquiva Inteligente Corrigida)
   if(boss && boss.tipo === 2 && !tempoParado && !bossMorrendo){
-      tiros.forEach(t => {
-          if(!t.isFireball && Math.abs(t.x - (boss.x + boss.w/2)) < 110 && t.y > boss.y){
-              const forca = 7.5;
-              if(boss.x < 110) boss.x += forca; // Se estiver na borda esquerda, vai pra direita obrigatoriamente
-              else if(boss.x > 690 - boss.w) boss.x -= forca; // Se estiver na borda direita, vai pra esquerda obrigatoriamente
-              else boss.x += (t.x < boss.x + boss.w/2) ? forca : -forca; // Senão, foge do tiro
-          }
-      });
+      tiros.forEach(t => { if(!t.isFireball && Math.abs(t.x - (boss.x + boss.w/2)) < 100 && t.y > boss.y && t.y < boss.y + 450) boss.x += (t.x < boss.x + boss.w/2) ? 6 : -6; });
       if(boss.x < 15) boss.x = 15; if(boss.x > 785 - boss.w) boss.x = 785 - boss.w;
   }
 
@@ -289,7 +270,6 @@ function gameLoop(now){
     } else if(te.y > 620) tirosE.splice(i,1);
   }
 
-  // Colisões do Jogador contra Inimigos
   if(!tempoParado && !bossMorrendo){
     for(let ti=tiros.length-1; ti>=0; ti--){
       const t = tiros[ti]; let consumed = false;
@@ -313,12 +293,10 @@ function gameLoop(now){
   if(boss) $('boss-hp-fill').style.width = Math.max(0,(boss.hp/boss.maxHp)*100)+'%';
   if(vivos === 0 && !bossMorrendo){ faseAtual++; criarFase(); }
 
-  // Desenho Final
   invasores.forEach(inv=>{ if(inv.isBoss){ if(inv.hp>0 || (inv.tipo === 2 && bossMorrendo)) desenharBoss(inv); } else if(inv.isShield){ if(inv.hp>0) desenharEscudoBoss(inv); } else if(inv.vivo) desenharNave(inv, '#ff0055', false); });
   tiros.forEach(t=> t.isFireball ? desenharFireball(t) : (ctx.fillStyle='#fff', ctx.fillRect(t.x, t.y, t.w, t.h)));
   tirosE.forEach(te=>(ctx.fillStyle='#ff0055', ctx.fillRect(te.x, te.y, 5, 15)));
   particulas.forEach((p,i)=>{ p.x += p.vx * (dt/16); p.y += p.vy * (dt/16); p.life -= dt/16; if(p.life<=0) particulas.splice(i,1); else { ctx.globalAlpha = p.life/30; ctx.fillStyle = p.color; ctx.fillRect(p.x-2,p.y-2,4,4); ctx.globalAlpha = 1; } });
-  
   requestAnimationFrame(gameLoop);
 }
 

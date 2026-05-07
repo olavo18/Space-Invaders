@@ -92,11 +92,25 @@
   #game-over.show{display:flex}
   #game-over h2{font-family:'Orbitron';font-size:54px;color:var(--neon-pink);letter-spacing:8px}
 
+  /* EFEITOS BOSS 3 */
+  #boss3-gif {
+      position: absolute; display: none; pointer-events: none; z-index: 45;
+      filter: drop-shadow(0 0 15px var(--neon-pink));
+  }
   .shake { animation: shakeAnim 0.1s infinite; }
   @keyframes shakeAnim {
     0% { transform: translate(3px, 3px); }
     50% { transform: translate(-3px, -3px); }
     100% { transform: translate(2px, -2px); }
+  }
+  .glitch-ui { animation: glitchAnim 0.2s infinite; color: #ff00ff !important; }
+  @keyframes glitchAnim {
+      0% { transform: translate(0); }
+      20% { transform: translate(-2px, 2px); }
+      40% { transform: translate(-2px, -2px); }
+      60% { transform: translate(2px, 2px); }
+      80% { transform: translate(2px, -2px); }
+      100% { transform: translate(0); }
   }
 </style>
 </head>
@@ -115,13 +129,16 @@
 
 <div id="game-container">
   <div id="ui-camada">
-    <div>FASE: <span id="fase-txt">1</span></div>
+    <div id="fase-ui">FASE: <span id="fase-txt">1</span></div>
     <div>BOLA FOGO (E): <span id="hab-txt">0</span>/3</div>
     <div>ESCUDO (R): <span id="escudo-txt">0</span>/2</div>
     <div>VIDAS: <span id="vidas-txt">3</span></div>
   </div>
   <div id="boss-hp-label">CHEFE SUPREMO</div>
   <div id="boss-hp-bar"><div id="boss-hp-fill"></div></div>
+  
+  <img id="boss3-gif" src="chefe3.gif">
+
   <div id="efeito-tempo"></div>
   <div id="dialogo-box"></div>
   <div id="game-over">
@@ -162,24 +179,13 @@ somTiroInimigo.volume = 0.2;
 function permitirAudio() {
     document.getElementById('overlay-start').style.display = 'none';
     document.getElementById('menu-principal').style.display = 'block';
-
-    somMenu.play().then(() => {
-        console.log("Áudio menu.mp3 liberado!");
-    }).catch(error => {
-        console.error("Erro ao tocar som.", error);
-    });
-
-    [somTempo, somTiroPlayer, somTiroInimigo].forEach(s => {
-        s.play(); s.pause(); s.currentTime = 0;
-    });
+    somMenu.play().catch(error => console.error("Erro ao tocar som.", error));
+    [somTempo, somTiroPlayer, somTiroInimigo].forEach(s => { s.play(); s.pause(); s.currentTime = 0; });
 }
 
 let modo = 'menu';
 let faseAtual = 1;
-let tempoParado = false;
-let contadorTempo = 0;
 let lastTime = performance.now();
-let avisandoHabilidade = false;
 let bossMorrendo = false;
 
 const player = { 
@@ -195,8 +201,6 @@ let tirosE = [];
 let particulas = [];
 const keys = {};
 let frameAnim = 0;
-
-const falasChefe = ["ZA WARUDO!", "O tempo é meu!", "Você não pode se mexer!", "Inútil! Inútil! Inútil!"];
 
 const $ = id => document.getElementById(id);
 
@@ -225,35 +229,41 @@ function iniciarHistoria(){
 }
 
 function criarFase(){
-  invasores=[]; tiros=[]; tirosE=[]; particulas=[]; avisandoHabilidade = false; bossMorrendo = false;
+  invasores=[]; tiros=[]; tirosE=[]; bossMorrendo = false;
   player.escudoAtivo = false; player.escudoTimer = 0;
   const bossBar = $('boss-hp-bar'), bossLabel = $('boss-hp-label'), container = $('game-container');
-  bossBar.style.display='none'; bossLabel.style.display='none';
+  const bossGif = $('boss3-gif');
+  const ui = $('ui-camada');
+  
+  bossBar.style.display='none'; bossLabel.style.display='none'; bossGif.style.display='none';
   container.classList.remove('shake');
+  ui.classList.remove('glitch-ui');
 
-  if(faseAtual % 10 === 0){
+  if(faseAtual % 15 === 0){ // NOVO BOSS 3 (Fase 15)
+      bossBar.style.display='block'; bossLabel.style.display='block';
+      bossLabel.innerText = "MK-III: ERRO DE SISTEMA";
+      $('boss-hp-fill').style.width='100%';
+      invasores.push({ x:300, y:80, w:220, h:220, hp:8000, maxHp:8000, isBoss:true, tipo:3, dir:1, vel:2.8 });
+      falar("SISTEMA: Realidade corrompida detectada.", 3000);
+  }
+  else if(faseAtual % 10 === 0){ // BOSS 2 (Fase 10)
     bossBar.style.display='block'; bossLabel.style.display='block';
     bossLabel.innerText = "MK-II: O ANULADOR";
     $('boss-hp-fill').style.width='100%';
-    // Vida reduzida para 5000 para ser mais rápido
     invasores.push({ x:300, y:80, w:180, h:150, hp:5000, maxHp:5000, isBoss:true, tipo:2, dir:1, vel:3.2 });
     invasores.push({ x:260, y:60, w:250, h:190, hp:400, maxHp:400, isShield:true });
   } 
-  else if(faseAtual % 5 === 0){
+  else if(faseAtual % 5 === 0){ // BOSS 1 (Fase 5)
     bossBar.style.display='block'; bossLabel.style.display='block';
     bossLabel.innerText = "CHEFE SUPREMO";
     $('boss-hp-fill').style.width='100%';
     const bossHp = 5000 + faseAtual*200; 
     invasores.push({ x:300, y:80, w:200, h:160, hp:bossHp, maxHp:bossHp, isBoss:true, tipo:1, dir:1, vel:1.4 });
-    const shieldHp = 400 + faseAtual*20;
-    invasores.push({ x:260, y:60, w:280, h:200, hp:shieldHp, maxHp:shieldHp, isShield:true });
-    for(let i=0;i<4;i++) invasores.push({ x:120 + i*170, y:330, w:55, h:55, vivo:true, dir:1, vel:1.2 });
-    contadorTempo=0;
+    invasores.push({ x:260, y:60, w:280, h:200, hp:400, maxHp:400, isShield:true });
   } else {
-    const cols = 5;
     const rows = 2 + Math.min(2, Math.floor(faseAtual/3));
     for(let r=0;r<rows;r++){
-      for(let c=0;c<cols;c++){
+      for(let c=0;c<5;c++){
         invasores.push({ x: c*110 + 130, y: r*70 + 70, w:55, h:55, vivo:true, dir:1, vel: 0.8 + faseAtual*0.15 });
       }
     }
@@ -262,31 +272,20 @@ function criarFase(){
 
 window.addEventListener('keydown', e => {
   keys[e.code] = true;
-  if(!tempoParado && modo==='jogando' && !bossMorrendo) {
-      if(e.code === 'KeyE') usarHabilidadeE();
-      if(e.code === 'KeyR') usarHabilidadeR();
+  if(modo==='jogando' && !bossMorrendo) {
+      if(e.code === 'KeyE' && player.kills >= 3){
+        tiros.push({ x: player.x + player.w/2 - 25, y: player.y - 20, w:50, h:50, s:9, isFireball:true });
+        player.kills -= 3;
+      }
+      if(e.code === 'KeyR' && player.kills >= 2 && !player.escudoAtivo){
+        player.escudoAtivo = true; player.escudoTimer = 2000; player.kills -= 2;
+      }
   }
-  if(['ArrowLeft','ArrowRight','KeyA','KeyD','Space'].includes(e.code)) e.preventDefault();
 });
 window.addEventListener('keyup', e => { keys[e.code] = false; });
 
-function usarHabilidadeE(){
-  if(player.kills >= 3){
-    tiros.push({ x: player.x + player.w/2 - 25, y: player.y - 20, w:50, h:50, s:9, isFireball:true });
-    player.kills -= 3;
-  }
-}
-
-function usarHabilidadeR(){
-    if(player.kills >= 2 && !player.escudoAtivo){
-        player.escudoAtivo = true;
-        player.escudoTimer = 2000;
-        player.kills -= 2;
-    }
-}
-
 function explodir(x,y,color){
-  for(let i=0;i<14;i++){
+  for(let i=0;i<12;i++){
     const a = Math.random()*Math.PI*2;
     const sp = 1 + Math.random()*3;
     particulas.push({ x, y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, life:30, color });
@@ -298,79 +297,16 @@ function desenharNave(obj, color, isPlayer){
   const cx = obj.x + obj.w/2, cy = obj.y + obj.h/2;
   const flutua = Math.sin(frameAnim*0.08 + obj.x*0.05) * 3;
   ctx.translate(cx, cy + flutua);
-  
-  if(!isPlayer && obj.dir) ctx.rotate(obj.dir * 0.1);
   if(isPlayer && player.danoTime > 0 && Math.floor(player.danoTime/4)%2) ctx.globalAlpha = 0.4;
-  
   const img = isPlayer ? skins.player : (obj.x === amigo.x ? skins.amigo : skins.alien);
-  if (img.complete && img.naturalWidth !== 0) {
-      ctx.drawImage(img, -obj.w/2, -obj.h/2, obj.w, obj.h);
-  } else {
-      ctx.fillStyle = color;
-      if(isPlayer){
-        ctx.beginPath(); ctx.moveTo(0, -obj.h/2); ctx.lineTo(obj.w/2, obj.h/2); ctx.lineTo(0, obj.h/3); ctx.lineTo(-obj.w/2, obj.h/2); ctx.closePath(); ctx.fill();
-      } else {
-        ctx.beginPath(); ctx.ellipse(0,0,obj.w/2,obj.h/2.2,0,0,Math.PI*2); ctx.fill();
-      }
-  }
-
+  ctx.drawImage(img, -obj.w/2, -obj.h/2, obj.w, obj.h);
   if(isPlayer && player.escudoAtivo) {
       ctx.restore(); ctx.save();
       ctx.translate(cx, cy + flutua);
-      ctx.rotate(frameAnim * 0.1);
-      if (skins.escudo.complete && skins.escudo.naturalWidth !== 0) {
-          ctx.globalAlpha = 0.6 + Math.sin(frameAnim*0.2)*0.2;
-          ctx.drawImage(skins.escudo, -obj.w*0.8, -obj.h*0.8, obj.w*1.6, obj.h*1.6);
-      } else {
-          ctx.strokeStyle = '#00d2ff'; ctx.lineWidth = 4;
-          ctx.beginPath(); ctx.arc(0,0, obj.w*0.8, 0, Math.PI*2); ctx.stroke();
-      }
-  }
-
-  ctx.restore();
-}
-
-function desenharBoss(obj){
-  ctx.save();
-  const cx = obj.x + obj.w/2, cy = obj.y + obj.h/2;
-  ctx.translate(cx, cy + Math.sin(frameAnim*0.05) * 6);
-  if(bossMorrendo) ctx.filter = `hue-rotate(${frameAnim*15}deg) brightness(2)`;
-  const img = (obj.tipo === 2) ? skins.chefe2 : skins.chefe;
-  if (img.complete && img.naturalWidth !== 0) {
-      ctx.drawImage(img, -obj.w/2, -obj.h/2, obj.w, obj.h);
-  } else {
-      ctx.fillStyle = (obj.tipo === 2) ? '#444' : '#8b0030';
-      ctx.beginPath(); ctx.ellipse(0,0,obj.w/2,obj.h/2,0,0,Math.PI*2); ctx.fill();
+      ctx.globalAlpha = 0.6 + Math.sin(frameAnim*0.2)*0.2;
+      ctx.drawImage(skins.escudo, -obj.w*0.8, -obj.h*0.8, obj.w*1.6, obj.h*1.6);
   }
   ctx.restore();
-}
-
-function desenharEscudoBoss(obj){
-  ctx.save();
-  ctx.translate(obj.x + obj.w/2, obj.y + obj.h/2);
-  if (skins.escudo.complete && skins.escudo.naturalWidth !== 0) {
-      ctx.globalAlpha = 0.5 + Math.sin(frameAnim*0.1)*0.2;
-      ctx.drawImage(skins.escudo, -obj.w/2, -obj.h/2, obj.w, obj.h);
-  } else {
-      ctx.globalAlpha = 0.35; ctx.strokeStyle = '#00d2ff'; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.ellipse(0,0,obj.w/2,obj.h/2,0,0,Math.PI*2); ctx.stroke();
-  }
-  ctx.restore();
-}
-
-function desenharFireball(t){
-  ctx.save();
-  ctx.translate(t.x + t.w/2, t.y + t.h/2); ctx.rotate(frameAnim*0.3);
-  if (skins.fireball.complete && skins.fireball.naturalWidth !== 0) {
-      ctx.drawImage(skins.fireball, -t.w/2, -t.h/2, t.w, t.h);
-  } else {
-      ctx.fillStyle = '#ffae3b'; ctx.beginPath(); ctx.arc(0,0,t.w/2,0,Math.PI*2); ctx.fill();
-  }
-  ctx.restore();
-}
-
-function colide(a,b){
-  return a.x < b.x+b.w && a.x+(a.w||6) > b.x && a.y < b.y+b.h && a.y+(a.h||20) > b.y;
 }
 
 function gameLoop(now){
@@ -386,7 +322,6 @@ function gameLoop(now){
 
   if(player.danoTime>0) player.danoTime -= dt/16;
   if(player.cooldown>0) player.cooldown -= dt;
-  
   if(player.escudoAtivo){
       player.escudoTimer -= dt;
       if(player.escudoTimer <= 0) player.escudoAtivo = false;
@@ -405,123 +340,85 @@ function gameLoop(now){
   const boss = invasores.find(i=>i.isBoss && i.hp>0);
   const shield = invasores.find(i=>i.isShield && i.hp>0);
 
-  if(bossMortoCheck = invasores.find(i=>i.isBoss && i.hp <= 0 && i.tipo === 2 && !bossMorrendo)){
-      bossMorrendo = true;
-      $('game-container').classList.add('shake');
-      falar("MK-II: Nos veremos novamente mortal...", 3500, () => {
-          invasores = invasores.filter(i => !i.isBoss);
-          faseAtual++;
-          criarFase();
-      });
+  // BOSS 3 GIF E EFEITOS
+  if(boss && boss.tipo === 3){
+      const gif = $('boss3-gif');
+      gif.style.display = 'block';
+      gif.style.left = (canvas.offsetLeft + boss.x) + "px";
+      gif.style.top = (canvas.offsetTop + boss.y) + "px";
+      gif.style.width = boss.w + "px";
+      if(boss.hp < 5000) $('game-container').classList.add('shake');
+      if(boss.hp < 2500) $('ui-camada').classList.add('glitch-ui');
   }
 
-  // BOSS 2 - IA DE DESVIO INTELIGENTE
-  if(boss && boss.tipo === 2 && !tempoParado && !bossMorrendo){
+  // BOSS 2 IA ESQUIVA
+  if(boss && boss.tipo === 2 && !bossMorrendo){
       tiros.forEach(t => {
-          if(!t.isFireball && Math.abs(t.x - (boss.x + boss.w/2)) < 110 && t.y > boss.y && t.y < boss.y + 450){
-              const centroTela = 400;
-              const forcaEsquiva = 7.5;
-              
-              // Se estiver no canto esquerdo, só foge pra direita
-              if(boss.x < 100) boss.x += forcaEsquiva;
-              // Se estiver no canto direito, só foge pra esquerda
-              else if(boss.x > 520) boss.x -= forcaEsquiva;
-              // No meio, foge do tiro normalmente
-              else {
-                  boss.x += (t.x < boss.x + boss.w/2) ? forcaEsquiva : -forcaEsquiva;
-              }
+          if(!t.isFireball && Math.abs(t.x - (boss.x + boss.w/2)) < 110 && t.y > boss.y){
+              boss.x += (t.x < boss.x + boss.w/2) ? 7.5 : -7.5;
           }
       });
-      // Movimento errático sutil para não ser estático
-      boss.x += Math.sin(frameAnim * 0.05) * 2;
-      
-      if(boss.x < 15) boss.x = 15;
-      if(boss.x > 800 - boss.w - 15) boss.x = 800 - boss.w - 15;
   }
 
-  if(!tempoParado && !bossMorrendo){
+  if(!bossMorrendo){
     const speed = 0.5 * dt;
     if((keys['ArrowLeft'] || keys['KeyA'])  && player.tx > 10)  player.tx -= speed;
-    if((keys['ArrowRight'] || keys['KeyD']) && player.tx < 740-player.w+10) player.tx += speed;
+    if((keys['ArrowRight'] || keys['KeyD']) && player.tx < 730) player.tx += speed;
     if(keys['Space'] && player.cooldown <= 0){
       tiros.push({ x: player.x + player.w/2 - 3, y: player.y, w:6, h:18, s:11 });
-      player.cooldown = 220;
-      somTiroPlayer.currentTime = 0; somTiroPlayer.play();
+      player.cooldown = 220; somTiroPlayer.currentTime = 0; somTiroPlayer.play();
     }
   }
 
   for(let i=tiros.length-1;i>=0;i--){
-    const t = tiros[i]; t.y -= t.s * (dt/16);
-    if(t.y < -100) tiros.splice(i,1);
+    tiros[i].y -= tiros[i].s * (dt/16);
+    if(tiros[i].y < -100) tiros.splice(i,1);
   }
 
   let vivos = 0; let edge = false;
   invasores.forEach(inv=>{
     if(inv.isBoss ? inv.hp<=0 : (inv.isShield ? inv.hp<=0 : !inv.vivo)) return;
     if(!inv.isShield) vivos++;
-
-    if((inv.isBoss || inv.isShield || !tempoParado) && !bossMorrendo){
-       if(inv.isShield && boss){ 
-         inv.x = boss.x + boss.w/2 - inv.w/2; 
-         inv.y = boss.y + boss.h/2 - inv.h/2; 
-       } else {
+    if(!bossMorrendo){
+       if(inv.isShield && boss){ inv.x = boss.x + boss.w/2 - inv.w/2; inv.y = boss.y + boss.h/2 - inv.h/2; }
+       else {
          inv.x += inv.vel * inv.dir * (dt/16);
-         if(inv.x > 800 - inv.w - 10 || inv.x < 10) edge = true;
-         if(Math.random() < (inv.isBoss ? 0.025 : 0.005) * (dt/16)) {
-            tirosE.push({ x: inv.x + inv.w/2 - 2, y: inv.y + inv.h });
+         if(inv.x > 790 - inv.w || inv.x < 10) edge = true;
+         if(Math.random() < (inv.isBoss ? 0.03 : 0.005) * (dt/16)) {
+            tirosE.push({ x: inv.x + inv.w/2, y: inv.y + inv.h, s: 5 });
             somTiroInimigo.currentTime = 0; somTiroInimigo.play();
          }
        }
     }
   });
 
-  if(edge && !bossMorrendo){ 
-    invasores.forEach(e=>{ 
-      if(!e.isShield){ 
-        e.dir *= -1; 
-        if(e.x < 10) e.x = 11;
-        if(e.x > 800 - e.w - 10) e.x = 800 - e.w - 11;
-        if(!e.isBoss && !tempoParado) e.y += 12; 
-      } 
-    }); 
-  }
+  if(edge){ invasores.forEach(e=>{ if(!e.isShield){ e.dir *= -1; if(!e.isBoss) e.y += 10; } }); }
 
   for(let i=tirosE.length-1;i>=0;i--){
-    const te = tirosE[i]; te.y += 5 * (dt/16);
-    const hitBoxTiro = {x:te.x, y:te.y, w:5, h:15};
-    if(colide(hitBoxTiro, player)){
-        if(player.escudoAtivo) {
-            explodir(te.x, te.y, '#00d2ff');
-            tirosE.splice(i,1);
-        } else if(player.danoTime <= 0) {
+    const te = tirosE[i]; te.y += te.s * (dt/16);
+    if(te.x < player.x+player.w && te.x+5 > player.x && te.y < player.y+player.h && te.y+15 > player.y){
+        if(player.escudoAtivo) { tirosE.splice(i,1); }
+        else if(player.danoTime <= 0) {
             player.vidas--; player.danoTime = 60; tirosE.splice(i,1);
-            explodir(player.x+player.w/2, player.y+player.h/2, '#00ff88');
             if(player.vidas <= 0){ modo = 'gameover'; $('fase-final').innerText = faseAtual; $('game-over').classList.add('show'); }
         }
     } else if(te.y > 620) tirosE.splice(i,1);
   }
 
-  if(!tempoParado && !bossMorrendo){
-    for(let ti=tiros.length-1; ti>=0; ti--){
-      const t = tiros[ti]; let consumed = false;
-      for(const inv of invasores){
-        const alive = inv.isBoss ? inv.hp>0 : (inv.isShield ? inv.hp>0 : inv.vivo);
-        if(!alive || !colide(t, inv)) continue;
-
-        if(t.isFireball){
-          if(inv.isBoss && inv.tipo === 2) { 
-            explodir(t.x, t.y, '#666'); 
-            tiros.splice(ti,1); 
-            consumed = true; break; 
+  for(let ti=tiros.length-1; ti>=0; ti--){
+    const t = tiros[ti];
+    for(const inv of invasores){
+      const alive = inv.isBoss ? inv.hp>0 : (inv.isShield ? inv.hp>0 : inv.vivo);
+      if(!alive) continue;
+      if(t.x < inv.x+inv.w && t.x+t.w > inv.x && t.y < inv.y+inv.h && t.y+t.h > inv.y){
+          if(t.isFireball){
+            if(inv.isBoss || inv.isShield) inv.hp -= 45;
+            else { inv.vivo = false; player.kills++; }
+          } else {
+            if(inv.isShield) { inv.hp -= 50; tiros.splice(ti,1); break; }
+            else if(inv.isBoss) { if(!shield) inv.hp -= 50; tiros.splice(ti,1); break; }
+            else { inv.vivo = false; player.kills++; tiros.splice(ti,1); break; }
           }
-          if(inv.isBoss || inv.isShield){ inv.hp -= 40; explodir(t.x+t.w/2, t.y+t.h/2, inv.isBoss ? '#ff0055' : '#00d2ff'); }
-          else { inv.vivo = false; player.kills++; explodir(inv.x+inv.w/2, inv.y+inv.h/2, '#ff0055'); }
-        } else {
-          if(inv.isShield) { inv.hp -= 50; consumed = true; }
-          else if(inv.isBoss) { if(!(shield && shield.hp>0)) inv.hp -= 50; consumed = true; }
-          else { inv.vivo = false; player.kills++; consumed = true; }
-          if(consumed) { explodir(t.x, t.y, '#fff'); tiros.splice(ti,1); break; }
-        }
       }
     }
   }
@@ -530,17 +427,20 @@ function gameLoop(now){
   if(vivos === 0 && !bossMorrendo){ faseAtual++; criarFase(); }
 
   invasores.forEach(inv=>{
-    if(inv.isBoss){ if(inv.hp>0 || (inv.tipo === 2 && bossMorrendo)) desenharBoss(inv); }
-    else if(inv.isShield){ if(inv.hp>0) desenharEscudoBoss(inv); }
-    else if(inv.vivo) desenharNave(inv, '#ff0055', false);
+    if(inv.isBoss){ if(inv.tipo !== 3) ctx.drawImage(inv.tipo===2?skins.chefe2:skins.chefe, inv.x, inv.y, inv.w, inv.h); }
+    else if(inv.isShield){ if(inv.hp>0) { ctx.globalAlpha=0.3; ctx.drawImage(skins.escudo, inv.x, inv.y, inv.w, inv.h); ctx.globalAlpha=1; } }
+    else if(inv.vivo) ctx.drawImage(skins.alien, inv.x, inv.y, inv.w, inv.h);
   });
-  tiros.forEach(t=> t.isFireball ? desenharFireball(t) : (ctx.fillStyle='#fff', ctx.fillRect(t.x, t.y, t.w, t.h)));
+  
+  tiros.forEach(t=> t.isFireball ? ctx.drawImage(skins.fireball, t.x, t.y, t.w, t.h) : (ctx.fillStyle='#fff', ctx.fillRect(t.x, t.y, t.w, t.h)));
   tirosE.forEach(te=>(ctx.fillStyle='#ff0055', ctx.fillRect(te.x, te.y, 5, 15)));
+  
   particulas.forEach((p,i)=>{
-    p.x += p.vx * (dt/16); p.y += p.vy * (dt/16); p.life -= dt/16;
+    p.x += p.vx; p.y += p.vy; p.life--;
     if(p.life<=0) particulas.splice(i,1);
-    else { ctx.globalAlpha = p.life/30; ctx.fillStyle = p.color; ctx.fillRect(p.x-2,p.y-2,4,4); ctx.globalAlpha = 1; }
+    else { ctx.globalAlpha = p.life/30; ctx.fillStyle = p.color; ctx.fillRect(p.x,p.y,3,3); ctx.globalAlpha = 1; }
   });
+
   requestAnimationFrame(gameLoop);
 }
 requestAnimationFrame(gameLoop);

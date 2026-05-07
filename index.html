@@ -123,7 +123,15 @@ skins.chefe.src = 'chefe1.png';
 skins.fireball.src = 'bola-defogo.png';
 skins.escudo.src = 'escudo.png';
 
+// --- NOVOS SONS ADICIONADOS ---
+const somMenu = new Audio('menu.mp3');
+somMenu.loop = true;
+const somTiroPlayer = new Audio('nave1.mp3');
+const somTiroInimigo = new Audio('nave2.mp3');
 const somTempo = new Audio('tempo.mp3');
+
+// Inicia a música do menu (precisa de interação do usuário em alguns navegadores)
+window.onclick = () => { if(modo === 'menu') somMenu.play(); };
 
 let modo = 'menu';
 let faseAtual = 1;
@@ -152,6 +160,7 @@ function falar(texto, tempo, cb){
 }
 
 function iniciarHistoria(){
+  somMenu.pause(); // Para a música do menu ao iniciar
   $('menu-principal').style.display='none';
   $('game-container').style.display='block';
   modo='historia';
@@ -203,6 +212,7 @@ function usarHabilidade(){
   if(player.kills >= 3){
     tiros.push({ x: player.x + player.w/2 - 25, y: player.y - 20, w:50, h:50, s:9, isFireball:true });
     player.kills -= 3;
+    // Som opcional para habilidade aqui se quiser no futuro
   }
 }
 
@@ -314,13 +324,15 @@ function gameLoop(now){
 
   if(!tempoParado){
     const speed = 0.5 * dt;
-    // MOVIMENTAÇÃO ATUALIZADA: ACEITA SETAS OU A/D
     if((keys['ArrowLeft'] || keys['KeyA'])  && player.tx > 10)  player.tx -= speed;
     if((keys['ArrowRight'] || keys['KeyD']) && player.tx < 740-player.w+10) player.tx += speed;
     
     if(keys['Space'] && player.cooldown <= 0){
       tiros.push({ x: player.x + player.w/2 - 3, y: player.y, w:6, h:18, s:11 });
       player.cooldown = 220;
+      // SOM TIRO PLAYER
+      somTiroPlayer.currentTime = 0;
+      somTiroPlayer.play();
     }
 
     for(let i=tiros.length-1;i>=0;i--){
@@ -345,7 +357,12 @@ function gameLoop(now){
       else {
         inv.x += inv.vel * inv.dir * (dt/16);
         if(inv.x > 740 || inv.x < 10) edge = true;
-        if(Math.random() < (inv.isBoss ? 0.025 : 0.005) * (dt/16)) tirosE.push({ x: inv.x + inv.w/2 - 2, y: inv.y + inv.h });
+        if(Math.random() < (inv.isBoss ? 0.025 : 0.005) * (dt/16)) {
+          tirosE.push({ x: inv.x + inv.w/2 - 2, y: inv.y + inv.h });
+          // SOM TIRO INIMIGO
+          somTiroInimigo.currentTime = 0;
+          somTiroInimigo.play();
+        }
       }
     });
     if(edge) invasores.forEach(e=>{ if(!e.isShield){ e.dir *= -1; if(!e.isBoss) e.y += 12; } });

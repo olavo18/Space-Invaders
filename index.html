@@ -3,24 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Space Invaders Neon - Ultra Edition</title>
+    <title>Space Invaders Neon - Isulpar Edition</title>
+    
+    <!-- Importação de Fontes -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
-    <!-- LINK PARA O CSS -->
+    
+    <!-- CONEXÃO COM O ARQUIVO CSS EXTERNO -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+<!-- Camada inicial para permitir áudio (requisito dos navegadores) -->
 <div id="overlay-start" onclick="permitirAudio()">
-    <h2>CLIQUE PARA ATIVAR O NEON</h2>
-    <p>(Habilita trilha sonora e efeitos)</p>
+    <h2>CLIQUE PARA ATIVAR O SISTEMA</h2>
+    <p>(Habilita trilha sonora e efeitos neon)</p>
 </div>
 
+<!-- Interface do Menu -->
 <div id="menu-principal">
     <h1>SPACE INVADERS</h1>
-    <p>Mova com <b>A D</b> ou <b>SETAS</b><br>Atire com <b>ESPAÇO</b><br>Especial <b>(E)</b> | Escudo 2s <b>(R)</b><br>Chefes a cada 5 níveis.</p>
+    <div style="margin-bottom: 25px; line-height: 1.6;">
+        <p>Mova: <b>A / D</b> ou <b>SETAS</b></p>
+        <p>Atirar: <b>ESPAÇO</b></p>
+        <p>Especial: <b>(E)</b> | Escudo: <b>(R)</b></p>
+    </div>
     <button class="btn-play" onclick="iniciarHistoria()">INICIAR JOGO</button>
 </div>
 
+<!-- Container Principal do Jogo -->
 <div id="game-container">
     <div id="ui-camada">
         <div>FASE: <span id="fase-txt">1</span></div>
@@ -32,21 +42,23 @@
     <div id="boss-hp-label">CHEFE SUPREMO</div>
     <div id="boss-hp-bar"><div id="boss-hp-fill"></div></div>
     
-    <!-- Imagem do Boss 3 (Só aparece na fase 15) -->
-    <img id="boss3-gif" src="chefe3.gif" style="position: absolute; display: none; z-index: 45;">
+    <!-- Elemento para o Chefe Especial -->
+    <img id="boss3-gif" src="chefe3.gif" style="position: absolute; display: none; z-index: 45; width: 200px;">
 
     <div id="efeito-tempo"></div>
     <div id="dialogo-box"></div>
     
     <div id="game-over">
         <h2>FALHA NA MISSÃO</h2>
-        <button class="btn-play" style="width:auto;padding:14px 30px" onclick="location.reload()">REINICIAR</button>
+        <button class="btn-play" style="width:auto; padding:14px 30px" onclick="location.reload()">REINICIAR</button>
     </div>
     
     <canvas id="gameCanvas" width="800" height="600"></canvas>
 </div>
 
-<!-- LINK PARA O JAVASCRIPT -->
+<!-- CONEXÃO COM O ARQUIVO JS EXTERNO -->
+<!-- Importante: deve ficar logo antes do fechamento da tag body -->
 <script src="script.js"></script>
+
 </body>
 </html>

@@ -3,32 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Space Invaders - Final Fix</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap" rel="stylesheet">
+    <title>Space Invaders - Final</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div id="overlay-start" onclick="permitirAudio()">
-    <h1>CLIQUE PARA INICIAR</h1>
-</div>
-
-<div id="menu-principal" style="display:none;">
-    <h1 style="font-family:'Orbitron'; color:#00d2ff;">SPACE INVADERS</h1>
-    <button class="btn-play" onclick="iniciarJogo()">JOGAR</button>
+<div id="overlay-start" onclick="iniciar()">
+    <h1>CLIQUE PARA JOGAR</h1>
 </div>
 
 <div id="game-container" style="display:none;">
-    <div id="ui-camada">
-        <span>FASE: <span id="fase-txt">1</span></span>
-        <span>VIDAS: <span id="vidas-txt">3</span></span>
-        <span>KILLS: <span id="kills-txt">0</span></span>
+    <div id="ui">
+        FASE: <span id="fase-txt">1</span> | 
+        VIDAS: <span id="vidas-txt">3</span> | 
+        KILLS: <span id="kills-txt">0</span>
     </div>
-
-    <div id="boss-hp-bar"><div id="boss-hp-fill"></div></div>
-    <img id="boss3-gif" src="chefe3.gif" style="position: absolute; display: none; z-index: 45; width: 150px;">
-    
-    <div id="dialogo-box"></div>
+    <div id="boss-bar"><div id="boss-fill"></div></div>
     <canvas id="gameCanvas" width="800" height="600"></canvas>
 </div>
 

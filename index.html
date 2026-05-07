@@ -33,22 +33,22 @@ html,body{
 body{
  background:radial-gradient(circle at center,#1a1a3a 0%,#050510 100%);
  font-family:'Plus Jakarta Sans',sans-serif;
+ color:white;
  display:flex;
  align-items:center;
  justify-content:center;
- color:white;
  overflow:hidden;
 }
 
 body::before{
- content:'';
+ content:"";
  position:fixed;
  inset:0;
  pointer-events:none;
  background-image:
- radial-gradient(1px 1px at 20% 30%,#fff,transparent),
- radial-gradient(1px 1px at 70% 80%,#fff,transparent),
- radial-gradient(2px 2px at 40% 60%,#00d2ff,transparent);
+ radial-gradient(1px 1px at 20% 30%, #fff, transparent),
+ radial-gradient(1px 1px at 70% 80%, #fff, transparent),
+ radial-gradient(2px 2px at 40% 60%, #00d2ff, transparent);
  background-size:600px 600px;
  opacity:.4;
  animation:drift 100s linear infinite;
@@ -73,16 +73,16 @@ body::before{
 }
 
 #overlay-start h2{
+ font-family:'Orbitron';
  font-size:38px;
  color:#00d2ff;
- font-family:'Orbitron';
  text-shadow:0 0 20px #00d2ff;
  animation:pulse 1.5s infinite;
 }
 
 #overlay-start p{
- margin-top:15px;
  opacity:.7;
+ margin-top:15px;
 }
 
 @keyframes pulse{
@@ -93,30 +93,32 @@ body::before{
 
 #menu-principal{
  display:none;
- width:95%;
- max-width:650px;
  background:rgba(5,5,20,.88);
  border:3px solid #00d2ff;
  border-radius:35px;
- padding:50px;
+ padding:55px;
+ width:95%;
+ max-width:650px;
  text-align:center;
- backdrop-filter:blur(15px);
- box-shadow:0 0 50px rgba(0,210,255,.3);
  position:relative;
  overflow:hidden;
+ box-shadow:0 0 60px rgba(0,210,255,.3);
+ backdrop-filter:blur(15px);
 }
 
 #menu-principal::after{
- content:'';
+ content:"";
  position:absolute;
  top:-100%;
  left:0;
  width:100%;
  height:50%;
- background:linear-gradient(to bottom,
+ background:linear-gradient(
+ to bottom,
  transparent,
  rgba(0,210,255,.08),
- transparent);
+ transparent
+ );
  animation:scan 4s linear infinite;
 }
 
@@ -126,8 +128,8 @@ body::before{
 }
 
 h1{
- font-size:54px;
  font-family:'Orbitron';
+ font-size:55px;
  letter-spacing:8px;
  color:#00d2ff;
  text-shadow:
@@ -141,14 +143,14 @@ h1{
  padding:20px;
  border:none;
  border-radius:18px;
+ background:linear-gradient(135deg,#ff0055,#ff3c8d);
+ color:white;
  font-size:22px;
  font-family:'Orbitron';
  font-weight:900;
  cursor:pointer;
- color:white;
- background:linear-gradient(135deg,#ff0055,#ff3c8d);
- box-shadow:0 10px 40px rgba(255,0,85,.5);
  transition:.3s;
+ box-shadow:0 10px 40px rgba(255,0,85,.5);
 }
 
 .btn-play:hover{
@@ -174,26 +176,27 @@ h1{
  right:20px;
  display:flex;
  justify-content:space-between;
- font-family:'Orbitron';
  z-index:200;
+ font-family:'Orbitron';
  color:#00d2ff;
 }
 
 #dialogo-box{
  position:absolute;
- bottom:25px;
+ bottom:20px;
  left:50%;
  transform:translateX(-50%);
  width:700px;
  max-width:92%;
- background:rgba(0,0,0,.82);
+ background:rgba(0,0,0,0.82);
+ color:#fff;
+ padding:18px 24px;
+ border-radius:18px;
  border:2px solid #00d2ff;
- border-radius:20px;
- padding:18px 25px;
- text-align:center;
- font-size:20px;
- font-family:'Orbitron';
  z-index:500;
+ font-size:20px;
+ text-align:center;
+ font-family:'Orbitron';
  display:none;
 }
 
@@ -204,12 +207,12 @@ h1{
 
 @keyframes fadeDialog{
  from{
-   opacity:0;
-   transform:translateX(-50%) translateY(15px);
+  opacity:0;
+  transform:translateX(-50%) translateY(10px);
  }
  to{
-   opacity:1;
-   transform:translateX(-50%) translateY(0);
+  opacity:1;
+  transform:translateX(-50%) translateY(0);
  }
 }
 
@@ -244,17 +247,6 @@ h1{
  background:linear-gradient(90deg,#ff0055,#ffae3b);
 }
 
-#game-over{
- position:absolute;
- inset:0;
- background:rgba(0,0,0,.9);
- display:none;
- flex-direction:column;
- align-items:center;
- justify-content:center;
- z-index:999;
-}
-
 canvas{
  display:block;
 }
@@ -265,13 +257,14 @@ canvas{
 
 <div id="overlay-start" onclick="permitirAudio()">
 <h2>CLIQUE PARA ATIVAR O NEON</h2>
-<p>Ativa sons e trilha sonora</p>
+<p>Ativa música e efeitos sonoros</p>
 </div>
 
 <div id="menu-principal">
+
 <h1>SPACE INVADERS</h1>
 
-<p>
+<p style="margin-bottom:25px;">
 A/D ou SETAS para mover<br>
 ESPAÇO para atirar<br>
 E = Bola de fogo<br>
@@ -281,6 +274,7 @@ R = Escudo
 <button class="btn-play" onclick="iniciarHistoria()">
 INICIAR MISSÃO
 </button>
+
 </div>
 
 <div id="game-container">
@@ -299,13 +293,6 @@ INICIAR MISSÃO
 
 <div id="dialogo-box"></div>
 
-<div id="game-over">
-<h1>GAME OVER</h1>
-<button class="btn-play" onclick="location.reload()">
-REINICIAR
-</button>
-</div>
-
 <canvas id="gameCanvas" width="800" height="600"></canvas>
 
 </div>
@@ -317,6 +304,24 @@ const ctx = canvas.getContext('2d');
 
 const $ = id => document.getElementById(id);
 
+const skins = {
+ player:new Image(),
+ amigo:new Image(),
+ alien:new Image(),
+ chefe:new Image(),
+ chefe2:new Image(),
+ fireball:new Image(),
+ escudo:new Image()
+};
+
+skins.player.src='jogadorprincipal.png';
+skins.amigo.src='amigo.png';
+skins.alien.src='alien.png';
+skins.chefe.src='chefe1.png';
+skins.chefe2.src='chefe2.png';
+skins.fireball.src='bola-defogo.png';
+skins.escudo.src='escudo.png';
+
 const somMenu = new Audio('menu.mp3');
 const somTempo = new Audio('tempo.mp3');
 const somTiro = new Audio('nave1.mp3');
@@ -324,7 +329,9 @@ const somTiro = new Audio('nave1.mp3');
 somMenu.loop = true;
 
 function permitirAudio(){
+
  $('overlay-start').style.display='none';
+
  $('menu-principal').style.display='block';
 
  somMenu.play();
@@ -333,6 +340,11 @@ function permitirAudio(){
  somTempo.pause();
  somTempo.currentTime = 0;
 }
+
+let modo = 'menu';
+let faseAtual = 1;
+let tempoParado = false;
+let contadorTempo = 0;
 
 const player = {
  x:370,
@@ -355,21 +367,18 @@ const amigo = {
 
 let tiros = [];
 let inimigos = [];
-let tempoParado = false;
-let faseAtual = 1;
-let modo = 'menu';
-let lastTime = performance.now();
 
 const keys = {};
 
 const falasChefe = [
  'ZA WARUDO!',
- 'O TEMPO PAROU!',
  'VOCÊ NÃO PODE SE MOVER!',
+ 'O TEMPO PAROU!',
  'INÚTIL!'
 ];
 
-function falar(texto,tempo=2000){
+function falar(texto,tempo=2500){
+
  const box = $('dialogo-box');
 
  box.innerText = texto;
@@ -379,6 +388,7 @@ function falar(texto,tempo=2000){
  setTimeout(()=>{
   box.classList.remove('show');
  },tempo);
+
 }
 
 function iniciarHistoria(){
@@ -386,50 +396,48 @@ function iniciarHistoria(){
  somMenu.pause();
 
  $('menu-principal').style.display='none';
+
  $('game-container').style.display='block';
 
  modo='historia';
 
- amigo.x = 120;
+ amigo.x = 140;
 
  falar('Amigo: Hunter... tome cuidado...',2500);
 
  setTimeout(()=>{
-
-  falar('Hunter: Eu vou acabar com todos eles.',2500);
-
+  falar('Hunter: Eu consigo derrotar eles.',2500);
  },3000);
 
  setTimeout(()=>{
-
   falar('Hunter: ADEUS MEU AMIGO!',2500);
-
  },6000);
 
  setTimeout(()=>{
-
-  iniciarAnimacaoSubida();
-
+  animacaoSubida();
  },9000);
 
 }
 
-function iniciarAnimacaoSubida(){
+function animacaoSubida(){
 
- let intervalo = setInterval(()=>{
+ const subir = setInterval(()=>{
 
   player.y -= 4;
 
   if(player.y < -120){
 
-   clearInterval(intervalo);
+   clearInterval(subir);
 
    falar('A INVASÃO COMEÇOU!',3000);
 
    setTimeout(()=>{
+
     modo='jogando';
+
     criarFase();
-   },2500);
+
+   },3000);
 
   }
 
@@ -449,7 +457,7 @@ function criarFase(){
 
   inimigos.push({
    x:250,
-   y:80,
+   y:70,
    w:220,
    h:170,
    hp:12000,
@@ -466,14 +474,13 @@ function criarFase(){
 
   inimigos.push({
    x:280,
-   y:80,
+   y:70,
    w:200,
    h:150,
    hp:7000,
    maxHp:7000,
    boss:1,
-   dir:1,
-   tempoCooldown:0
+   dir:1
   });
 
  }
@@ -485,12 +492,11 @@ function criarFase(){
   for(let i=0;i<10;i++){
 
    inimigos.push({
-    x:80 + (i%5)*120,
-    y:70 + Math.floor(i/5)*80,
-    w:50,
-    h:50,
-    hp:1,
-    dir:1
+    x:80+(i%5)*120,
+    y:80+Math.floor(i/5)*90,
+    w:55,
+    h:55,
+    hp:1
    });
 
   }
@@ -525,7 +531,7 @@ window.addEventListener('keyup',e=>{
  keys[e.code]=false;
 });
 
-function ativarZaWarudo(boss){
+function ativarZaWarudo(){
 
  if(tempoParado) return;
 
@@ -536,7 +542,8 @@ function ativarZaWarudo(boss){
  somTempo.currentTime = 0;
  somTempo.play();
 
- const frase = falasChefe[Math.floor(Math.random()*falasChefe.length)];
+ const frase =
+  falasChefe[Math.floor(Math.random()*falasChefe.length)];
 
  falar(frase,3000);
 
@@ -552,49 +559,71 @@ function ativarZaWarudo(boss){
 
 function desenharPlayer(){
 
- ctx.fillStyle='#00ff88';
+ if(skins.player.complete){
 
- ctx.beginPath();
+  ctx.drawImage(
+   skins.player,
+   player.x,
+   player.y,
+   player.w,
+   player.h
+  );
 
- ctx.moveTo(player.x+30,player.y);
- ctx.lineTo(player.x+60,player.y+60);
- ctx.lineTo(player.x,player.y+60);
-
- ctx.fill();
+ }
 
 }
 
 function desenharAmigo(){
 
- ctx.fillStyle='#00d2ff';
+ if(skins.amigo.complete){
 
- ctx.fillRect(amigo.x,amigo.y,60,60);
-
-}
-
-function desenharInimigo(i){
-
- if(i.boss===1){
-
-  ctx.fillStyle='#ff0055';
-
-  ctx.fillRect(i.x,i.y,i.w,i.h);
+  ctx.drawImage(
+   skins.amigo,
+   amigo.x,
+   amigo.y,
+   amigo.w,
+   amigo.h
+  );
 
  }
 
- else if(i.boss===2){
+}
 
-  ctx.fillStyle='#777';
+function desenharInimigo(enemy){
 
-  ctx.fillRect(i.x,i.y,i.w,i.h);
+ if(enemy.boss===1){
+
+  ctx.drawImage(
+   skins.chefe,
+   enemy.x,
+   enemy.y,
+   enemy.w,
+   enemy.h
+  );
+
+ }
+
+ else if(enemy.boss===2){
+
+  ctx.drawImage(
+   skins.chefe2,
+   enemy.x,
+   enemy.y,
+   enemy.w,
+   enemy.h
+  );
 
  }
 
  else{
 
-  ctx.fillStyle='red';
-
-  ctx.fillRect(i.x,i.y,i.w,i.h);
+  ctx.drawImage(
+   skins.alien,
+   enemy.x,
+   enemy.y,
+   enemy.w,
+   enemy.h
+  );
 
  }
 
@@ -611,9 +640,11 @@ function colisao(a,b){
 
 }
 
+let lastTime = performance.now();
+
 function gameLoop(now){
 
- const dt = now - lastTime;
+ const dt = now-lastTime;
 
  lastTime = now;
 
@@ -631,7 +662,7 @@ function gameLoop(now){
   if(!tempoParado) player.x += 5;
  }
 
- if(amigo.x > -100 && modo==='historia'){
+ if(amigo.x>-100 && modo==='historia'){
   desenharAmigo();
  }
 
@@ -653,7 +684,6 @@ function gameLoop(now){
     if(enemy.boss===2){
 
      tiros.splice(i,1);
-
      return;
 
     }
@@ -698,15 +728,13 @@ function gameLoop(now){
 
   if(enemy.boss===1){
 
-   enemy.tempoCooldown ??= 0;
+   contadorTempo += dt;
 
-   enemy.tempoCooldown += dt;
+   if(contadorTempo >= 9000){
 
-   if(enemy.tempoCooldown > 8000){
+    contadorTempo = 0;
 
-    enemy.tempoCooldown = 0;
-
-    ativarZaWarudo(enemy);
+    ativarZaWarudo();
 
    }
 

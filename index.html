@@ -91,6 +91,14 @@
     flex-direction:column;align-items:center;justify-content:center;z-index:300;gap:20px}
   #game-over.show{display:flex}
   #game-over h2{font-family:'Orbitron';font-size:54px;color:var(--neon-pink);letter-spacing:8px}
+
+  /* Animação de tremor para a morte do Boss */
+  .shake { animation: shakeAnim 0.1s infinite; }
+  @keyframes shakeAnim {
+    0% { transform: translate(2px, 2px); }
+    50% { transform: translate(-2px, -2px); }
+    100% { transform: translate(1px, -1px); }
+  }
 </style>
 </head>
 <body>
@@ -172,6 +180,7 @@ let tempoParado = false;
 let contadorTempo = 0;
 let lastTime = performance.now();
 let avisandoHabilidade = false;
+let bossMorrendo = false;
 
 const player = { x:370, y:520, w:60, h:60, tx:370, vidas:3, danoTime:0, kills:0, cooldown:0 };
 const amigo  = { x:-150, y:450, w:60, h:60, tx:-150 };
@@ -212,17 +221,18 @@ function iniciarHistoria(){
 }
 
 function criarFase(){
-  invasores=[]; tiros=[]; tirosE=[]; particulas=[]; avisandoHabilidade = false;
-  const bossBar = $('boss-hp-bar'), bossLabel = $('boss-hp-label');
+  invasores=[]; tiros=[]; tirosE=[]; particulas=[]; avisandoHabilidade = false; bossMorrendo = false;
+  const bossBar = $('boss-hp-bar'), bossLabel = $('boss-hp-label'), container = $('game-container');
   bossBar.style.display='none'; bossLabel.style.display='none';
+  container.classList.remove('shake');
 
-  // MECÂNICA BOSS 2 (FASE 10)
   if(faseAtual % 10 === 0){
     bossBar.style.display='block'; bossLabel.style.display='block';
     bossLabel.innerText = "MK-II: O ANULADOR";
     $('boss-hp-fill').style.width='100%';
-    invasores.push({ x:300, y:80, w:180, h:150, hp:650, maxHp:650, isBoss:true, tipo:2, dir:1, vel:2.5, spawnTimer:0 });
-    invasores.push({ x:260, y:60, w:250, h:190, hp:600, maxHp:600, isShield:true });
+    // VIDA AUMENTADA PARA 12.000
+    invasores.push({ x:300, y:80, w:180, h:150, hp:12000, maxHp:12000, isBoss:true, tipo:2, dir:1, vel:2.2, spawnTimer:0 });
+    invasores.push({ x:260, y:60, w:250, h:190, hp:800, maxHp:800, isShield:true });
   } 
   else if(faseAtual % 5 === 0){
     bossBar.style.display='block'; bossLabel.style.display='block';
@@ -247,7 +257,7 @@ function criarFase(){
 
 window.addEventListener('keydown', e => {
   keys[e.code] = true;
-  if(e.code === 'KeyE' && !tempoParado && modo==='jogando') usarHabilidade();
+  if(e.code === 'KeyE' && !tempoParado && modo==='jogando' && !bossMorrendo) usarHabilidade();
   if(['ArrowLeft','ArrowRight','KeyA','KeyD','Space'].includes(e.code)) e.preventDefault();
 });
 window.addEventListener('keyup', e => { keys[e.code] = false; });
@@ -292,6 +302,7 @@ function desenharBoss(obj){
   ctx.save();
   const cx = obj.x + obj.w/2, cy = obj.y + obj.h/2;
   ctx.translate(cx, cy + Math.sin(frameAnim*0.05) * 6);
+  if(bossMorrendo) ctx.filter = `hue-rotate(${frameAnim*10}deg) brightness(2)`;
   const img = (obj.tipo === 2) ? skins.chefe2 : skins.chefe;
   if (img.complete && img.naturalWidth !== 0) {
       ctx.drawImage(img, -obj.w/2, -obj.h/2, obj.w, obj.h);
@@ -356,7 +367,19 @@ function gameLoop(now){
   const boss = invasores.find(i=>i.isBoss && i.hp>0);
   const shield = invasores.find(i=>i.isShield && i.hp>0);
 
-  // MECÂNICA EXCLUSIVA BOSS 1 (ZA WARUDO)
+  // ANIMAÇÃO DE MORTE DO BOSS 2
+  const bossMortoCheck = invasores.find(i=>i.isBoss && i.hp <= 0 && i.tipo === 2 && !bossMorrendo);
+  if(bossMortoCheck){
+      bossMorrendo = true;
+      $('game-container').classList.add('shake');
+      falar("MK-II: Nos veremos novamente, mortal...", 3000, () => {
+          invasores = invasores.filter(i => !i.isBoss);
+          faseAtual++;
+          criarFase();
+      });
+  }
+
+  // LÓGICA BOSS 1 (ZA WARUDO)
   if(boss && boss.tipo === 1 && !tempoParado && !avisandoHabilidade){
     contadorTempo += dt/1000;
     if(contadorTempo >= 7){
@@ -375,21 +398,26 @@ function gameLoop(now){
     }
   }
 
-  // MECÂNICA EXCLUSIVA BOSS 2 (ESQUIVA E SPAWN)
-  if(boss && boss.tipo === 2 && !tempoParado){
+  // LÓGICA BOSS 2 (MK-II ESQUIVA REFEITA)
+  if(boss && boss.tipo === 2 && !tempoParado && !bossMorrendo){
+      // Esquiva: se um tiro estiver vindo na direção dele
       tiros.forEach(t => {
-          if(Math.abs(t.x - boss.x) < 120 && t.y > boss.y && t.y < boss.y + 350){
-              boss.x += boss.dir * 4; 
+          if(!t.isFireball && Math.abs(t.x - (boss.x + boss.w/2)) < 80 && t.y > boss.y && t.y < boss.y + 400){
+              boss.x += (t.x < boss.x + boss.w/2) ? 4 : -4;
           }
       });
+      // Mantém dentro da tela
+      if(boss.x < 20) boss.x = 20;
+      if(boss.x > 780 - boss.w) boss.x = 780 - boss.w;
+
       boss.spawnTimer += dt;
-      if(boss.spawnTimer > 5000){
-          for(let i=0; i<3; i++) invasores.push({ x: boss.x + (i*50), y: boss.y + 100, w:45, h:45, vivo:true, dir:1, vel:2 });
+      if(boss.spawnTimer > 4000){
+          for(let i=0; i<2; i++) invasores.push({ x: boss.x + (i*100), y: boss.y + 120, w:50, h:50, vivo:true, dir:1, vel:2 });
           boss.spawnTimer = 0;
       }
   }
 
-  if(!tempoParado){
+  if(!tempoParado && !bossMorrendo){
     const speed = 0.5 * dt;
     if((keys['ArrowLeft'] || keys['KeyA'])  && player.tx > 10)  player.tx -= speed;
     if((keys['ArrowRight'] || keys['KeyD']) && player.tx < 740-player.w+10) player.tx += speed;
@@ -410,7 +438,7 @@ function gameLoop(now){
     if(inv.isBoss ? inv.hp<=0 : (inv.isShield ? inv.hp<=0 : !inv.vivo)) return;
     if(!inv.isShield) vivos++;
 
-    if(inv.isBoss || inv.isShield || !tempoParado){
+    if((inv.isBoss || inv.isShield || !tempoParado) && !bossMorrendo){
        if(inv.isShield && boss){ 
          inv.x = boss.x + boss.w/2 - inv.w/2; 
          inv.y = boss.y + boss.h/2 - inv.h/2; 
@@ -425,7 +453,7 @@ function gameLoop(now){
     }
   });
 
-  if(edge){ 
+  if(edge && !bossMorrendo){ 
     invasores.forEach(e=>{ 
       if(!e.isShield){ 
         e.dir *= -1; 
@@ -445,14 +473,20 @@ function gameLoop(now){
     } else if(te.y > 620) tirosE.splice(i,1);
   }
 
-  if(!tempoParado){
+  if(!tempoParado && !bossMorrendo){
     for(let ti=tiros.length-1; ti>=0; ti--){
       const t = tiros[ti]; let consumed = false;
       for(const inv of invasores){
         const alive = inv.isBoss ? inv.hp>0 : (inv.isShield ? inv.hp>0 : inv.vivo);
         if(!alive || !colide(t, inv)) continue;
+
         if(t.isFireball){
-          if(inv.isBoss && inv.tipo === 2) { explodir(t.x, t.y, '#666'); tiros.splice(ti,1); consumed = true; break; }
+          // IMUNIDADE BOSS 2 À BOLA DE FOGO
+          if(inv.isBoss && inv.tipo === 2) { 
+            explodir(t.x, t.y, '#555'); 
+            tiros.splice(ti,1); 
+            consumed = true; break; 
+          }
           if(inv.isBoss || inv.isShield){ inv.hp -= 40; explodir(t.x+t.w/2, t.y+t.h/2, inv.isBoss ? '#ff0055' : '#00d2ff'); }
           else { inv.vivo = false; player.kills++; explodir(inv.x+inv.w/2, inv.y+inv.h/2, '#ff0055'); }
         } else {
@@ -466,10 +500,10 @@ function gameLoop(now){
   }
 
   if(boss) $('boss-hp-fill').style.width = Math.max(0,(boss.hp/boss.maxHp)*100)+'%';
-  if(vivos === 0){ faseAtual++; criarFase(); }
+  if(vivos === 0 && !bossMorrendo){ faseAtual++; criarFase(); }
 
   invasores.forEach(inv=>{
-    if(inv.isBoss){ if(inv.hp>0) desenharBoss(inv); }
+    if(inv.isBoss){ if(inv.hp>0 || (inv.tipo === 2 && bossMorrendo)) desenharBoss(inv); }
     else if(inv.isShield){ if(inv.hp>0) desenharEscudo(inv); }
     else if(inv.vivo) desenharNave(inv, '#ff0055', false);
   });

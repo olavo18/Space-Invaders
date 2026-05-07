@@ -68,7 +68,7 @@
     border-radius:15px;box-shadow:0 0 100px rgba(0,210,255,0.3)}
 
   #ui-camada{position:absolute;top:14px;left:20px;right:20px;display:flex;
-    justify-content:space-between;font-family:'Orbitron',sans-serif;font-size:16px;
+    justify-content:space-between;font-family:'Orbitron',sans-serif;font-size:14px;
     color:var(--neon-blue);pointer-events:none;z-index:50;}
 
   #dialogo-box{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(.9);
@@ -109,14 +109,15 @@
 
 <div id="menu-principal">
   <h1>SPACE INVADERS</h1>
-  <p>Mova com <b>A D</b> ou <b>SETAS</b><br>Atire com <b>ESPAÇO</b> e use a especial no <b>E</b><br>Derrote o Chefe a cada 5 níveis.</p>
+  <p>Mova com <b>A D</b> ou <b>SETAS</b><br>Atire com <b>ESPAÇO</b><br>Especial <b>(E)</b> | Escudo 2s <b>(R)</b><br>Derrote o Chefe a cada 5 níveis.</p>
   <button class="btn-play" onclick="iniciarHistoria()">INICIAR JOGO</button>
 </div>
 
 <div id="game-container">
   <div id="ui-camada">
     <div>FASE: <span id="fase-txt">1</span></div>
-    <div>ESPECIAL (E): <span id="hab-txt">0</span>/3</div>
+    <div>BOLA FOGO (E): <span id="hab-txt">0</span>/3</div>
+    <div>ESCUDO (R): <span id="escudo-txt">0</span>/2</div>
     <div>VIDAS: <span id="vidas-txt">3</span></div>
   </div>
   <div id="boss-hp-label">CHEFE SUPREMO</div>
@@ -181,7 +182,11 @@ let lastTime = performance.now();
 let avisandoHabilidade = false;
 let bossMorrendo = false;
 
-const player = { x:370, y:520, w:60, h:60, tx:370, vidas:3, danoTime:0, kills:0, cooldown:0 };
+const player = { 
+    x:370, y:520, w:60, h:60, tx:370, vidas:3, 
+    danoTime:0, kills:0, cooldown:0, 
+    escudoAtivo: false, escudoTimer: 0 
+};
 const amigo  = { x:-150, y:450, w:60, h:60, tx:-150 };
 
 let invasores = [];
@@ -221,6 +226,7 @@ function iniciarHistoria(){
 
 function criarFase(){
   invasores=[]; tiros=[]; tirosE=[]; particulas=[]; avisandoHabilidade = false; bossMorrendo = false;
+  player.escudoAtivo = false; player.escudoTimer = 0;
   const bossBar = $('boss-hp-bar'), bossLabel = $('boss-hp-label'), container = $('game-container');
   bossBar.style.display='none'; bossLabel.style.display='none';
   container.classList.remove('shake');
@@ -229,7 +235,6 @@ function criarFase(){
     bossBar.style.display='block'; bossLabel.style.display='block';
     bossLabel.innerText = "MK-II: O ANULADOR";
     $('boss-hp-fill').style.width='100%';
-    // Vida reduzida para ser mais justo, sem spawn de bots
     invasores.push({ x:300, y:80, w:180, h:150, hp:8000, maxHp:8000, isBoss:true, tipo:2, dir:1, vel:2.8 });
     invasores.push({ x:260, y:60, w:250, h:190, hp:600, maxHp:600, isShield:true });
   } 
@@ -256,16 +261,27 @@ function criarFase(){
 
 window.addEventListener('keydown', e => {
   keys[e.code] = true;
-  if(e.code === 'KeyE' && !tempoParado && modo==='jogando' && !bossMorrendo) usarHabilidade();
+  if(!tempoParado && modo==='jogando' && !bossMorrendo) {
+      if(e.code === 'KeyE') usarHabilidadeE();
+      if(e.code === 'KeyR') usarHabilidadeR();
+  }
   if(['ArrowLeft','ArrowRight','KeyA','KeyD','Space'].includes(e.code)) e.preventDefault();
 });
 window.addEventListener('keyup', e => { keys[e.code] = false; });
 
-function usarHabilidade(){
+function usarHabilidadeE(){
   if(player.kills >= 3){
     tiros.push({ x: player.x + player.w/2 - 25, y: player.y - 20, w:50, h:50, s:9, isFireball:true });
     player.kills -= 3;
   }
+}
+
+function usarHabilidadeR(){
+    if(player.kills >= 2 && !player.escudoAtivo){
+        player.escudoAtivo = true;
+        player.escudoTimer = 2000; // 2 segundos
+        player.kills -= 2;
+    }
 }
 
 function explodir(x,y,color){
@@ -281,8 +297,10 @@ function desenharNave(obj, color, isPlayer){
   const cx = obj.x + obj.w/2, cy = obj.y + obj.h/2;
   const flutua = Math.sin(frameAnim*0.08 + obj.x*0.05) * 3;
   ctx.translate(cx, cy + flutua);
+  
   if(!isPlayer && obj.dir) ctx.rotate(obj.dir * 0.1);
   if(isPlayer && player.danoTime > 0 && Math.floor(player.danoTime/4)%2) ctx.globalAlpha = 0.4;
+  
   const img = isPlayer ? skins.player : (obj.x === amigo.x ? skins.amigo : skins.alien);
   if (img.complete && img.naturalWidth !== 0) {
       ctx.drawImage(img, -obj.w/2, -obj.h/2, obj.w, obj.h);
@@ -294,6 +312,21 @@ function desenharNave(obj, color, isPlayer){
         ctx.beginPath(); ctx.ellipse(0,0,obj.w/2,obj.h/2.2,0,0,Math.PI*2); ctx.fill();
       }
   }
+
+  // DESENHAR ESCUDO DO JOGADOR
+  if(isPlayer && player.escudoAtivo) {
+      ctx.restore(); ctx.save();
+      ctx.translate(cx, cy + flutua);
+      ctx.rotate(frameAnim * 0.1);
+      if (skins.escudo.complete && skins.escudo.naturalWidth !== 0) {
+          ctx.globalAlpha = 0.6 + Math.sin(frameAnim*0.2)*0.2;
+          ctx.drawImage(skins.escudo, -obj.w*0.8, -obj.h*0.8, obj.w*1.6, obj.h*1.6);
+      } else {
+          ctx.strokeStyle = '#00d2ff'; ctx.lineWidth = 4;
+          ctx.beginPath(); ctx.arc(0,0, obj.w*0.8, 0, Math.PI*2); ctx.stroke();
+      }
+  }
+
   ctx.restore();
 }
 
@@ -312,7 +345,7 @@ function desenharBoss(obj){
   ctx.restore();
 }
 
-function desenharEscudo(obj){
+function desenharEscudoBoss(obj){
   ctx.save();
   ctx.translate(obj.x + obj.w/2, obj.y + obj.h/2);
   if (skins.escudo.complete && skins.escudo.naturalWidth !== 0) {
@@ -353,6 +386,12 @@ function gameLoop(now){
 
   if(player.danoTime>0) player.danoTime -= dt/16;
   if(player.cooldown>0) player.cooldown -= dt;
+  
+  // LÓGICA TEMPO ESCUDO
+  if(player.escudoAtivo){
+      player.escudoTimer -= dt;
+      if(player.escudoTimer <= 0) player.escudoAtivo = false;
+  }
 
   if(amigo.x > -100) desenharNave(amigo, '#00d2ff', false);
   desenharNave(player, '#00ff88', true);
@@ -362,6 +401,7 @@ function gameLoop(now){
   $('fase-txt').innerText = faseAtual;
   $('vidas-txt').innerText = player.vidas;
   $('hab-txt').innerText = Math.min(player.kills,3);
+  $('escudo-txt').innerText = Math.min(player.kills,2);
 
   const boss = invasores.find(i=>i.isBoss && i.hp>0);
   const shield = invasores.find(i=>i.isShield && i.hp>0);
@@ -397,10 +437,9 @@ function gameLoop(now){
     }
   }
 
-  // BOSS 2 (ESQUIVA MELHORADA E SEM BOTS)
+  // BOSS 2
   if(boss && boss.tipo === 2 && !tempoParado && !bossMorrendo){
       tiros.forEach(t => {
-          // Desvio mais agressivo quando detecta tiro próximo
           if(!t.isFireball && Math.abs(t.x - (boss.x + boss.w/2)) < 100 && t.y > boss.y && t.y < boss.y + 450){
               const forcaEsquiva = 6;
               boss.x += (t.x < boss.x + boss.w/2) ? forcaEsquiva : -forcaEsquiva;
@@ -457,12 +496,20 @@ function gameLoop(now){
     }); 
   }
 
+  // COLISÃO TIRO INIMIGO -> PLAYER
   for(let i=tirosE.length-1;i>=0;i--){
     const te = tirosE[i]; te.y += 5 * (dt/16);
-    if(colide({x:te.x, y:te.y, w:5, h:15}, player) && player.danoTime<=0){
-      player.vidas--; player.danoTime = 60; tirosE.splice(i,1);
-      explodir(player.x+player.w/2, player.y+player.h/2, '#00ff88');
-      if(player.vidas <= 0){ modo = 'gameover'; $('fase-final').innerText = faseAtual; $('game-over').classList.add('show'); }
+    const hitBoxTiro = {x:te.x, y:te.y, w:5, h:15};
+    
+    if(colide(hitBoxTiro, player)){
+        if(player.escudoAtivo) {
+            explodir(te.x, te.y, '#00d2ff');
+            tirosE.splice(i,1);
+        } else if(player.danoTime <= 0) {
+            player.vidas--; player.danoTime = 60; tirosE.splice(i,1);
+            explodir(player.x+player.w/2, player.y+player.h/2, '#00ff88');
+            if(player.vidas <= 0){ modo = 'gameover'; $('fase-final').innerText = faseAtual; $('game-over').classList.add('show'); }
+        }
     } else if(te.y > 620) tirosE.splice(i,1);
   }
 
@@ -474,7 +521,6 @@ function gameLoop(now){
         if(!alive || !colide(t, inv)) continue;
 
         if(t.isFireball){
-          // IMUNIDADE BOSS 2 À ESPECIAL
           if(inv.isBoss && inv.tipo === 2) { 
             explodir(t.x, t.y, '#666'); 
             tiros.splice(ti,1); 
@@ -497,7 +543,7 @@ function gameLoop(now){
 
   invasores.forEach(inv=>{
     if(inv.isBoss){ if(inv.hp>0 || (inv.tipo === 2 && bossMorrendo)) desenharBoss(inv); }
-    else if(inv.isShield){ if(inv.hp>0) desenharEscudo(inv); }
+    else if(inv.isShield){ if(inv.hp>0) desenharEscudoBoss(inv); }
     else if(inv.vivo) desenharNave(inv, '#ff0055', false);
   });
   tiros.forEach(t=> t.isFireball ? desenharFireball(t) : (ctx.fillStyle='#fff', ctx.fillRect(t.x, t.y, t.w, t.h)));

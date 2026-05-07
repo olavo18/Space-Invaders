@@ -97,7 +97,7 @@
 
 <div id="overlay-start" onclick="permitirAudio()">
   <h2>CLIQUE PARA ATIVAR O NEON</h2>
-  <p>(Isso habilita a trilha sonora do jogo)</p>
+  <p>(Isso habilita a trilha sonora: menu.mp3)</p>
 </div>
 
 <div id="menu-principal">
@@ -139,37 +139,30 @@ skins.chefe.src = 'chefe1.png';
 skins.fireball.src = 'bola-defogo.png';
 skins.escudo.src = 'escudo.png';
 
-// DEFINIÇÃO DOS SONS
-const somMenu = new Audio('musica-menu.mp3');
+// DEFINIÇÃO DOS SONS (CORRIGIDO PARA menu.mp3)
+const somMenu = new Audio('menu.mp3');
 const somTempo = new Audio('tempo.mp3');
 const somTiroPlayer = new Audio('nave1.mp3');
 const somTiroInimigo = new Audio('nave2.mp3');
 
-// Configuração inicial de volumes
 somMenu.loop = true;
 somMenu.volume = 0.5;
 somTempo.volume = 0.4;
 somTiroPlayer.volume = 0.3;
 somTiroInimigo.volume = 0.2;
 
-// FUNÇÃO CRÍTICA PARA LIBERAR O ÁUDIO
 function permitirAudio() {
-    // Esconde o overlay e mostra o menu
     document.getElementById('overlay-start').style.display = 'none';
     document.getElementById('menu-principal').style.display = 'block';
 
-    // Tenta tocar a música imediatamente
     somMenu.play().then(() => {
-        console.log("Áudio liberado com sucesso!");
+        console.log("Áudio menu.mp3 liberado!");
     }).catch(error => {
-        console.error("Erro ao tocar música. Verifique se o arquivo musica-menu.mp3 está na pasta.", error);
+        console.error("Erro ao tocar som.", error);
     });
 
-    // "Acorda" os outros sons para não haver atraso depois
     [somTempo, somTiroPlayer, somTiroInimigo].forEach(s => {
-        s.play();
-        s.pause();
-        s.currentTime = 0;
+        s.play(); s.pause(); s.currentTime = 0;
     });
 }
 

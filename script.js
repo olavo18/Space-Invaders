@@ -115,7 +115,6 @@ function criarFase() {
         bossLabel.style.display = 'block';
         bossLabel.innerText = "MK-II: O ANULADOR";
         document.getElementById('boss-hp-fill').style.width = '100%';
-        // Boss 2: 3000 HP, Velocidade aumentada para garantir movimento
         invasores.push({ x: 300, y: 80, w: 180, h: 150, hp: 3000, maxHp: 3000, isBoss: true, tipo: 2, dir: 1, vel: 2.8 });
         invasores.push({ x: 260, y: 60, w: 250, h: 190, hp: 600, maxHp: 600, isShield: true });
     } 
@@ -125,7 +124,7 @@ function criarFase() {
         bossLabel.innerText = "CHEFE SUPREMO";
         document.getElementById('boss-hp-fill').style.width = '100%';
         const bossHp = 5000 + faseAtual * 200;
-        invasores.push({ x: 300, y: 80, w: 200, h: 160, hp: bossHp, maxHp: bossHp, isBoss: true, tipo: 1, dir: 1, vel: 1.4 });
+        invasores.push({ x: 300, y: 80, w: 200, h: 160, hp: bossHp, maxHp: bossHp, isBoss: true, tipo: 1, dir: 1, vel: 1.8 });
         const shieldHp = 400 + faseAtual * 20;
         invasores.push({ x: 260, y: 60, w: 280, h: 200, hp: shieldHp, maxHp: shieldHp, isShield: true });
         for (let i = 0; i < 4; i++) {
@@ -259,14 +258,17 @@ function gameLoop(now) {
     const boss = invasores.find(i => i.isBoss && i.hp > 0);
     const shield = invasores.find(i => i.isShield && i.hp > 0);
 
-    // --- LOGICA BOSS 1: SUPREMO ---
+    // --- LOGICA BOSS 1: SUPREMO (ARRUMADO: AGORA MOVE E ATIRA) ---
     if (boss && boss.tipo === 1 && !tempoParado && !avisandoHabilidade) {
         boss.x += boss.vel * boss.dir * (dt / 16);
         if (boss.x > 780 - boss.w || boss.x < 20) boss.dir *= -1;
-        if (Math.random() < 0.02 * (dt / 16)) {
-            tirosE.push({ x: boss.x + boss.w / 2, y: boss.y + boss.h });
-            somTiroInimigo.currentTime = 0; somTiroInimigo.play();
+        
+        if (Math.random() < 0.025 * (dt / 16)) {
+            tirosE.push({ x: boss.x + boss.w / 2 - 2, y: boss.y + boss.h });
+            somTiroInimigo.currentTime = 0;
+            somTiroInimigo.play();
         }
+
         contadorTempo += dt / 1000;
         if (contadorTempo >= 7) {
             avisandoHabilidade = true;
@@ -282,7 +284,7 @@ function gameLoop(now) {
         }
     }
 
-    // --- LOGICA BOSS 2: MK-II (MOVIMENTO, ESQUIVA E TIRO) ---
+    // --- LOGICA BOSS 2: MK-II (ARRUMADO: AGORA TAMBÉM ATIRA) ---
     if (boss && boss.tipo === 2 && !tempoParado && !bossMorrendo) {
         boss.x += boss.vel * boss.dir * (dt / 16);
         tiros.forEach(t => {
@@ -291,13 +293,14 @@ function gameLoop(now) {
             }
         });
         if (boss.x < 15 || boss.x > 785 - boss.w) boss.dir *= -1;
-        if (Math.random() < 0.03 * (dt / 16)) {
-            tirosE.push({ x: boss.x + boss.w / 2, y: boss.y + boss.h });
-            somTiroInimigo.currentTime = 0; somTiroInimigo.play();
+
+        if (Math.random() < 0.035 * (dt / 16)) {
+            tirosE.push({ x: boss.x + boss.w / 2 - 2, y: boss.y + boss.h });
+            somTiroInimigo.currentTime = 0;
+            somTiroInimigo.play();
         }
     }
 
-    // Movimento Player
     const pSpeed = 0.5 * dt;
     if (!tempoParado && !bossMorrendo) {
         if ((keys['ArrowLeft'] || keys['KeyA']) && player.tx > 10) player.tx -= pSpeed;

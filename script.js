@@ -1,151 +1,118 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-const skins = {
-    player: new Image(), amigo: new Image(), alien: new Image(),
-    chefe: new Image(), chefe2: new Image(), fireball: new Image(), escudo: new Image()
+// Assets - Verifique se os nomes dos arquivos no seu GitHub são IGUAIS a estes
+const img = {
+    player: new Image(), alien: new Image(), chefe: new Image(), chefe2: new Image()
 };
-skins.player.src = 'jogadorprincipal.png';
-skins.amigo.src = 'amigo.png';
-skins.alien.src = 'alien.png';
-skins.chefe.src = 'chefe1.png';
-skins.chefe2.src = 'chefe2.png';
-skins.fireball.src = 'bola-defogo.png';
-skins.escudo.src = 'escudo.png';
+img.player.src = 'jogadorprincipal.png';
+img.alien.src = 'alien.png';
+img.chefe.src = 'chefe1.png';
+img.chefe2.src = 'chefe2.png';
 
-const somMenu = new Audio('menu.mp3');
-const somTiro = new Audio('nave1.mp3');
-somMenu.loop = true;
+let fase = 1, modo = 'espera', lastTime = 0;
+let player = { x: 370, y: 520, w: 60, h: 60, vidas: 3, kills: 0 };
+let invasores = [], tiros = [];
+let keys = {};
 
-let modo = 'menu', faseAtual = 1, lastTime = performance.now();
-const player = { x:370, y:520, w:60, h:60, tx:370, vidas:3, kills:0, cooldown:0, escudoAtivo:false, escudoTimer:0 };
-const amigo = { x:-150, y:450, w:60, h:60, tx:-150 };
-let invasores = [], tiros = [], tirosE = [];
-const keys = {};
-
+// Funções de Inicialização
 function permitirAudio() {
     document.getElementById('overlay-start').style.display = 'none';
     document.getElementById('menu-principal').style.display = 'block';
-    somMenu.play().catch(() => {});
 }
 
-function falar(texto, tempo, cb) {
-    const box = document.getElementById('dialogo-box');
-    box.innerText = texto; box.classList.add('show');
-    setTimeout(() => { box.classList.remove('show'); if(cb) cb(); }, tempo);
-}
-
-function iniciarHistoria() {
-    somMenu.pause();
+function iniciarJogo() {
     document.getElementById('menu-principal').style.display = 'none';
     document.getElementById('game-container').style.display = 'block';
-    modo = 'historia'; amigo.tx = 200; player.tx = 500;
-    falar("Hunter: Eu cuido deles!", 2000, () => {
-        amigo.tx = -200; player.tx = 370; modo = 'jogando'; criarFase();
-    });
+    modo = 'jogando';
+    criarFase();
+    requestAnimationFrame(loop);
 }
 
 function criarFase() {
-    invasores = []; tiros = []; tirosE = [];
-    const bossBar = document.getElementById('boss-hp-bar');
-    bossBar.style.display = 'none';
-    document.getElementById('boss3-gif').style.display = 'none';
-
-    if(faseAtual % 5 === 0) {
-        bossBar.style.display = 'block';
-        let tipo = (faseAtual % 15 === 0) ? 3 : (faseAtual % 10 === 0 ? 2 : 1);
-        if(tipo === 3) document.getElementById('boss3-gif').style.display = 'block';
-        invasores.push({ x:300, y:80, w:200, h:160, hp:5000, maxHp:5000, isBoss:true, tipo: tipo, dir:1, vel:2 });
-    } else {
-        for(let r=0; r<3; r++) {
-            for(let c=0; c<6; c++) {
-                invasores.push({ x: c*100 + 100, y: r*60 + 60, w:50, h:50, vivo:true, dir:1, vel: 1 + faseAtual*0.2 });
-            }
-        }
-    }
-}
-
-window.addEventListener('keydown', e => {
-    keys[e.code] = true;
-    if(modo === 'jogando') {
-        if(e.code === 'KeyE' && player.kills >= 3) {
-            tiros.push({ x: player.x+5, y: player.y, w:50, h:50, s:8, isFireball:true });
-            player.kills -= 3;
-        }
-        if(e.code === 'KeyR' && player.kills >= 2) {
-            player.escudoAtivo = true; player.escudoTimer = 2000; player.kills -= 2;
-        }
-    }
-});
-window.addEventListener('keyup', e => keys[e.code] = false);
-
-function gameLoop(now) {
-    const dt = now - lastTime; lastTime = now;
-    ctx.clearRect(0,0,800,600);
-
-    if(modo === 'jogando') {
-        const speed = 0.6 * dt;
-        if(keys['ArrowLeft'] || keys['KeyA']) player.tx -= speed;
-        if(keys['ArrowRight'] || keys['KeyD']) player.tx += speed;
-        player.x += (player.tx - player.x) * 0.1;
-
-        if(keys['Space'] && player.cooldown <= 0) {
-            tiros.push({ x: player.x+27, y: player.y, w:6, h:18, s:10 });
-            player.cooldown = 250; somTiro.play();
-        }
-        if(player.cooldown > 0) player.cooldown -= dt;
-        if(player.escudoTimer > 0) { player.escudoTimer -= dt; } else { player.escudoAtivo = false; }
-
-        // Atualiza UI
-        document.getElementById('fase-txt').innerText = faseAtual;
-        document.getElementById('vidas-txt').innerText = player.vidas;
-        document.getElementById('hab-txt').innerText = Math.floor(player.kills/3);
-
-        // Movimento Inimigos
-        let vivos = 0;
-        invasores.forEach(inv => {
-            if(inv.vivo === false || (inv.isBoss && inv.hp <= 0)) return;
-            vivos++;
-            inv.x += inv.vel * inv.dir;
-            if(inv.x > 750 || inv.x < 10) { inv.dir *= -1; inv.y += 10; }
-            if(inv.isBoss && inv.tipo === 3) {
-                const gif = document.getElementById('boss3-gif');
-                gif.style.left = (canvas.offsetLeft + inv.x) + "px";
-                gif.style.top = (canvas.offsetTop + inv.y) + "px";
-            }
-        });
-        if(vivos === 0) { faseAtual++; criarFase(); }
-
-        // Tiros
-        tiros.forEach((t, i) => {
-            t.y -= t.s;
-            invasores.forEach(inv => {
-                if(!inv.vivo && !inv.isBoss) return;
-                if(t.x < inv.x + inv.w && t.x + t.w > inv.x && t.y < inv.y + inv.h) {
-                    if(inv.isBoss) { inv.hp -= (t.isFireball?200:50); document.getElementById('boss-hp-fill').style.width = (inv.hp/inv.maxHp*100)+'%'; }
-                    else { inv.vivo = false; player.kills++; }
-                    if(!t.isFireball) tiros.splice(i, 1);
-                }
-            });
-        });
-    }
-
-    // Desenho
-    ctx.drawImage(skins.player, player.x, player.y, player.w, player.h);
-    if(player.escudoAtivo) ctx.drawImage(skins.escudo, player.x-10, player.y-10, 80, 80);
+    invasores = [];
+    tiros = [];
+    const colunas = 6, linhas = 3;
     
-    invasores.forEach(inv => {
-        if(inv.vivo || (inv.isBoss && inv.hp > 0)) {
-            let img = inv.isBoss ? (inv.tipo === 2 ? skins.chefe2 : skins.chefe) : skins.alien;
-            if(inv.tipo !== 3) ctx.drawImage(img, inv.x, inv.y, inv.w, inv.h);
+    // Lógica de Boss a cada 5 fases
+    if (fase % 5 === 0) {
+        document.getElementById('boss-hp-bar').style.display = 'block';
+        invasores.push({ 
+            x: 300, y: 50, w: 150, h: 100, hp: 1000 * (fase/5), maxHp: 1000 * (fase/5), 
+            isBoss: true, dir: 1, vel: 2 
+        });
+    } else {
+        document.getElementById('boss-hp-bar').style.display = 'none';
+        for (let r = 0; r < linhas; r++) {
+            for (let c = 0; c < colunas; c++) {
+                invasores.push({ x: c * 80 + 150, y: r * 60 + 80, w: 40, h: 40, vivo: true, dir: 1 });
+            }
         }
-    });
-
-    tiros.forEach(t => {
-        if(t.isFireball) ctx.drawImage(skins.fireball, t.x, t.y, t.w, t.h);
-        else { ctx.fillStyle = "#fff"; ctx.fillRect(t.x, t.y, t.w, t.h); }
-    });
-
-    requestAnimationFrame(gameLoop);
+    }
 }
-requestAnimationFrame(gameLoop);
+
+// Controles
+window.onkeydown = (e) => keys[e.code] = true;
+window.onkeyup = (e) => keys[e.code] = false;
+
+function loop(t) {
+    if (modo !== 'jogando') return;
+    let dt = t - lastTime; lastTime = t;
+    ctx.clearRect(0, 0, 800, 600);
+
+    // Movimentação Player
+    if ((keys.ArrowLeft || keys.KeyA) && player.x > 0) player.x -= 5;
+    if ((keys.ArrowRight || keys.KeyD) && player.x < 740) player.x += 5;
+    if (keys.Space && tiros.length < 3) {
+        tiros.push({ x: player.x + 28, y: player.y, w: 4, h: 15 });
+    }
+
+    // Tiros e Colisão
+    tiros.forEach((tiro, index) => {
+        tiro.y -= 7;
+        if (tiro.y < 0) tiros.splice(index, 1);
+
+        invasores.forEach(inv => {
+            if (!inv.vivo && !inv.isBoss) return;
+            if (tiro.x < inv.x + inv.w && tiro.x + tiro.w > inv.x && tiro.y < inv.y + inv.h) {
+                if (inv.isBoss) {
+                    inv.hp -= 20;
+                    document.getElementById('boss-hp-fill').style.width = (inv.hp/inv.maxHp*100) + "%";
+                    if (inv.hp <= 0) inv.vivo = false;
+                } else {
+                    inv.vivo = false;
+                    player.kills++;
+                }
+                tiros.splice(index, 1);
+            }
+        });
+    });
+
+    // Movimentação Inimigos e Checagem de Vitória
+    let vivos = 0;
+    invasores.forEach(inv => {
+        if (inv.isBoss && inv.hp <= 0) return;
+        if (!inv.isBoss && !inv.vivo) return;
+        
+        vivos++;
+        inv.x += (inv.dir * (1 + fase * 0.2));
+        if (inv.x > 760 || inv.x < 0) {
+            invasores.forEach(i => { i.dir *= -1; i.y += 10; });
+        }
+        
+        // Desenho Inimigos
+        ctx.drawImage(inv.isBoss ? img.chefe : img.alien, inv.x, inv.y, inv.w, inv.h);
+    });
+
+    if (vivos === 0) {
+        fase++;
+        criarFase();
+    }
+
+    // Desenho Player e UI
+    ctx.drawImage(img.player, player.x, player.y, player.w, player.h);
+    document.getElementById('fase-txt').innerText = fase;
+    document.getElementById('kills-txt').innerText = player.kills;
+
+    requestAnimationFrame(loop);
+}

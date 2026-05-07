@@ -2,24 +2,42 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Space Invaders - Versão Estável</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Invaders Neon</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="overlay-start" onclick="iniciarJogo()">
-        <h1>CLIQUE AQUI PARA CARREGAR</h1>
-        <p>Se não iniciar, verifique o Console (F12)</p>
-    </div>
 
-    <div id="game-container" style="display:none;">
-        <div id="ui">
-            FASE: <span id="fase-txt">1</span> | VIDAS: <span id="vidas-txt">3</span>
-        </div>
-     <!-- ... resto do seu html ... -->
+<!-- Tela de Início (Necessária para habilitar o som) -->
+<div id="overlay-start" onclick="permitirAudio()">
+    <h1>CLIQUE PARA ATIVAR O SISTEMA</h1>
+    <p>Áudio e Gráficos Neon</p>
+</div>
+
+<!-- Menu Principal -->
+<div id="menu-principal" style="display:none;">
+    <h1 class="neon-text">SPACE INVADERS</h1>
+    <div class="controles">
+        <p>Mova: <b>A / D</b> ou <b>SETAS</b></p>
+        <p>Atirar: <b>ESPAÇO</b></p>
+        <p>Especial: <b>(E)</b> | Escudo: <b>(R)</b></p>
+    </div>
+    <button class="btn-play" onclick="iniciarHistoria()">INICIAR MISSÃO</button>
+</div>
+
+<!-- Jogo -->
+<div id="game-container" style="display:none;">
+    <div id="ui-camada">
+        <div>FASE: <span id="fase-txt">1</span></div>
+        <div>HABILIDADE (E): <span id="hab-txt">0</span>/3</div>
+        <div>VIDAS: <span id="vidas-txt">3</span></div>
+    </div>
+    
+    <div id="boss-hp-bar"><div id="boss-hp-fill"></div></div>
+    <div id="dialogo-box"></div>
     <canvas id="gameCanvas" width="800" height="600"></canvas>
 </div>
 
-<!-- O segredo está aqui: type="text/javascript" -->
-<script type="text/javascript" src="script.js"></script>
+<script src="script.js"></script>
 </body>
 </html>

@@ -4,546 +4,815 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Space Invaders Neon - Ultra Edition</title>
+
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+
 <style>
-  :root { --neon-blue:#00d2ff; --neon-pink:#ff0055; --neon-orange:#ffae3b; --space-dark:#050510; }
-  *{margin:0;padding:0;box-sizing:border-box}
-  html,body{height:100%; width: 100%;}
-  body{
-    background: radial-gradient(circle at center, #1a1a3a 0%, var(--space-dark) 100%);
-    font-family:'Plus Jakarta Sans',sans-serif;color:#fff;
-    min-height:100vh;display:flex;align-items:center;justify-content:center;
-    overflow:hidden;
-  }
-  
-  body::before {
-    content:"";position:fixed;inset:0;pointer-events:none;
-    background-image: 
-      radial-gradient(1px 1px at 20% 30%, #fff, transparent),
-      radial-gradient(1px 1px at 70% 80%, #fff, transparent),
-      radial-gradient(2px 2px at 40% 60%, #aef, transparent);
-    background-size:600px 600px; opacity:.4; animation: drift 100s linear infinite;
-  }
-  @keyframes drift{from{background-position:0 0}to{background-position:600px 600px}}
+:root{
+--neon-blue:#00d2ff;
+--neon-pink:#ff0055;
+--space-dark:#050510;
+}
 
-  #overlay-start {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    cursor: pointer; text-align: center; padding: 20px;
-  }
-  #overlay-start h2 { font-family: 'Orbitron'; color: var(--neon-blue); font-size: 32px; margin-bottom: 10px; animation: pulse 1.5s infinite; }
-  #overlay-start p { font-family: 'Orbitron'; color: #fff; opacity: 0.6; font-size: 14px; }
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
 
-  #menu-principal{
-    text-align:center; background:rgba(5, 5, 20, 0.85);
-    padding:60px; border-radius:40px; border:3px solid var(--neon-blue);
-    max-width:550px; width:95%; box-shadow: 0 0 40px rgba(0, 210, 255, 0.2);
-    backdrop-filter:blur(15px); position: relative; overflow: hidden; display: none;
-  }
-  
-  #menu-principal::after {
-    content: ""; position: absolute; top: -100%; left: 0; width: 100%; height: 50%;
-    background: linear-gradient(to bottom, transparent, rgba(0, 210, 255, 0.05), transparent);
-    animation: scan 4s linear infinite;
-  }
-  @keyframes scan { 0% { top: -100%; } 100% { top: 200%; } }
+body{
+background:radial-gradient(circle,#1a1a3a 0%,#050510 100%);
+font-family:'Plus Jakarta Sans',sans-serif;
+overflow:hidden;
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+color:white;
+}
 
-  h1{font-family:'Orbitron',sans-serif;font-size:48px;color:var(--neon-blue);
-    text-shadow:0 0 15px var(--neon-blue), 0 0 30px var(--neon-blue);
-    margin-bottom:20px;letter-spacing:6px;}
+#overlay-start{
+position:fixed;
+inset:0;
+background:black;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+z-index:999;
+cursor:pointer;
+}
 
-  #menu-principal p{opacity:.8; font-size:15px; margin-bottom:35px; line-height:1.8; color: #aef; }
+#overlay-start h1{
+font-size:40px;
+font-family:'Orbitron';
+color:#00d2ff;
+text-shadow:0 0 20px #00d2ff;
+animation:pulse 1s infinite;
+}
 
-  .btn-play{
-    padding:20px 40px; font-size:20px; font-weight:800;
-    background: linear-gradient(135deg, var(--neon-pink), #ff0080); color:#fff;
-    border:none; border-radius:20px; cursor:pointer; width:100%; text-transform:uppercase;
-    letter-spacing:3px; box-shadow:0 10px 30px rgba(255,0,85,0.4);
-    transition: all 0.3s ease; font-family:'Orbitron',sans-serif;
-  }
-  .btn-play:hover{ transform: scale(1.05); box-shadow:0 15px 45px rgba(255,0,85,0.6); }
+#overlay-start p{
+opacity:.7;
+margin-top:10px;
+}
 
-  #game-container{display:none;position:relative;width:800px;height:600px;
-    background:#000;border:3px solid var(--neon-blue);overflow:hidden;
-    border-radius:15px;box-shadow:0 0 100px rgba(0,210,255,0.3)}
+@keyframes pulse{
+0%{transform:scale(1)}
+50%{transform:scale(1.05)}
+100%{transform:scale(1)}
+}
 
-  #ui-camada{position:absolute;top:14px;left:20px;right:20px;display:flex;
-    justify-content:space-between;font-family:'Orbitron',sans-serif;font-size:14px;
-    color:var(--neon-blue);pointer-events:none;z-index:50;}
+#menu-principal{
+display:none;
+width:550px;
+padding:50px;
+background:rgba(0,0,0,.75);
+border:3px solid #00d2ff;
+border-radius:30px;
+backdrop-filter:blur(15px);
+text-align:center;
+box-shadow:0 0 50px rgba(0,210,255,.3);
+}
 
-  #dialogo-box{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(.9);
-    background:rgba(255,255,255,0.98);color:#000;padding:25px 40px;border-radius:20px;
-    font-weight:800;display:none;z-index:200;width:560px;text-align:center;
-    border:4px solid var(--neon-blue);font-size:19px; opacity:0;transition:all 0.3s ease;}
-  #dialogo-box.show{display:block;opacity:1;transform:translate(-50%,-50%) scale(1)}
+#menu-principal h1{
+font-size:55px;
+font-family:'Orbitron';
+color:#00d2ff;
+margin-bottom:20px;
+text-shadow:0 0 30px #00d2ff;
+}
 
-  #efeito-tempo{position:absolute;inset:0;background:radial-gradient(circle,rgba(0,150,255,0.2),rgba(0,150,255,0.5));
-    display:none;z-index:5;pointer-events:none;}
-  
-  #boss-hp-bar{position:absolute;top:50px;left:50%;transform:translateX(-50%);
-    width:420px;height:16px;background:#111;border:2px solid #fff;display:none;
-    border-radius:10px;z-index:15;overflow:hidden;}
-  #boss-hp-fill{width:100%;height:100%;background:linear-gradient(90deg,#ff0055,#ffae3b);transition:width .25s ease}
-  #boss-hp-label{position:absolute;top:30px;left:50%;transform:translateX(-50%);
-    font-family:'Orbitron';font-size:14px;color:#ff5577;display:none;z-index:15;letter-spacing:3px}
+#menu-principal p{
+opacity:.8;
+line-height:1.8;
+margin-bottom:30px;
+}
 
-  #game-over{position:absolute;inset:0;background:rgba(0,0,0,0.9);display:none;
-    flex-direction:column;align-items:center;justify-content:center;z-index:300;gap:20px}
-  #game-over.show{display:flex}
-  #game-over h2{font-family:'Orbitron';font-size:54px;color:var(--neon-pink);letter-spacing:8px}
+.btn-play{
+padding:18px 35px;
+border:none;
+background:linear-gradient(135deg,#ff0055,#ff0080);
+border-radius:18px;
+color:white;
+font-size:20px;
+font-family:'Orbitron';
+font-weight:bold;
+cursor:pointer;
+transition:.3s;
+}
 
-  .shake { animation: shakeAnim 0.1s infinite; }
-  @keyframes shakeAnim {
-    0% { transform: translate(3px, 3px); }
-    50% { transform: translate(-3px, -3px); }
-    100% { transform: translate(2px, -2px); }
-  }
+.btn-play:hover{
+transform:scale(1.05);
+box-shadow:0 0 30px rgba(255,0,85,.7);
+}
+
+#game-container{
+display:none;
+position:relative;
+width:800px;
+height:600px;
+border:3px solid #00d2ff;
+overflow:hidden;
+border-radius:15px;
+background:black;
+box-shadow:0 0 80px rgba(0,210,255,.4);
+}
+
+#gameCanvas{
+background:transparent;
+}
+
+#dialogo-box{
+position:absolute;
+left:50%;
+bottom:40px;
+transform:translateX(-50%);
+width:700px;
+padding:18px 30px;
+background:rgba(0,0,0,.8);
+border:2px solid #00d2ff;
+border-radius:20px;
+font-size:20px;
+font-weight:bold;
+display:none;
+z-index:200;
+backdrop-filter:blur(10px);
+}
+
+#dialogo-box.show{
+display:block;
+animation:fade .4s;
+}
+
+@keyframes fade{
+from{opacity:0;transform:translateX(-50%) translateY(20px)}
+to{opacity:1;transform:translateX(-50%) translateY(0)}
+}
+
+#efeito-tempo{
+position:absolute;
+inset:0;
+background:rgba(0,180,255,.15);
+display:none;
+pointer-events:none;
+z-index:50;
+backdrop-filter:blur(3px);
+}
+
+#ui-camada{
+position:absolute;
+top:15px;
+left:20px;
+right:20px;
+display:flex;
+justify-content:space-between;
+font-family:'Orbitron';
+font-size:14px;
+z-index:100;
+}
+
+#boss-hp-bar{
+position:absolute;
+top:45px;
+left:50%;
+transform:translateX(-50%);
+width:450px;
+height:18px;
+background:#111;
+border:2px solid white;
+display:none;
+border-radius:10px;
+overflow:hidden;
+z-index:100;
+}
+
+#boss-hp-fill{
+height:100%;
+width:100%;
+background:linear-gradient(90deg,#ff0055,#ffae3b);
+}
+
+#boss-hp-label{
+position:absolute;
+top:20px;
+left:50%;
+transform:translateX(-50%);
+font-family:'Orbitron';
+display:none;
+z-index:100;
+}
+
+#game-over{
+position:absolute;
+inset:0;
+background:rgba(0,0,0,.9);
+display:none;
+justify-content:center;
+align-items:center;
+flex-direction:column;
+z-index:500;
+}
+
+#game-over h1{
+font-size:60px;
+font-family:'Orbitron';
+color:#ff0055;
+margin-bottom:20px;
+}
+
+.shake{
+animation:shake .1s infinite;
+}
+
+@keyframes shake{
+0%{transform:translate(3px,3px)}
+50%{transform:translate(-3px,-3px)}
+100%{transform:translate(2px,-2px)}
+}
 </style>
 </head>
+
 <body>
 
 <div id="overlay-start" onclick="permitirAudio()">
-  <h2>CLIQUE PARA ATIVAR O NEON</h2>
-  <p>(Isso habilita a trilha sonora: menu.mp3)</p>
+<h1>CLIQUE PARA COMEÇAR</h1>
+<p>ativar áudio neon</p>
 </div>
 
 <div id="menu-principal">
-  <h1>SPACE INVADERS</h1>
-  <p>Mova com <b>A D</b> ou <b>SETAS</b><br>Atire com <b>ESPAÇO</b><br>Especial <b>(E)</b> | Escudo 2s <b>(R)</b><br>Derrote o Chefe a cada 5 níveis.</p>
-  <button class="btn-play" onclick="iniciarHistoria()">INICIAR JOGO</button>
+<h1>SPACE INVADERS</h1>
+
+<p>
+A/D ou SETAS para mover<br>
+ESPAÇO para atirar<br>
+E = Bola de fogo<br>
+R = Escudo
+</p>
+
+<button class="btn-play" onclick="iniciarHistoria()">INICIAR</button>
 </div>
 
 <div id="game-container">
-  <div id="ui-camada">
-    <div>FASE: <span id="fase-txt">1</span></div>
-    <div>BOLA FOGO (E): <span id="hab-txt">0</span>/3</div>
-    <div>ESCUDO (R): <span id="escudo-txt">0</span>/2</div>
-    <div>VIDAS: <span id="vidas-txt">3</span></div>
-  </div>
-  <div id="boss-hp-label">CHEFE SUPREMO</div>
-  <div id="boss-hp-bar"><div id="boss-hp-fill"></div></div>
-  <div id="efeito-tempo"></div>
-  <div id="dialogo-box"></div>
-  <div id="game-over">
-    <h2>FALHA NA MISSÃO</h2>
-    <p>Fase alcançada: <span id="fase-final">1</span></p>
-    <button class="btn-play" style="width:auto;padding:14px 30px" onclick="location.reload()">REINICIAR SISTEMA</button>
-  </div>
-  <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+<div id="ui-camada">
+<div>FASE: <span id="fase-txt">1</span></div>
+<div>KILLS: <span id="hab-txt">0</span></div>
+<div>VIDAS: <span id="vidas-txt">3</span></div>
+</div>
+
+<div id="boss-hp-label">CHEFE</div>
+<div id="boss-hp-bar">
+<div id="boss-hp-fill"></div>
+</div>
+
+<div id="efeito-tempo"></div>
+
+<div id="dialogo-box"></div>
+
+<div id="game-over">
+<h1>GAME OVER</h1>
+<button class="btn-play" onclick="location.reload()">REINICIAR</button>
+</div>
+
+<canvas id="gameCanvas" width="800" height="600"></canvas>
+
 </div>
 
 <script>
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+const $ = id => document.getElementById(id);
 
 const skins = {
-    player: new Image(), amigo: new Image(), alien: new Image(),
-    chefe: new Image(), chefe2: new Image(), fireball: new Image(), escudo: new Image()
+player:new Image(),
+amigo:new Image(),
+alien:new Image(),
+chefe:new Image(),
+chefe2:new Image(),
+fireball:new Image()
 };
-skins.player.src = 'jogadorprincipal.png';
-skins.amigo.src = 'amigo.png';
-skins.alien.src = 'alien.png';
-skins.chefe.src = 'chefe1.png';
-skins.chefe2.src = 'chefe2.png';
-skins.fireball.src = 'bola-defogo.png';
-skins.escudo.src = 'escudo.png';
+
+skins.player.src="jogadorprincipal.png";
+skins.amigo.src="amigo.png";
+skins.alien.src="alien.png";
+skins.chefe.src="chefe1.png";
+skins.chefe2.src="chefe2.png";
+skins.fireball.src="bola-defogo.png";
 
 const somMenu = new Audio('menu.mp3');
 const somTempo = new Audio('tempo.mp3');
+const somZaWarudo = new Audio('zawarudo.mp3');
 const somTiroPlayer = new Audio('nave1.mp3');
 const somTiroInimigo = new Audio('nave2.mp3');
 
 somMenu.loop = true;
-somMenu.volume = 0.5;
-somTempo.volume = 0.4;
-somTiroPlayer.volume = 0.3;
-somTiroInimigo.volume = 0.2;
 
-function permitirAudio() {
-    document.getElementById('overlay-start').style.display = 'none';
-    document.getElementById('menu-principal').style.display = 'block';
+function permitirAudio(){
 
-    somMenu.play().then(() => {
-        console.log("Áudio menu.mp3 liberado!");
-    }).catch(error => {
-        console.error("Erro ao tocar som.", error);
-    });
+$('overlay-start').style.display='none';
+$('menu-principal').style.display='block';
 
-    [somTempo, somTiroPlayer, somTiroInimigo].forEach(s => {
-        s.play(); s.pause(); s.currentTime = 0;
-    });
+somMenu.play();
+
 }
 
-let modo = 'menu';
-let faseAtual = 1;
-let tempoParado = false;
-let contadorTempo = 0;
-let lastTime = performance.now();
-let avisandoHabilidade = false;
-let bossMorrendo = false;
+let modo='menu';
+let faseAtual=1;
+let tempoParado=false;
+let bossMorrendo=false;
+let frameAnim=0;
+let lastTime=performance.now();
+let tempoCooldown=0;
 
-const player = { 
-    x:370, y:520, w:60, h:60, tx:370, vidas:3, 
-    danoTime:0, kills:0, cooldown:0, 
-    escudoAtivo: false, escudoTimer: 0 
+const player={
+x:370,
+y:500,
+w:60,
+h:60,
+vidas:3,
+tx:370,
+cooldown:0,
+kills:0
 };
-const amigo  = { x:-150, y:450, w:60, h:60, tx:-150 };
 
-let invasores = [];
-let tiros = [];
-let tirosE = [];
-let particulas = [];
-const keys = {};
-let frameAnim = 0;
+const amigo={
+x:-150,
+y:450,
+w:60,
+h:60,
+tx:-150
+};
 
-const falasChefe = ["ZA WARUDO!", "O tempo é meu!", "Você não pode se mexer!", "Inútil! Inútil! Inútil!"];
+let invasores=[];
+let tiros=[];
+let tirosE=[];
+let particulas=[];
+const keys={};
 
-const $ = id => document.getElementById(id);
+const falasChefe=[
+"ZA WARUDO!",
+"O TEMPO É MEU!",
+"VOCÊ NÃO PODE SE MEXER!",
+"INÚTIL!"
+];
 
-function falar(texto, tempo, cb){
-  const box = $('dialogo-box');
-  box.innerText = texto;
-  box.classList.add('show');
-  setTimeout(()=>{ box.classList.remove('show'); cb && cb(); }, tempo);
+function falar(texto,tempo,cb){
+
+const box=$('dialogo-box');
+
+box.innerText=texto;
+
+box.classList.add('show');
+
+setTimeout(()=>{
+
+box.classList.remove('show');
+
+if(cb) cb();
+
+},tempo);
+
 }
 
 function iniciarHistoria(){
-  somMenu.pause(); 
-  $('menu-principal').style.display='none';
-  $('game-container').style.display='block';
-  modo='historia';
-  amigo.tx = 200; player.tx = 500;
-  falar("Hunter: Eu consigo derrotar esses alienígenas sozinho!", 2200, ()=>{
-    falar("Amigo: Hunter, você enlouqueceu? São muitos!", 2200, ()=>{
-      falar("Hunter: Vou mostrar do que sou capaz!", 1500, ()=>{
-        modo='jogando';
-        amigo.tx = -200; player.tx = 370;
-        criarFase();
-      });
-    });
-  });
+
+somMenu.pause();
+
+$('menu-principal').style.display='none';
+$('game-container').style.display='block';
+
+modo='historia';
+
+amigo.tx=220;
+player.tx=520;
+
+falar("Hunter: Vou destruir todos eles!",2200,()=>{
+
+falar("Amigo: Você vai morrer Hunter!",2200,()=>{
+
+falar("Hunter: Não hoje...",1800,()=>{
+
+falar("Hunter: ADEUS MEU AMIGO!",2200,()=>{
+
+animacaoSubida();
+
+});
+
+});
+
+});
+
+});
+
+}
+
+function animacaoSubida(){
+
+let fumaça=[];
+
+let interval=setInterval(()=>{
+
+fumaça.push({
+x:player.x+30+(Math.random()*20-10),
+y:player.y+55,
+r:Math.random()*10+5,
+a:1
+});
+
+},30);
+
+let subir=setInterval(()=>{
+
+player.y-=4;
+
+if(player.y<-150){
+
+clearInterval(subir);
+clearInterval(interval);
+
+falar("A INVASÃO COMEÇOU",2500,()=>{
+
+modo='jogando';
+
+player.y=500;
+player.tx=370;
+
+criarFase();
+
+});
+
+}
+
+},16);
+
+function desenharFumaca(){
+
+for(let i=fumaça.length-1;i>=0;i--){
+
+let p=fumaça[i];
+
+ctx.beginPath();
+ctx.fillStyle=`rgba(180,180,180,${p.a})`;
+ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+ctx.fill();
+
+p.y+=1;
+p.a-=0.02;
+
+if(p.a<=0){
+fumaça.splice(i,1);
+}
+
+}
+
+requestAnimationFrame(desenharFumaca);
+
+}
+
+desenharFumaca();
+
 }
 
 function criarFase(){
-  invasores=[]; tiros=[]; tirosE=[]; particulas=[]; avisandoHabilidade = false; bossMorrendo = false;
-  player.escudoAtivo = false; player.escudoTimer = 0;
-  const bossBar = $('boss-hp-bar'), bossLabel = $('boss-hp-label'), container = $('game-container');
-  bossBar.style.display='none'; bossLabel.style.display='none';
-  container.classList.remove('shake');
 
-  if(faseAtual % 10 === 0){
-    bossBar.style.display='block'; bossLabel.style.display='block';
-    bossLabel.innerText = "MK-II: O ANULADOR";
-    $('boss-hp-fill').style.width='100%';
-    // Vida reduzida para 5000 para ser mais rápido
-    invasores.push({ x:300, y:80, w:180, h:150, hp:5000, maxHp:5000, isBoss:true, tipo:2, dir:1, vel:3.2 });
-    invasores.push({ x:260, y:60, w:250, h:190, hp:400, maxHp:400, isShield:true });
-  } 
-  else if(faseAtual % 5 === 0){
-    bossBar.style.display='block'; bossLabel.style.display='block';
-    bossLabel.innerText = "CHEFE SUPREMO";
-    $('boss-hp-fill').style.width='100%';
-    const bossHp = 5000 + faseAtual*200; 
-    invasores.push({ x:300, y:80, w:200, h:160, hp:bossHp, maxHp:bossHp, isBoss:true, tipo:1, dir:1, vel:1.4 });
-    const shieldHp = 400 + faseAtual*20;
-    invasores.push({ x:260, y:60, w:280, h:200, hp:shieldHp, maxHp:shieldHp, isShield:true });
-    for(let i=0;i<4;i++) invasores.push({ x:120 + i*170, y:330, w:55, h:55, vivo:true, dir:1, vel:1.2 });
-    contadorTempo=0;
-  } else {
-    const cols = 5;
-    const rows = 2 + Math.min(2, Math.floor(faseAtual/3));
-    for(let r=0;r<rows;r++){
-      for(let c=0;c<cols;c++){
-        invasores.push({ x: c*110 + 130, y: r*70 + 70, w:55, h:55, vivo:true, dir:1, vel: 0.8 + faseAtual*0.15 });
-      }
-    }
-  }
-}
+invasores=[];
+tiros=[];
+tirosE=[];
 
-window.addEventListener('keydown', e => {
-  keys[e.code] = true;
-  if(!tempoParado && modo==='jogando' && !bossMorrendo) {
-      if(e.code === 'KeyE') usarHabilidadeE();
-      if(e.code === 'KeyR') usarHabilidadeR();
-  }
-  if(['ArrowLeft','ArrowRight','KeyA','KeyD','Space'].includes(e.code)) e.preventDefault();
+if(faseAtual%10===0){
+
+$('boss-hp-bar').style.display='block';
+$('boss-hp-label').style.display='block';
+
+invasores.push({
+x:300,
+y:80,
+w:180,
+h:150,
+hp:5000,
+maxHp:5000,
+isBoss:true,
+tipo:2,
+dir:1,
+vel:3
 });
-window.addEventListener('keyup', e => { keys[e.code] = false; });
 
-function usarHabilidadeE(){
-  if(player.kills >= 3){
-    tiros.push({ x: player.x + player.w/2 - 25, y: player.y - 20, w:50, h:50, s:9, isFireball:true });
-    player.kills -= 3;
-  }
+}else{
+
+$('boss-hp-bar').style.display='none';
+$('boss-hp-label').style.display='none';
+
+for(let r=0;r<3;r++){
+
+for(let c=0;c<5;c++){
+
+invasores.push({
+x:c*110+130,
+y:r*70+70,
+w:55,
+h:55,
+vivo:true,
+dir:1,
+vel:1+faseAtual*.2
+});
+
 }
 
-function usarHabilidadeR(){
-    if(player.kills >= 2 && !player.escudoAtivo){
-        player.escudoAtivo = true;
-        player.escudoTimer = 2000;
-        player.kills -= 2;
-    }
 }
 
-function explodir(x,y,color){
-  for(let i=0;i<14;i++){
-    const a = Math.random()*Math.PI*2;
-    const sp = 1 + Math.random()*3;
-    particulas.push({ x, y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, life:30, color });
-  }
 }
 
-function desenharNave(obj, color, isPlayer){
-  ctx.save();
-  const cx = obj.x + obj.w/2, cy = obj.y + obj.h/2;
-  const flutua = Math.sin(frameAnim*0.08 + obj.x*0.05) * 3;
-  ctx.translate(cx, cy + flutua);
-  
-  if(!isPlayer && obj.dir) ctx.rotate(obj.dir * 0.1);
-  if(isPlayer && player.danoTime > 0 && Math.floor(player.danoTime/4)%2) ctx.globalAlpha = 0.4;
-  
-  const img = isPlayer ? skins.player : (obj.x === amigo.x ? skins.amigo : skins.alien);
-  if (img.complete && img.naturalWidth !== 0) {
-      ctx.drawImage(img, -obj.w/2, -obj.h/2, obj.w, obj.h);
-  } else {
-      ctx.fillStyle = color;
-      if(isPlayer){
-        ctx.beginPath(); ctx.moveTo(0, -obj.h/2); ctx.lineTo(obj.w/2, obj.h/2); ctx.lineTo(0, obj.h/3); ctx.lineTo(-obj.w/2, obj.h/2); ctx.closePath(); ctx.fill();
-      } else {
-        ctx.beginPath(); ctx.ellipse(0,0,obj.w/2,obj.h/2.2,0,0,Math.PI*2); ctx.fill();
-      }
-  }
-
-  if(isPlayer && player.escudoAtivo) {
-      ctx.restore(); ctx.save();
-      ctx.translate(cx, cy + flutua);
-      ctx.rotate(frameAnim * 0.1);
-      if (skins.escudo.complete && skins.escudo.naturalWidth !== 0) {
-          ctx.globalAlpha = 0.6 + Math.sin(frameAnim*0.2)*0.2;
-          ctx.drawImage(skins.escudo, -obj.w*0.8, -obj.h*0.8, obj.w*1.6, obj.h*1.6);
-      } else {
-          ctx.strokeStyle = '#00d2ff'; ctx.lineWidth = 4;
-          ctx.beginPath(); ctx.arc(0,0, obj.w*0.8, 0, Math.PI*2); ctx.stroke();
-      }
-  }
-
-  ctx.restore();
 }
 
-function desenharBoss(obj){
-  ctx.save();
-  const cx = obj.x + obj.w/2, cy = obj.y + obj.h/2;
-  ctx.translate(cx, cy + Math.sin(frameAnim*0.05) * 6);
-  if(bossMorrendo) ctx.filter = `hue-rotate(${frameAnim*15}deg) brightness(2)`;
-  const img = (obj.tipo === 2) ? skins.chefe2 : skins.chefe;
-  if (img.complete && img.naturalWidth !== 0) {
-      ctx.drawImage(img, -obj.w/2, -obj.h/2, obj.w, obj.h);
-  } else {
-      ctx.fillStyle = (obj.tipo === 2) ? '#444' : '#8b0030';
-      ctx.beginPath(); ctx.ellipse(0,0,obj.w/2,obj.h/2,0,0,Math.PI*2); ctx.fill();
-  }
-  ctx.restore();
+window.addEventListener('keydown',e=>{
+
+keys[e.code]=true;
+
+});
+
+window.addEventListener('keyup',e=>{
+
+keys[e.code]=false;
+
+});
+
+function ativarZaWarudo(boss){
+
+if(tempoParado) return;
+
+tempoParado=true;
+
+somZaWarudo.currentTime=0;
+somZaWarudo.play();
+
+somTempo.currentTime=0;
+somTempo.play();
+
+$('efeito-tempo').style.display='block';
+
+$('game-container').classList.add('shake');
+
+const frase=falasChefe[Math.floor(Math.random()*falasChefe.length)];
+
+falar(frase,2500);
+
+setTimeout(()=>{
+
+tempoParado=false;
+
+$('efeito-tempo').style.display='none';
+
+$('game-container').classList.remove('shake');
+
+somTempo.pause();
+
+},5000);
+
 }
 
-function desenharEscudoBoss(obj){
-  ctx.save();
-  ctx.translate(obj.x + obj.w/2, obj.y + obj.h/2);
-  if (skins.escudo.complete && skins.escudo.naturalWidth !== 0) {
-      ctx.globalAlpha = 0.5 + Math.sin(frameAnim*0.1)*0.2;
-      ctx.drawImage(skins.escudo, -obj.w/2, -obj.h/2, obj.w, obj.h);
-  } else {
-      ctx.globalAlpha = 0.35; ctx.strokeStyle = '#00d2ff'; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.ellipse(0,0,obj.w/2,obj.h/2,0,0,Math.PI*2); ctx.stroke();
-  }
-  ctx.restore();
-}
+function desenharNave(obj,img){
 
-function desenharFireball(t){
-  ctx.save();
-  ctx.translate(t.x + t.w/2, t.y + t.h/2); ctx.rotate(frameAnim*0.3);
-  if (skins.fireball.complete && skins.fireball.naturalWidth !== 0) {
-      ctx.drawImage(skins.fireball, -t.w/2, -t.h/2, t.w, t.h);
-  } else {
-      ctx.fillStyle = '#ffae3b'; ctx.beginPath(); ctx.arc(0,0,t.w/2,0,Math.PI*2); ctx.fill();
-  }
-  ctx.restore();
+ctx.drawImage(img,obj.x,obj.y,obj.w,obj.h);
+
 }
 
 function colide(a,b){
-  return a.x < b.x+b.w && a.x+(a.w||6) > b.x && a.y < b.y+b.h && a.y+(a.h||20) > b.y;
+
+return a.x<b.x+b.w &&
+a.x+a.w>b.x &&
+a.y<b.y+b.h &&
+a.y+a.h>b.y;
+
 }
 
 function gameLoop(now){
-  const dt = Math.min(32, now - lastTime);
-  lastTime = now; frameAnim += dt * 0.06;
-  ctx.clearRect(0,0,800,600);
 
-  if(modo === 'menu') { requestAnimationFrame(gameLoop); return; }
+const dt=Math.min(32,now-lastTime);
 
-  const lerp = 1 - Math.pow(0.001, dt/1000);
-  player.x += (player.tx - player.x) * lerp;
-  amigo.x  += (amigo.tx  - amigo.x ) * lerp;
+lastTime=now;
 
-  if(player.danoTime>0) player.danoTime -= dt/16;
-  if(player.cooldown>0) player.cooldown -= dt;
-  
-  if(player.escudoAtivo){
-      player.escudoTimer -= dt;
-      if(player.escudoTimer <= 0) player.escudoAtivo = false;
-  }
+frameAnim+=dt*.06;
 
-  if(amigo.x > -100) desenharNave(amigo, '#00d2ff', false);
-  desenharNave(player, '#00ff88', true);
+ctx.clearRect(0,0,800,600);
 
-  if(modo !== 'jogando'){ requestAnimationFrame(gameLoop); return; }
+if(modo==='menu'){
 
-  $('fase-txt').innerText = faseAtual;
-  $('vidas-txt').innerText = player.vidas;
-  $('hab-txt').innerText = Math.min(player.kills,3);
-  $('escudo-txt').innerText = Math.min(player.kills,2);
-
-  const boss = invasores.find(i=>i.isBoss && i.hp>0);
-  const shield = invasores.find(i=>i.isShield && i.hp>0);
-
-  if(bossMortoCheck = invasores.find(i=>i.isBoss && i.hp <= 0 && i.tipo === 2 && !bossMorrendo)){
-      bossMorrendo = true;
-      $('game-container').classList.add('shake');
-      falar("MK-II: Nos veremos novamente mortal...", 3500, () => {
-          invasores = invasores.filter(i => !i.isBoss);
-          faseAtual++;
-          criarFase();
-      });
-  }
-
-  // BOSS 2 - IA DE DESVIO INTELIGENTE
-  if(boss && boss.tipo === 2 && !tempoParado && !bossMorrendo){
-      tiros.forEach(t => {
-          if(!t.isFireball && Math.abs(t.x - (boss.x + boss.w/2)) < 110 && t.y > boss.y && t.y < boss.y + 450){
-              const centroTela = 400;
-              const forcaEsquiva = 7.5;
-              
-              // Se estiver no canto esquerdo, só foge pra direita
-              if(boss.x < 100) boss.x += forcaEsquiva;
-              // Se estiver no canto direito, só foge pra esquerda
-              else if(boss.x > 520) boss.x -= forcaEsquiva;
-              // No meio, foge do tiro normalmente
-              else {
-                  boss.x += (t.x < boss.x + boss.w/2) ? forcaEsquiva : -forcaEsquiva;
-              }
-          }
-      });
-      // Movimento errático sutil para não ser estático
-      boss.x += Math.sin(frameAnim * 0.05) * 2;
-      
-      if(boss.x < 15) boss.x = 15;
-      if(boss.x > 800 - boss.w - 15) boss.x = 800 - boss.w - 15;
-  }
-
-  if(!tempoParado && !bossMorrendo){
-    const speed = 0.5 * dt;
-    if((keys['ArrowLeft'] || keys['KeyA'])  && player.tx > 10)  player.tx -= speed;
-    if((keys['ArrowRight'] || keys['KeyD']) && player.tx < 740-player.w+10) player.tx += speed;
-    if(keys['Space'] && player.cooldown <= 0){
-      tiros.push({ x: player.x + player.w/2 - 3, y: player.y, w:6, h:18, s:11 });
-      player.cooldown = 220;
-      somTiroPlayer.currentTime = 0; somTiroPlayer.play();
-    }
-  }
-
-  for(let i=tiros.length-1;i>=0;i--){
-    const t = tiros[i]; t.y -= t.s * (dt/16);
-    if(t.y < -100) tiros.splice(i,1);
-  }
-
-  let vivos = 0; let edge = false;
-  invasores.forEach(inv=>{
-    if(inv.isBoss ? inv.hp<=0 : (inv.isShield ? inv.hp<=0 : !inv.vivo)) return;
-    if(!inv.isShield) vivos++;
-
-    if((inv.isBoss || inv.isShield || !tempoParado) && !bossMorrendo){
-       if(inv.isShield && boss){ 
-         inv.x = boss.x + boss.w/2 - inv.w/2; 
-         inv.y = boss.y + boss.h/2 - inv.h/2; 
-       } else {
-         inv.x += inv.vel * inv.dir * (dt/16);
-         if(inv.x > 800 - inv.w - 10 || inv.x < 10) edge = true;
-         if(Math.random() < (inv.isBoss ? 0.025 : 0.005) * (dt/16)) {
-            tirosE.push({ x: inv.x + inv.w/2 - 2, y: inv.y + inv.h });
-            somTiroInimigo.currentTime = 0; somTiroInimigo.play();
-         }
-       }
-    }
-  });
-
-  if(edge && !bossMorrendo){ 
-    invasores.forEach(e=>{ 
-      if(!e.isShield){ 
-        e.dir *= -1; 
-        if(e.x < 10) e.x = 11;
-        if(e.x > 800 - e.w - 10) e.x = 800 - e.w - 11;
-        if(!e.isBoss && !tempoParado) e.y += 12; 
-      } 
-    }); 
-  }
-
-  for(let i=tirosE.length-1;i>=0;i--){
-    const te = tirosE[i]; te.y += 5 * (dt/16);
-    const hitBoxTiro = {x:te.x, y:te.y, w:5, h:15};
-    if(colide(hitBoxTiro, player)){
-        if(player.escudoAtivo) {
-            explodir(te.x, te.y, '#00d2ff');
-            tirosE.splice(i,1);
-        } else if(player.danoTime <= 0) {
-            player.vidas--; player.danoTime = 60; tirosE.splice(i,1);
-            explodir(player.x+player.w/2, player.y+player.h/2, '#00ff88');
-            if(player.vidas <= 0){ modo = 'gameover'; $('fase-final').innerText = faseAtual; $('game-over').classList.add('show'); }
-        }
-    } else if(te.y > 620) tirosE.splice(i,1);
-  }
-
-  if(!tempoParado && !bossMorrendo){
-    for(let ti=tiros.length-1; ti>=0; ti--){
-      const t = tiros[ti]; let consumed = false;
-      for(const inv of invasores){
-        const alive = inv.isBoss ? inv.hp>0 : (inv.isShield ? inv.hp>0 : inv.vivo);
-        if(!alive || !colide(t, inv)) continue;
-
-        if(t.isFireball){
-          if(inv.isBoss && inv.tipo === 2) { 
-            explodir(t.x, t.y, '#666'); 
-            tiros.splice(ti,1); 
-            consumed = true; break; 
-          }
-          if(inv.isBoss || inv.isShield){ inv.hp -= 40; explodir(t.x+t.w/2, t.y+t.h/2, inv.isBoss ? '#ff0055' : '#00d2ff'); }
-          else { inv.vivo = false; player.kills++; explodir(inv.x+inv.w/2, inv.y+inv.h/2, '#ff0055'); }
-        } else {
-          if(inv.isShield) { inv.hp -= 50; consumed = true; }
-          else if(inv.isBoss) { if(!(shield && shield.hp>0)) inv.hp -= 50; consumed = true; }
-          else { inv.vivo = false; player.kills++; consumed = true; }
-          if(consumed) { explodir(t.x, t.y, '#fff'); tiros.splice(ti,1); break; }
-        }
-      }
-    }
-  }
-
-  if(boss) $('boss-hp-fill').style.width = Math.max(0,(boss.hp/boss.maxHp)*100)+'%';
-  if(vivos === 0 && !bossMorrendo){ faseAtual++; criarFase(); }
-
-  invasores.forEach(inv=>{
-    if(inv.isBoss){ if(inv.hp>0 || (inv.tipo === 2 && bossMorrendo)) desenharBoss(inv); }
-    else if(inv.isShield){ if(inv.hp>0) desenharEscudoBoss(inv); }
-    else if(inv.vivo) desenharNave(inv, '#ff0055', false);
-  });
-  tiros.forEach(t=> t.isFireball ? desenharFireball(t) : (ctx.fillStyle='#fff', ctx.fillRect(t.x, t.y, t.w, t.h)));
-  tirosE.forEach(te=>(ctx.fillStyle='#ff0055', ctx.fillRect(te.x, te.y, 5, 15)));
-  particulas.forEach((p,i)=>{
-    p.x += p.vx * (dt/16); p.y += p.vy * (dt/16); p.life -= dt/16;
-    if(p.life<=0) particulas.splice(i,1);
-    else { ctx.globalAlpha = p.life/30; ctx.fillStyle = p.color; ctx.fillRect(p.x-2,p.y-2,4,4); ctx.globalAlpha = 1; }
-  });
-  requestAnimationFrame(gameLoop);
-}
 requestAnimationFrame(gameLoop);
+return;
+
+}
+
+player.x += (player.tx-player.x)*0.08;
+amigo.x += (amigo.tx-amigo.x)*0.08;
+
+if(amigo.x>-100){
+
+desenharNave(amigo,skins.amigo);
+
+}
+
+desenharNave(player,skins.player);
+
+if(modo!=='jogando'){
+
+requestAnimationFrame(gameLoop);
+return;
+
+}
+
+$('fase-txt').innerText=faseAtual;
+$('vidas-txt').innerText=player.vidas;
+$('hab-txt').innerText=player.kills;
+
+const boss=invasores.find(i=>i.isBoss && i.hp>0);
+
+if(boss){
+
+$('boss-hp-fill').style.width=(boss.hp/boss.maxHp*100)+'%';
+
+tempoCooldown+=dt;
+
+if(tempoCooldown>=10000){
+
+tempoCooldown=0;
+
+ativarZaWarudo(boss);
+
+}
+
+}
+
+if(!tempoParado){
+
+if((keys['ArrowLeft']||keys['KeyA']) && player.tx>0){
+
+player.tx-=6;
+
+}
+
+if((keys['ArrowRight']||keys['KeyD']) && player.tx<740){
+
+player.tx+=6;
+
+}
+
+if(keys['Space'] && player.cooldown<=0){
+
+tiros.push({
+x:player.x+28,
+y:player.y,
+w:6,
+h:20,
+s:10
+});
+
+player.cooldown=250;
+
+somTiroPlayer.currentTime=0;
+somTiroPlayer.play();
+
+}
+
+}
+
+if(player.cooldown>0){
+
+player.cooldown-=dt;
+
+}
+
+for(let i=tiros.length-1;i>=0;i--){
+
+const t=tiros[i];
+
+if(!tempoParado){
+
+t.y-=t.s;
+
+}
+
+ctx.fillStyle='white';
+ctx.fillRect(t.x,t.y,t.w,t.h);
+
+if(t.y<-50){
+
+tiros.splice(i,1);
+
+}
+
+}
+
+let vivos=0;
+
+invasores.forEach(inv=>{
+
+if(inv.isBoss){
+
+ctx.drawImage(skins.chefe2,inv.x,inv.y,inv.w,inv.h);
+
+if(!tempoParado){
+
+inv.x+=inv.vel*inv.dir;
+
+if(inv.x<0 || inv.x>620){
+
+inv.dir*=-1;
+
+}
+
+}
+
+}else{
+
+if(inv.vivo){
+
+vivos++;
+
+ctx.drawImage(skins.alien,inv.x,inv.y,inv.w,inv.h);
+
+if(!tempoParado){
+
+inv.x+=inv.vel*inv.dir;
+
+}
+
+}
+
+}
+
+});
+
+for(let ti=tiros.length-1;ti>=0;ti--){
+
+for(let inv of invasores){
+
+if(inv.isBoss){
+
+if(colide(tiros[ti],inv)){
+
+inv.hp-=50;
+
+tiros.splice(ti,1);
+
+if(inv.hp<=0){
+
+bossMorrendo=true;
+
+$('game-container').classList.add('shake');
+
+falar("MK-II: Nos veremos novamente...",3500,()=>{
+
+$('game-container').classList.remove('shake');
+
+faseAtual++;
+
+criarFase();
+
+});
+
+}
+
+break;
+
+}
+
+}else{
+
+if(inv.vivo && colide(tiros[ti],inv)){
+
+inv.vivo=false;
+
+player.kills++;
+
+tiros.splice(ti,1);
+
+break;
+
+}
+
+}
+
+}
+
+}
+
+if(vivos===0 && !boss){
+
+faseAtual++;
+
+criarFase();
+
+}
+
+requestAnimationFrame(gameLoop);
+
+}
+
+requestAnimationFrame(gameLoop);
+
 </script>
+
 </body>
 </html>

@@ -16,7 +16,6 @@
     overflow:hidden;
   }
   
-  /* Background Animado */
   body::before {
     content:"";position:fixed;inset:0;pointer-events:none;
     background-image: 
@@ -27,23 +26,21 @@
   }
   @keyframes drift{from{background-position:0 0}to{background-position:600px 600px}}
 
-  /* Overlay de Ativação (Necessário para o som tocar) */
   #overlay-start {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000;
+    position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    cursor: pointer;
+    cursor: pointer; text-align: center; padding: 20px;
   }
-  #overlay-start h2 { font-family: 'Orbitron'; color: var(--neon-blue); margin-bottom: 20px; animation: pulse 1.5s infinite; }
+  #overlay-start h2 { font-family: 'Orbitron'; color: var(--neon-blue); font-size: 32px; margin-bottom: 10px; animation: pulse 1.5s infinite; }
+  #overlay-start p { font-family: 'Orbitron'; color: #fff; opacity: 0.6; font-size: 14px; }
 
-  /* Estilo do Menu */
   #menu-principal{
     text-align:center; background:rgba(5, 5, 20, 0.85);
     padding:60px; border-radius:40px; border:3px solid var(--neon-blue);
-    max-width:550px; width:95%; box-shadow: 0 0 40px rgba(0, 210, 255, 0.2), inset 0 0 20px rgba(0, 210, 255, 0.1);
-    backdrop-filter:blur(15px); position: relative; overflow: hidden;
+    max-width:550px; width:95%; box-shadow: 0 0 40px rgba(0, 210, 255, 0.2);
+    backdrop-filter:blur(15px); position: relative; overflow: hidden; display: none;
   }
   
-  /* Efeito de Scanner no Menu */
   #menu-principal::after {
     content: ""; position: absolute; top: -100%; left: 0; width: 100%; height: 50%;
     background: linear-gradient(to bottom, transparent, rgba(0, 210, 255, 0.05), transparent);
@@ -53,9 +50,7 @@
 
   h1{font-family:'Orbitron',sans-serif;font-size:48px;color:var(--neon-blue);
     text-shadow:0 0 15px var(--neon-blue), 0 0 30px var(--neon-blue);
-    margin-bottom:20px;letter-spacing:6px; animation: glow 3s ease-in-out infinite; }
-  
-  @keyframes glow { 0%, 100% { filter: drop-shadow(0 0 5px var(--neon-blue)); } 50% { filter: drop-shadow(0 0 20px var(--neon-blue)); } }
+    margin-bottom:20px;letter-spacing:6px;}
 
   #menu-principal p{opacity:.8; font-size:15px; margin-bottom:35px; line-height:1.8; color: #aef; }
 
@@ -64,33 +59,30 @@
     background: linear-gradient(135deg, var(--neon-pink), #ff0080); color:#fff;
     border:none; border-radius:20px; cursor:pointer; width:100%; text-transform:uppercase;
     letter-spacing:3px; box-shadow:0 10px 30px rgba(255,0,85,0.4);
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); font-family:'Orbitron',sans-serif;
+    transition: all 0.3s ease; font-family:'Orbitron',sans-serif;
   }
   .btn-play:hover{ transform: scale(1.05); box-shadow:0 15px 45px rgba(255,0,85,0.6); }
 
-  /* Container do Jogo */
   #game-container{display:none;position:relative;width:800px;height:600px;
     background:#000;border:3px solid var(--neon-blue);overflow:hidden;
     border-radius:15px;box-shadow:0 0 100px rgba(0,210,255,0.3)}
 
   #ui-camada{position:absolute;top:14px;left:20px;right:20px;display:flex;
     justify-content:space-between;font-family:'Orbitron',sans-serif;font-size:16px;
-    color:var(--neon-blue);pointer-events:none;z-index:50;text-shadow:0 0 10px var(--neon-blue)}
-  #ui-camada span{color:#fff}
+    color:var(--neon-blue);pointer-events:none;z-index:50;}
 
   #dialogo-box{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(.9);
     background:rgba(255,255,255,0.98);color:#000;padding:25px 40px;border-radius:20px;
     font-weight:800;display:none;z-index:200;width:560px;text-align:center;
-    border:4px solid var(--neon-blue);box-shadow:0 0 120px rgba(0,210,255,0.7);font-size:19px;
-    opacity:0;transition:all 0.3s ease;font-family:'Plus Jakarta Sans'}
+    border:4px solid var(--neon-blue);font-size:19px; opacity:0;transition:all 0.3s ease;}
   #dialogo-box.show{display:block;opacity:1;transform:translate(-50%,-50%) scale(1)}
 
   #efeito-tempo{position:absolute;inset:0;background:radial-gradient(circle,rgba(0,150,255,0.2),rgba(0,150,255,0.5));
-    display:none;z-index:5;pointer-events:none;animation:timeWarp .6s ease}
+    display:none;z-index:5;pointer-events:none;}
   
   #boss-hp-bar{position:absolute;top:50px;left:50%;transform:translateX(-50%);
     width:420px;height:16px;background:#111;border:2px solid #fff;display:none;
-    border-radius:10px;z-index:15;overflow:hidden;box-shadow:0 0 20px rgba(255,0,85,0.6)}
+    border-radius:10px;z-index:15;overflow:hidden;}
   #boss-hp-fill{width:100%;height:100%;background:linear-gradient(90deg,#ff0055,#ffae3b);transition:width .25s ease}
   #boss-hp-label{position:absolute;top:30px;left:50%;transform:translateX(-50%);
     font-family:'Orbitron';font-size:14px;color:#ff5577;display:none;z-index:15;letter-spacing:3px}
@@ -98,15 +90,14 @@
   #game-over{position:absolute;inset:0;background:rgba(0,0,0,0.9);display:none;
     flex-direction:column;align-items:center;justify-content:center;z-index:300;gap:20px}
   #game-over.show{display:flex}
-  #game-over h2{font-family:'Orbitron';font-size:54px;color:var(--neon-pink);
-    text-shadow:0 0 40px var(--neon-pink);letter-spacing:8px}
+  #game-over h2{font-family:'Orbitron';font-size:54px;color:var(--neon-pink);letter-spacing:8px}
 </style>
 </head>
 <body>
 
 <div id="overlay-start" onclick="permitirAudio()">
-  <h2>CLIQUE PARA INICIAR</h2>
-  <p>Ativando sistemas de áudio neon...</p>
+  <h2>CLIQUE PARA ATIVAR O NEON</h2>
+  <p>(Isso habilita a trilha sonora do jogo)</p>
 </div>
 
 <div id="menu-principal">
@@ -148,21 +139,38 @@ skins.chefe.src = 'chefe1.png';
 skins.fireball.src = 'bola-defogo.png';
 skins.escudo.src = 'escudo.png';
 
-// CONFIGURAÇÃO DE ÁUDIO
+// DEFINIÇÃO DOS SONS
 const somMenu = new Audio('musica-menu.mp3');
+const somTempo = new Audio('tempo.mp3');
+const somTiroPlayer = new Audio('nave1.mp3');
+const somTiroInimigo = new Audio('nave2.mp3');
+
+// Configuração inicial de volumes
 somMenu.loop = true;
 somMenu.volume = 0.5;
-
-const somTempo = new Audio('tempo.mp3');
 somTempo.volume = 0.4;
-const somTiroPlayer = new Audio('nave1.mp3');
 somTiroPlayer.volume = 0.3;
-const somTiroInimigo = new Audio('nave2.mp3');
 somTiroInimigo.volume = 0.2;
 
+// FUNÇÃO CRÍTICA PARA LIBERAR O ÁUDIO
 function permitirAudio() {
+    // Esconde o overlay e mostra o menu
     document.getElementById('overlay-start').style.display = 'none';
-    somMenu.play().catch(e => console.log("Erro ao tocar música:", e));
+    document.getElementById('menu-principal').style.display = 'block';
+
+    // Tenta tocar a música imediatamente
+    somMenu.play().then(() => {
+        console.log("Áudio liberado com sucesso!");
+    }).catch(error => {
+        console.error("Erro ao tocar música. Verifique se o arquivo musica-menu.mp3 está na pasta.", error);
+    });
+
+    // "Acorda" os outros sons para não haver atraso depois
+    [somTempo, somTiroPlayer, somTiroInimigo].forEach(s => {
+        s.play();
+        s.pause();
+        s.currentTime = 0;
+    });
 }
 
 let modo = 'menu';
@@ -194,7 +202,7 @@ function falar(texto, tempo, cb){
 }
 
 function iniciarHistoria(){
-  somMenu.pause(); // Para a música do menu ao começar o jogo
+  somMenu.pause(); 
   $('menu-principal').style.display='none';
   $('game-container').style.display='block';
   modo='historia';

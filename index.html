@@ -86,7 +86,7 @@
 
 <div id="menu-principal">
   <h1>SPACE INVADERS</h1>
-  <p>← → mover · ESPAÇO atirar · E bola de fogo<br>Cuidado com o chefe a cada 5 fases</p>
+  <p>← → ou A D para mover · ESPAÇO atirar · E bola de fogo<br>Cuidado com o chefe a cada 5 fases</p>
   <button class="btn-play" onclick="iniciarHistoria()">INICIAR JOGO</button>
 </div>
 
@@ -175,11 +175,8 @@ function criarFase(){
   if(faseAtual % 5 === 0){
     bossBar.style.display='block'; bossLabel.style.display='block';
     $('boss-hp-fill').style.width='100%';
-    
-    // VIDA DO CHEFE AUMENTADA PARA 5000 (Sendo bem resistente agora)
     const bossHp = 5000 + faseAtual*200; 
     invasores.push({ x:300, y:80, w:200, h:160, hp:bossHp, maxHp:bossHp, isBoss:true, dir:1, vel:1.4 });
-    
     const shieldHp = 400 + faseAtual*20;
     invasores.push({ x:260, y:60, w:280, h:200, hp:shieldHp, maxHp:shieldHp, isShield:true });
     for(let i=0;i<4;i++) invasores.push({ x:120 + i*170, y:330, w:55, h:55, vivo:true, dir:1, vel:1.2 });
@@ -189,10 +186,7 @@ function criarFase(){
     const rows = 2 + Math.min(2, Math.floor(faseAtual/3));
     for(let r=0;r<rows;r++){
       for(let c=0;c<cols;c++){
-        invasores.push({
-          x: c*110 + 130, y: r*70 + 70, w:55, h:55,
-          vivo:true, dir:1, vel: 0.8 + faseAtual*0.15
-        });
+        invasores.push({ x: c*110 + 130, y: r*70 + 70, w:55, h:55, vivo:true, dir:1, vel: 0.8 + faseAtual*0.15 });
       }
     }
   }
@@ -201,7 +195,7 @@ function criarFase(){
 window.addEventListener('keydown', e => {
   keys[e.code] = true;
   if(e.code === 'KeyE' && !tempoParado && modo==='jogando') usarHabilidade();
-  if(['ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault();
+  if(['ArrowLeft','ArrowRight','KeyA','KeyD','Space'].includes(e.code)) e.preventDefault();
 });
 window.addEventListener('keyup', e => { keys[e.code] = false; });
 
@@ -243,8 +237,7 @@ function desenharNave(obj, color, isPlayer){
 function desenharBoss(obj){
   ctx.save();
   const cx = obj.x + obj.w/2, cy = obj.y + obj.h/2;
-  const flutua = Math.sin(frameAnim*0.05) * 6;
-  ctx.translate(cx, cy + flutua);
+  ctx.translate(cx, cy + Math.sin(frameAnim*0.05) * 6);
   if (skins.chefe.complete && skins.chefe.naturalWidth !== 0) {
       ctx.drawImage(skins.chefe, -obj.w/2, -obj.h/2, obj.w, obj.h);
   } else {
@@ -255,8 +248,7 @@ function desenharBoss(obj){
 
 function desenharEscudo(obj){
   ctx.save();
-  const cx = obj.x + obj.w/2, cy = obj.y + obj.h/2;
-  ctx.translate(cx, cy);
+  ctx.translate(obj.x + obj.w/2, obj.y + obj.h/2);
   if (skins.escudo.complete && skins.escudo.naturalWidth !== 0) {
       ctx.globalAlpha = 0.5 + Math.sin(frameAnim*0.1)*0.2;
       ctx.drawImage(skins.escudo, -obj.w/2, -obj.h/2, obj.w, obj.h);
@@ -322,8 +314,10 @@ function gameLoop(now){
 
   if(!tempoParado){
     const speed = 0.5 * dt;
-    if(keys['ArrowLeft']  && player.tx > 10)  player.tx -= speed;
-    if(keys['ArrowRight'] && player.tx < 740-player.w+10) player.tx += speed;
+    // MOVIMENTAÇÃO ATUALIZADA: ACEITA SETAS OU A/D
+    if((keys['ArrowLeft'] || keys['KeyA'])  && player.tx > 10)  player.tx -= speed;
+    if((keys['ArrowRight'] || keys['KeyD']) && player.tx < 740-player.w+10) player.tx += speed;
+    
     if(keys['Space'] && player.cooldown <= 0){
       tiros.push({ x: player.x + player.w/2 - 3, y: player.y, w:6, h:18, s:11 });
       player.cooldown = 220;
@@ -361,26 +355,13 @@ function gameLoop(now){
       for(const inv of invasores){
         const alive = inv.isBoss ? inv.hp>0 : (inv.isShield ? inv.hp>0 : inv.vivo);
         if(!alive || !colide(t, inv)) continue;
-
-        // --- LÓGICA DE DANO DA BOLA DE FOGO ---
         if(t.isFireball){
-          if(inv.isBoss || inv.isShield){
-            inv.hp -= 40; // Dano muito reduzido no Boss/Escudo para não dar Hit Kill
-            explodir(t.x+t.w/2, t.y+t.h/2, inv.isBoss ? '#ff0055' : '#00d2ff');
-            // Nota: Não damos tiros.splice aqui para a bola continuar atravessando, mas o dano é baixo.
-          } else {
-            inv.vivo = false; // Hit Kill nos bots normais
-            player.kills++; explodir(inv.x+inv.w/2, inv.y+inv.h/2, '#ff0055');
-          }
+          if(inv.isBoss || inv.isShield){ inv.hp -= 40; explodir(t.x+t.w/2, t.y+t.h/2, inv.isBoss ? '#ff0055' : '#00d2ff'); }
+          else { inv.vivo = false; player.kills++; explodir(inv.x+inv.w/2, inv.y+inv.h/2, '#ff0055'); }
         } else {
-          // Tiro normal
           if(inv.isShield) { inv.hp -= 50; consumed = true; }
-          else if(inv.isBoss) { 
-            if(!(shield && shield.hp>0)) inv.hp -= 50; 
-            consumed = true; 
-          }
+          else if(inv.isBoss) { if(!(shield && shield.hp>0)) inv.hp -= 50; consumed = true; }
           else { inv.vivo = false; player.kills++; consumed = true; }
-          
           if(consumed) { explodir(t.x, t.y, '#fff'); tiros.splice(ti,1); break; }
         }
       }
@@ -401,7 +382,6 @@ function gameLoop(now){
     if(p.life<=0) particulas.splice(i,1);
     else { ctx.globalAlpha = p.life/30; ctx.fillStyle = p.color; ctx.fillRect(p.x-2,p.y-2,4,4); ctx.globalAlpha = 1; }
   });
-
   requestAnimationFrame(gameLoop);
 }
 requestAnimationFrame(gameLoop);

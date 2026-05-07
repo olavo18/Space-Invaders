@@ -349,7 +349,7 @@ function gameLoop(now){
     if(t.y < -100) tiros.splice(i,1);
   }
 
-  // Logica de Inimigos (BOSS SE MOVE NO GELO)
+  // Logica de Inimigos (BOSS SE MOVE NO GELO E RESPEITA BORDAS)
   let vivos = 0; let edge = false;
   invasores.forEach(inv=>{
     if(inv.isBoss ? inv.hp<=0 : (inv.isShield ? inv.hp<=0 : !inv.vivo)) return;
@@ -362,7 +362,10 @@ function gameLoop(now){
          inv.y = boss.y + boss.h/2 - inv.h/2; 
        } else {
          inv.x += inv.vel * inv.dir * (dt/16);
-         if(inv.x > 740 || inv.x < 10) edge = true;
+         
+         // CHECAGEM DE BORDA: Agora o Boss também ativa a inversão de direção
+         if(inv.x > 800 - inv.w - 10 || inv.x < 10) edge = true;
+
          // Tiros do boss continuam no tempo parado
          if(Math.random() < (inv.isBoss ? 0.025 : 0.005) * (dt/16)) {
             tirosE.push({ x: inv.x + inv.w/2 - 2, y: inv.y + inv.h });
@@ -372,7 +375,18 @@ function gameLoop(now){
     }
   });
 
-  if(edge && !tempoParado) invasores.forEach(e=>{ if(!e.isShield){ e.dir *= -1; if(!e.isBoss) e.y += 12; } });
+  // Inversão de direção global
+  if(edge){ 
+    invasores.forEach(e=>{ 
+      if(!e.isShield){ 
+        e.dir *= -1; 
+        // Correção rápida para não prender na parede
+        if(e.x < 10) e.x = 11;
+        if(e.x > 800 - e.w - 10) e.x = 800 - e.w - 11;
+        if(!e.isBoss && !tempoParado) e.y += 12; 
+      } 
+    }); 
+  }
 
   // Tiros Inimigos sempre se movem e matam player (mesmo no tempo parado)
   for(let i=tirosE.length-1;i>=0;i--){

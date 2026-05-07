@@ -130,16 +130,16 @@ const ctx = canvas.getContext('2d');
 
 const skins = {
     player: new Image(), amigo: new Image(), alien: new Image(),
-    chefe: new Image(), fireball: new Image(), escudo: new Image()
+    chefe: new Image(), chefe2: new Image(), fireball: new Image(), escudo: new Image()
 };
 skins.player.src = 'jogadorprincipal.png';
 skins.amigo.src = 'amigo.png';
 skins.alien.src = 'alien.png';
 skins.chefe.src = 'chefe1.png';
+skins.chefe2.src = 'chefe2.png';
 skins.fireball.src = 'bola-defogo.png';
 skins.escudo.src = 'escudo.png';
 
-// DEFINIÇÃO DOS SONS (CORRIGIDO PARA menu.mp3)
 const somMenu = new Audio('menu.mp3');
 const somTempo = new Audio('tempo.mp3');
 const somTiroPlayer = new Audio('nave1.mp3');
@@ -216,11 +216,20 @@ function criarFase(){
   const bossBar = $('boss-hp-bar'), bossLabel = $('boss-hp-label');
   bossBar.style.display='none'; bossLabel.style.display='none';
 
-  if(faseAtual % 5 === 0){
+  // MECÂNICA BOSS 2 (FASE 10)
+  if(faseAtual % 10 === 0){
     bossBar.style.display='block'; bossLabel.style.display='block';
+    bossLabel.innerText = "MK-II: O ANULADOR";
+    $('boss-hp-fill').style.width='100%';
+    invasores.push({ x:300, y:80, w:180, h:150, hp:650, maxHp:650, isBoss:true, tipo:2, dir:1, vel:2.5, spawnTimer:0 });
+    invasores.push({ x:260, y:60, w:250, h:190, hp:600, maxHp:600, isShield:true });
+  } 
+  else if(faseAtual % 5 === 0){
+    bossBar.style.display='block'; bossLabel.style.display='block';
+    bossLabel.innerText = "CHEFE SUPREMO";
     $('boss-hp-fill').style.width='100%';
     const bossHp = 5000 + faseAtual*200; 
-    invasores.push({ x:300, y:80, w:200, h:160, hp:bossHp, maxHp:bossHp, isBoss:true, dir:1, vel:1.4 });
+    invasores.push({ x:300, y:80, w:200, h:160, hp:bossHp, maxHp:bossHp, isBoss:true, tipo:1, dir:1, vel:1.4 });
     const shieldHp = 400 + faseAtual*20;
     invasores.push({ x:260, y:60, w:280, h:200, hp:shieldHp, maxHp:shieldHp, isShield:true });
     for(let i=0;i<4;i++) invasores.push({ x:120 + i*170, y:330, w:55, h:55, vivo:true, dir:1, vel:1.2 });
@@ -283,10 +292,12 @@ function desenharBoss(obj){
   ctx.save();
   const cx = obj.x + obj.w/2, cy = obj.y + obj.h/2;
   ctx.translate(cx, cy + Math.sin(frameAnim*0.05) * 6);
-  if (skins.chefe.complete && skins.chefe.naturalWidth !== 0) {
-      ctx.drawImage(skins.chefe, -obj.w/2, -obj.h/2, obj.w, obj.h);
+  const img = (obj.tipo === 2) ? skins.chefe2 : skins.chefe;
+  if (img.complete && img.naturalWidth !== 0) {
+      ctx.drawImage(img, -obj.w/2, -obj.h/2, obj.w, obj.h);
   } else {
-      ctx.fillStyle = '#8b0030'; ctx.beginPath(); ctx.ellipse(0,0,obj.w/2,obj.h/2,0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = (obj.tipo === 2) ? '#444' : '#8b0030';
+      ctx.beginPath(); ctx.ellipse(0,0,obj.w/2,obj.h/2,0,0,Math.PI*2); ctx.fill();
   }
   ctx.restore();
 }
@@ -345,7 +356,8 @@ function gameLoop(now){
   const boss = invasores.find(i=>i.isBoss && i.hp>0);
   const shield = invasores.find(i=>i.isShield && i.hp>0);
 
-  if(boss && !tempoParado && !avisandoHabilidade){
+  // MECÂNICA EXCLUSIVA BOSS 1 (ZA WARUDO)
+  if(boss && boss.tipo === 1 && !tempoParado && !avisandoHabilidade){
     contadorTempo += dt/1000;
     if(contadorTempo >= 7){
       avisandoHabilidade = true;
@@ -361,6 +373,20 @@ function gameLoop(now){
         }, 2500);
       });
     }
+  }
+
+  // MECÂNICA EXCLUSIVA BOSS 2 (ESQUIVA E SPAWN)
+  if(boss && boss.tipo === 2 && !tempoParado){
+      tiros.forEach(t => {
+          if(Math.abs(t.x - boss.x) < 120 && t.y > boss.y && t.y < boss.y + 350){
+              boss.x += boss.dir * 4; 
+          }
+      });
+      boss.spawnTimer += dt;
+      if(boss.spawnTimer > 5000){
+          for(let i=0; i<3; i++) invasores.push({ x: boss.x + (i*50), y: boss.y + 100, w:45, h:45, vivo:true, dir:1, vel:2 });
+          boss.spawnTimer = 0;
+      }
   }
 
   if(!tempoParado){
@@ -426,6 +452,7 @@ function gameLoop(now){
         const alive = inv.isBoss ? inv.hp>0 : (inv.isShield ? inv.hp>0 : inv.vivo);
         if(!alive || !colide(t, inv)) continue;
         if(t.isFireball){
+          if(inv.isBoss && inv.tipo === 2) { explodir(t.x, t.y, '#666'); tiros.splice(ti,1); consumed = true; break; }
           if(inv.isBoss || inv.isShield){ inv.hp -= 40; explodir(t.x+t.w/2, t.y+t.h/2, inv.isBoss ? '#ff0055' : '#00d2ff'); }
           else { inv.vivo = false; player.kills++; explodir(inv.x+inv.w/2, inv.y+inv.h/2, '#ff0055'); }
         } else {

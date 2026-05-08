@@ -1,13 +1,13 @@
-// Utilitários e Inicialização [cite: 24, 36]
+// Utilitários e Inicialização
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const $ = id => document.getElementById(id);
 
-// Carregamento de Skins [cite: 25, 26]
+// Carregamento de Skins
 const skins = {
     player: new Image(), amigo: new Image(), alien: new Image(),
-    chefe: new Image(), chefe2: new Image(), fireball: new Image(), escudo: new Image()
-    criador: new Image() // <-- ADICIONE ISSO AQUI
+    chefe: new Image(), chefe2: new Image(), fireball: new Image(), escudo: new Image(),
+    criador: new Image(),
 };
 skins.player.src = 'jogadorprincipal.png';
 skins.amigo.src = 'amigo.png';
@@ -16,9 +16,9 @@ skins.chefe.src = 'chefe1.png';
 skins.chefe2.src = 'chefe2.png';
 skins.fireball.src = 'bola-defogo.png';
 skins.escudo.src = 'escudo.png';
-skins.criador.src = 'criador.png'; // <-- ADICIONE ISSO AQUI                                                                                                                                            
+skins.criador.src = 'criador.png';
 
-// Sons [cite: 27]
+// Sons
 const somMenu = new Audio('menu.mp3');
 const somTempo = new Audio('tempo.mp3');
 const somTiroPlayer = new Audio('nave1.mp3');
@@ -30,7 +30,7 @@ somTempo.volume = 0.4;
 somTiroPlayer.volume = 0.3;
 somTiroInimigo.volume = 0.2;
 
-// Variáveis de Estado [cite: 31, 32, 33]
+// Variáveis de Estado
 let modo = 'menu';
 let faseAtual = 1;
 let tempoParado = false;
@@ -54,7 +54,7 @@ const keys = {};
 let frameAnim = 0;
 const falasChefe = ["ZA WARUDO!", "O tempo é meu!", "Você não pode se mexer!", "Inútil! Inútil! Inútil!"];
 
-// Funções Globais (Chamadas pelo HTML) [cite: 28, 38]
+// Funções Globais (Chamadas pelo HTML)
 window.permitirAudio = function() {
     $('overlay-start').style.display = 'none';
     $('menu-principal').style.display = 'block';
@@ -81,7 +81,7 @@ window.iniciarHistoria = function(){
   });
 };
 
-// Lógica de Jogo [cite: 37, 40, 50, 77]
+// Lógica de Jogo
 function falar(texto, tempo, cb){
   const box = $('dialogo-box');
   box.innerText = texto;
@@ -96,9 +96,7 @@ function criarFase(){
   bossBar.style.display='none'; bossLabel.style.display='none';
   container.classList.remove('shake');
     
-  // =========================================================================
-  // 1. CHEFE CRIADOR (Surgirá na fase 15, 30, 45, etc.)
-  // =========================================================================
+  // 1. CHEFE CRIADOR (Fase 15, 30, 45...)
   if(faseAtual % 15 === 0){
     bossBar.style.display='block'; bossLabel.style.display='block';
     bossLabel.innerText = "O CRIADOR DE MUNDOS";
@@ -113,9 +111,7 @@ function criarFase(){
     });
     contadorTempo=0;
   } 
-  // =========================================================================
-  // 2. CHEFE MK-II (Surgirá na fase 10, 20, 40, etc. Menos na 30, que é do Criador)
-  // =========================================================================
+  // 2. CHEFE MK-II (Fase 10, 20, 40...)
   else if(faseAtual % 10 === 0){
     bossBar.style.display='block'; bossLabel.style.display='block';
     bossLabel.innerText = "MK-II: O ANULADOR";
@@ -123,9 +119,7 @@ function criarFase(){
     invasores.push({ x:300, y:80, w:180, h:150, hp:8000, maxHp:8000, isBoss:true, tipo:2, dir:1, vel:2.8 });
     invasores.push({ x:260, y:60, w:250, h:190, hp:600, maxHp:600, isShield:true });
   } 
-  // =========================================================================
-  // 3. CHEFE SUPREMO (Surgirá na fase 5, 25, 35, etc. Menos na 10, 15, 20 e 30)
-  // =========================================================================
+  // 3. CHEFE SUPREMO (Fase 5, 25, 35...)
   else if(faseAtual % 5 === 0){
     bossBar.style.display='block'; bossLabel.style.display='block';
     bossLabel.innerText = "CHEFE SUPREMO";
@@ -137,9 +131,7 @@ function criarFase(){
     for(let i=0;i<4;i++) invasores.push({ x:120 + i*170, y:330, w:55, h:55, vivo:true, dir:1, vel:1.2 });
     contadorTempo=0;
   } 
-  // =========================================================================
-  // 4. FASE NORMAL (Para todas as outras fases sem chefes)
-  // =========================================================================
+  // 4. FASE NORMAL
   else {
     const cols = 5;
     const rows = 2 + Math.min(2, Math.floor(faseAtual/3));
@@ -150,7 +142,8 @@ function criarFase(){
     }
   }
 }
-// Controles e Habilidades [cite: 51, 52]
+
+// Controles e Habilidades
 window.addEventListener('keydown', e => {
   keys[e.code] = true;
   if(!tempoParado && modo==='jogando' && !bossMorrendo) {
@@ -161,7 +154,7 @@ window.addEventListener('keydown', e => {
 });
 window.addEventListener('keyup', e => { keys[e.code] = false; });
 
-// Renderização [cite: 55, 63, 67, 74]
+// Renderização
 function explodir(x,y,color){
   for(let i=0;i<14;i++){
     const a = Math.random()*Math.PI*2;
@@ -197,9 +190,16 @@ function desenharBoss(obj){
   const cx = obj.x + obj.w/2, cy = obj.y + obj.h/2;
   ctx.translate(cx, cy + Math.sin(frameAnim*0.05) * 6);
   if(bossMorrendo) ctx.filter = `hue-rotate(${frameAnim*15}deg) brightness(2)`;
-  const img = (obj.tipo === 2) ? skins.chefe2 : skins.chefe;
+  
+  let img = skins.chefe;
+  if(obj.tipo === 2) img = skins.chefe2;
+  if(obj.tipo === 3) img = skins.criador; 
+
   if (img.complete && img.naturalWidth !== 0) ctx.drawImage(img, -obj.w/2, -obj.h/2, obj.w, obj.h);
-  else { ctx.fillStyle = (obj.tipo === 2) ? '#444' : '#8b0030'; ctx.beginPath(); ctx.ellipse(0,0,obj.w/2,obj.h/2,0,0,Math.PI*2); ctx.fill(); }
+  else { 
+      ctx.fillStyle = (obj.tipo === 3) ? '#00d2ff' : ((obj.tipo === 2) ? '#444' : '#8b0030'); 
+      ctx.beginPath(); ctx.ellipse(0,0,obj.w/2,obj.h/2,0,0,Math.PI*2); ctx.fill(); 
+  }
   ctx.restore();
 }
 
@@ -219,7 +219,7 @@ function desenharFireball(t){
 
 function colide(a,b){ return a.x < b.x+b.w && a.x+(a.w||6) > b.x && a.y < b.y+b.h && a.y+(a.h||20) > b.y; }
 
-// Game Loop [cite: 78, 89, 97, 106, 119, 122]
+// Game Loop
 function gameLoop(now){
   const dt = Math.min(32, now - lastTime);
   lastTime = now; frameAnim += dt * 0.06;
@@ -244,13 +244,22 @@ function gameLoop(now){
 
   const boss = invasores.find(i=>i.isBoss && i.hp>0);
   const shield = invasores.find(i=>i.isShield && i.hp>0);
-  const bossMortoCheck = invasores.find(i=>i.isBoss && i.hp <= 0 && i.tipo === 2 && !bossMorrendo);
+  const bossMortoCheck = invasores.find(i=>i.isBoss && i.hp <= 0 && (i.tipo === 2 || i.tipo === 3) && !bossMorrendo);
 
   if(bossMortoCheck){
       bossMorrendo = true; $('game-container').classList.add('shake');
-      falar("MK-II: Nos veremos novamente mortal...", 3500, () => { invasores = invasores.filter(i => !i.isBoss); faseAtual++; criarFase(); });
+      
+      const nomeBoss = bossMortoCheck.tipo === 3 ? "Criador" : "MK-II";
+      const falaMorte = bossMortoCheck.tipo === 3 ? "Criador: Este universo ainda será meu..." : "MK-II: Nos veremos novamente mortal...";
+      
+      falar(falaMorte, 3500, () => { 
+          invasores = invasores.filter(i => !i.isBoss); 
+          faseAtual++; 
+          criarFase(); 
+      });
   }
 
+  // Comportamento do Chefe Supremo (Tipo 1)
   if(boss && boss.tipo === 1 && !tempoParado && !avisandoHabilidade){
     contadorTempo += dt/1000;
     if(contadorTempo >= 7){
@@ -263,11 +272,28 @@ function gameLoop(now){
     }
   }
 
+  // Comportamento do MK-II (Tipo 2) - Esquivar-se de disparos
   if(boss && boss.tipo === 2 && !tempoParado && !bossMorrendo){
       tiros.forEach(t => { if(!t.isFireball && Math.abs(t.x - (boss.x + boss.w/2)) < 100 && t.y > boss.y && t.y < boss.y + 450) boss.x += (t.x < boss.x + boss.w/2) ? 6 : -6; });
       if(boss.x < 15) boss.x = 15; if(boss.x > 785 - boss.w) boss.x = 785 - boss.w;
   }
 
+  // NOVA MECÂNICA: Invocação do Criador de Mundos (Tipo 3)
+  if(boss && boss.tipo === 3 && !tempoParado && !bossMorrendo){
+    boss.timerInvocacao += dt;
+    if(boss.timerInvocacao >= 4000){
+      boss.timerInvocacao = 0;
+      const minionsAtuais = invasores.filter(i => !i.isBoss && !i.isShield && i.vivo).length;
+      if(minionsAtuais < 6){
+        invasores.push({ x: boss.x + 20, y: boss.y + boss.h + 10, w:55, h:55, vivo:true, dir: 1, vel: 1.2 });
+        invasores.push({ x: boss.x + boss.w - 75, y: boss.y + boss.h + 10, w:55, h:55, vivo:true, dir: -1, vel: 1.2 });
+        explodir(boss.x + 40, boss.y + boss.h + 30, '#00d2ff');
+        explodir(boss.x + boss.w - 40, boss.y + boss.h + 30, '#00d2ff');
+      }
+    }
+  }
+
+  // Movimento e tiro do jogador
   if(!tempoParado && !bossMorrendo){
     const speed = 0.5 * dt;
     if((keys['ArrowLeft'] || keys['KeyA']) && player.tx > 10) player.tx -= speed;
@@ -278,8 +304,10 @@ function gameLoop(now){
     }
   }
 
+  // Atualização dos Tiros do Player
   for(let i=tiros.length-1;i>=0;i--){ tiros[i].y -= tiros[i].s * (dt/16); if(tiros[i].y < -100) tiros.splice(i,1); }
 
+  // Atualização dos Invasores
   let vivos = 0; let edge = false;
   invasores.forEach(inv=>{
     if(inv.isBoss ? inv.hp<=0 : (inv.isShield ? inv.hp<=0 : !inv.vivo)) return;
@@ -295,6 +323,7 @@ function gameLoop(now){
 
   if(edge && !bossMorrendo){ invasores.forEach(e=>{ if(!e.isShield){ e.dir *= -1; if(e.x < 10) e.x = 11; if(e.x > 800 - e.w - 10) e.x = 800 - e.w - 11; if(!e.isBoss && !tempoParado) e.y += 12; } }); }
 
+  // Atualização dos Tiros Inimigos
   for(let i=tirosE.length-1;i>=0;i--){
     const te = tirosE[i]; te.y += 5 * (dt/16);
     if(colide({x:te.x, y:te.y, w:5, h:15}, player)){
@@ -303,6 +332,7 @@ function gameLoop(now){
     } else if(te.y > 620) tirosE.splice(i,1);
   }
 
+  // Colisões e Dano
   if(!tempoParado && !bossMorrendo){
     for(let ti=tiros.length-1; ti>=0; ti--){
       const t = tiros[ti]; let consumed = false;
@@ -315,7 +345,12 @@ function gameLoop(now){
           else { inv.vivo = false; player.kills++; explodir(inv.x+inv.w/2, inv.y+inv.h/2, '#ff0055'); }
         } else {
           if(inv.isShield) { inv.hp -= 50; consumed = true; }
-          else if(inv.isBoss) { if(!(shield && shield.hp>0)) inv.hp -= 50; consumed = true; }
+          else if(inv.isBoss) { 
+              if(inv.tipo === 3 || !(shield && shield.hp > 0)) {
+                  inv.hp -= 50; 
+              }
+              consumed = true; 
+          }
           else { inv.vivo = false; player.kills++; consumed = true; }
           if(consumed) { explodir(t.x, t.y, '#fff'); tiros.splice(ti,1); break; }
         }
@@ -326,7 +361,17 @@ function gameLoop(now){
   if(boss) $('boss-hp-fill').style.width = Math.max(0,(boss.hp/boss.maxHp)*100)+'%';
   if(vivos === 0 && !bossMorrendo){ faseAtual++; criarFase(); }
 
-  invasores.forEach(inv=>{ if(inv.isBoss){ if(inv.hp>0 || (inv.tipo === 2 && bossMorrendo)) desenharBoss(inv); } else if(inv.isShield){ if(inv.hp>0) desenharEscudoBoss(inv); } else if(inv.vivo) desenharNave(inv, '#ff0055', false); });
+  // Desenho dos Invasores e Efeitos
+  invasores.forEach(inv=>{ 
+      if(inv.isBoss){ 
+          if(inv.hp>0 || ((inv.tipo === 2 || inv.tipo === 3) && bossMorrendo)) desenharBoss(inv); 
+      } else if(inv.isShield){ 
+          if(inv.hp>0) desenharEscudoBoss(inv); 
+      } else if(inv.vivo) {
+          desenharNave(inv, '#ff0055', false); 
+      }
+  });
+
   tiros.forEach(t=> t.isFireball ? desenharFireball(t) : (ctx.fillStyle='#fff', ctx.fillRect(t.x, t.y, t.w, t.h)));
   tirosE.forEach(te=>(ctx.fillStyle='#ff0055', ctx.fillRect(te.x, te.y, 5, 15)));
   particulas.forEach((p,i)=>{ p.x += p.vx * (dt/16); p.y += p.vy * (dt/16); p.life -= dt/16; if(p.life<=0) particulas.splice(i,1); else { ctx.globalAlpha = p.life/30; ctx.fillStyle = p.color; ctx.fillRect(p.x-2,p.y-2,4,4); ctx.globalAlpha = 1; } });

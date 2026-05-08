@@ -138,11 +138,11 @@ h1 {
     color: #b0c4de; 
 }
 
-/* Container de Botões no Menu para acomodar os novos elementos */
+/* Container de Botões no Menu para alinhar os elementos perfeitamente */
 .menu-buttons {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 16px;
     width: 100%;
 }
 
@@ -177,33 +177,73 @@ h1 {
     transform: translateY(-1px) scale(0.99);
 }
 
-/* Botão Secundário para o Guia de Chefes */
+/* ==========================================================
+   NOVO BOTÃO SECUNDÁRIO (GUIA DE CHEFES) - ESTILO HOLOGRÁFICO NEON
+   ========================================================== */
 .btn-secondary {
-    padding: 14px 28px;
-    font-size: 14px;
-    font-weight: 700;
-    background: rgba(0, 210, 255, 0.1);
-    color: var(--neon-blue);
-    border: 2px solid rgba(0, 210, 255, 0.4);
-    border-radius: 14px;
-    cursor: pointer;
+    display: block;
     width: 100%;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    transition: all 0.3s ease;
+    padding: 16px 36px;
+    font-size: 15px;
+    font-weight: 700;
     font-family: 'Orbitron', sans-serif;
+    color: var(--neon-blue);
+    
+    /* Remove estilos padrões do navegador que quebravam o visual */
+    background: rgba(0, 210, 255, 0.05);
+    border: 2px solid var(--neon-blue);
+    outline: none;
+    text-decoration: none;
+    border-radius: 16px;
+    box-sizing: border-box;
+    
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 
+        0 0 15px rgba(0, 210, 255, 0.15),
+        inset 0 0 10px rgba(0, 210, 255, 0.1);
 }
 
+/* Efeito de Hover (Passar o Mouse) */
 .btn-secondary:hover {
-    background: rgba(0, 210, 255, 0.25);
-    border-color: var(--neon-blue);
-    box-shadow: 0 0 15px rgba(0, 210, 255, 0.3);
-    transform: translateY(-2px);
+    background: rgba(0, 210, 255, 0.18);
+    color: #fff;
+    transform: translateY(-4px) scale(1.02);
+    border-color: #fff;
+    box-shadow: 
+        0 0 25px rgba(0, 210, 255, 0.5),
+        0 0 10px var(--neon-blue),
+        inset 0 0 15px rgba(0, 210, 255, 0.2);
 }
 
+/* Efeito de Clique físico */
 .btn-secondary:active {
-    transform: translateY(0);
+    transform: translateY(-1px) scale(0.99);
+    box-shadow: 0 0 12px rgba(0, 210, 255, 0.3);
 }
+
+/* Brilho interno animado (scan) passando pelo botão ao focar/pairar */
+.btn-secondary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(to right, transparent, rgba(0, 210, 255, 0.35), transparent);
+    transform: skewX(-25deg);
+    transition: 0.75s;
+}
+
+.btn-secondary:hover::before {
+    left: 150%;
+}
+
 
 /* Container do Jogo com efeito de monitor CRT retrô sutil */
 #game-container {

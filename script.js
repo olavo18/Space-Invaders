@@ -350,9 +350,23 @@ function gameLoop(now){
         const alive = inv.isBoss ? inv.hp>0 : (inv.isShield ? inv.hp>0 : inv.vivo);
         if(!alive || !colide(t, inv)) continue;
         if(t.isFireball){
-          if(inv.isBoss && inv.tipo === 2) { explodir(t.x, t.y, '#666'); tiros.splice(ti,1); consumed = true; break; }
-          if(inv.isBoss || inv.isShield){ inv.hp -= 40; explodir(t.x+t.w/2, t.y+t.h/2, inv.isBoss ? '#ff0055' : '#00d2ff'); }
-          else { inv.vivo = false; player.kills++; explodir(inv.x+inv.w/2, inv.y+inv.h/2, '#ff0055'); }
+          if(inv.isBoss && inv.tipo === 2) { 
+              explodir(t.x, t.y, '#666'); 
+              tiros.splice(ti,1); 
+              consumed = true; 
+              break; 
+          }
+          if(inv.isBoss || inv.isShield){ 
+              inv.hp -= 40; 
+              explodir(t.x+(t.w||50)/2, t.y+(t.h||50)/2, inv.isBoss ? '#ff0055' : '#00d2ff'); 
+          } else { 
+              inv.vivo = false; 
+              player.kills++; 
+              explodir(inv.x+inv.w/2, inv.y+inv.h/2, '#ff0055'); 
+          }
+          tiros.splice(ti,1); // Bola de fogo some ao colidir com qualquer coisa
+          consumed = true;
+          break;
         } else {
           if(inv.isShield) { inv.hp -= 50; consumed = true; }
           else if(inv.isBoss) { 

@@ -10,34 +10,61 @@
 <body>
 
 <div id="overlay-start" onclick="permitirAudio()">
-  <h2>CLIQUE PARA ATIVAR O NEON</h2>
-  <p>(Isso habilita a trilha sonora: menu.mp3)</p>
+    <h2>CLIQUE PARA ATIVAR O NEON</h2>
+    <p>(Isso habilita a trilha sonora: menu.mp3)</p>
 </div>
 
 <div id="menu-principal">
-  <h1>SPACE INVADERS</h1>
-  <p>Mova com <b>A D</b> ou <b>SETAS</b><br>Atire com <b>ESPAÇO</b><br>Especial <b>(E)</b> |
+    <h1>SPACE INVADERS</h1>
+    <p>Mova com <b>A D</b> ou <b>SETAS</b><br>Atire com <b>ESPAÇO</b><br>Especial <b>(E)</b> |
     Escudo 2s <b>(R)</b><br>Derrote o Chefe a cada 5 níveis.</p>
-  <button class="btn-play" onclick="iniciarHistoria()">INICIAR JOGO</button>
+    <button class="btn-play" onclick="iniciarHistoria()">INICIAR JOGO</button>
+    <button class="btn-bosses" onclick="abrirGuiaBosses()">Guia de Chefes</button>
 </div>
 
 <div id="game-container">
-  <div id="ui-camada">
-    <div>FASE: <span id="fase-txt">1</span></div>
-    <div>BOLA FOGO (E): <span id="hab-txt">0</span>/3</div>
-    <div>ESCUDO (R): <span id="escudo-txt">0</span>/2</div>
-    <div>VIDAS: <span id="vidas-txt">3</span></div>
-  </div>
-  <div id="boss-hp-label">CHEFE SUPREMO</div>
-  <div id="boss-hp-bar"><div id="boss-hp-fill"></div></div>
-  <div id="efeito-tempo"></div>
-  <div id="dialogo-box"></div>
-  <div id="game-over">
-    <h2>FALHA NA MISSÃO</h2>
-    <p>Fase alcançada: <span id="fase-final">1</span></p>
-    <button class="btn-play" style="width:auto;padding:14px 30px" onclick="location.reload()">REINICIAR SISTEMA</button>
-  </div>
-  <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div id="ui-camada">
+        <div>FASE: <span id="fase-txt">1</span></div>
+        <div>BOLA FOGO (E): <span id="hab-txt">0</span>/3</div>
+        <div>ESCUDO (R): <span id="escudo-txt">0</span>/2</div>
+        <div>VIDAS: <span id="vidas-txt">3</span></div>
+    </div>
+    <div id="boss-hp-label">CHEFE SUPREMO</div>
+    <div id="boss-hp-bar"><div id="boss-hp-fill"></div></div>
+    <div id="efeito-tempo"></div>
+    <div id="dialogo-box"></div>
+    <div id="game-over">
+        <h2>FALHA NA MISSÃO</h2>
+        <p>Fase alcançada: <span id="fase-final">1</span></p>
+        <button class="btn-play" style="width:auto;padding:14px 30px" onclick="location.reload()">REINICIAR SISTEMA</button>
+    </div>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+</div>
+
+<div id="guia-bosses-painel" style="display: none;">
+    <div class="guia-conteudo">
+        <h2>Dossiê de Ameaças</h2>
+        
+        <div class="boss-card">
+            <span class="boss-tag rosa">Fase 5+</span>
+            <h3>Chefe Supremo</h3>
+            <p><strong>Poder:</strong> Controle Temporal. A cada 7 segundos ele paralisa o tempo com <em>"ZA WARUDO!"</em>, impedindo seus movimentos por 2.5 segundos enquanto seus projéteis continuam ativos. Vem escoltado por um escudo orbital.</p>
+        </div>
+        
+        <div class="boss-card">
+            <span class="boss-tag cinza">Fase 10+</span>
+            <h3>MK-II: O Anulador</h3>
+            <p><strong>Poder:</strong> Esquiva Evasiva. Seus sensores hiper-rápidos detectam seus tiros normais e o fazem desviar lateralmente. Use o tempo a seu favor para encurralá-lo e destrua seu escudo frontal primeiro!</p>
+        </div>
+        
+        <div class="boss-card">
+            <span class="boss-tag azul">Fase 15+</span>
+            <h3>O Criador de Mundos</h3>
+            <p><strong>Poder:</strong> Reconstrução de Matéria. Cria barreiras menores a cada 4 segundos. Ao cair abaixo de 20% de vida, ativa uma <strong>Cura de Emergência (recupera 50% de HP)</strong> e invoca uma Barreira Suprema indestrutível no centro da tela.</p>
+        </div>
+        
+        <button class="btn-fechar" onclick="fecharGuiaBosses()">Voltar ao Menu</button>
+    </div>
 </div>
 
 <script src="script.js"></script>

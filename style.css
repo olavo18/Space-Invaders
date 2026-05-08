@@ -308,8 +308,7 @@ h1 {
     letter-spacing: 1.5px;
 }
 
-/* Seletor genérico para os botões virtuais criados via JS */
-#mobile-controls-container button,
+/* Configuração de manipulação para botões gerais */
 button {
     touch-action: manipulation; /* Remove o delay de 300ms de toque no mobile */
     -webkit-user-select: none; /* Impede a seleção do texto do botão */
@@ -494,7 +493,7 @@ button {
     width: 95%;
     max-width: 750px;
     max-height: 85vh;
-    padding: 25px; /* Reduzido de 35px para caber melhor no mobile */
+    padding: 25px; /* Reduzido para caber melhor no mobile */
     box-shadow: 
         0 0 50px rgba(0, 210, 255, 0.2),
         inset 0 0 25px rgba(0, 210, 255, 0.1);

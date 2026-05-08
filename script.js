@@ -73,9 +73,18 @@ function aplicarTremor(forca) {
 window.permitirAudio = function() {
     $('overlay-start').style.display = 'none';
     $('menu-principal').style.display = 'block';
-    somMenu.play().catch(error => console.error("Erro ao tocar som.", error));
+    
+    // Tocar música do menu
+    somMenu.play().catch(error => console.warn("Interação prévia necessária para o áudio.", error));
+    
+    // Desmuda os efeitos sonoros preparando-os para reprodução futura de forma segura
     [somTempo, somTiroPlayer, somTiroInimigo].forEach(s => {
-        s.play(); s.pause(); s.currentTime = 0;
+        s.muted = true;
+        s.play().then(() => {
+            s.pause();
+            s.currentTime = 0;
+            s.muted = false;
+        }).catch(e => console.warn("Não foi possível pré-carregar os efeitos.", e));
     });
 };
 
@@ -132,7 +141,7 @@ function criarFase(){
             isBoss: true, tipo: 3, 
             dir: 1, vel: 1.5,
             timerInvocacao: 0,
-            usouCura: false // Controla a cura única
+            usouCura: false 
         });
         contadorTempo = 0;
     } 
@@ -336,28 +345,25 @@ function desenharFireball(t){
     ctx.restore();
 }
 
-// Nova função adicionada: Efeito visual do Tokitobashi (Tela Trincada)
+// Efeito visual do Tokitobashi (Tela Trincada)
 function desenharRachadurasEspacoTempo() {
     ctx.save();
     
-    // Configuração das linhas neon
     ctx.strokeStyle = 'rgba(0, 246, 255, 0.85)'; 
     ctx.lineWidth = 2.5;
     ctx.shadowColor = '#00f6ff';
     ctx.shadowBlur = 15;
 
-    const centerX = 400; // Centro horizontal da tela (800 / 2)
-    const centerY = 300; // Centro vertical da tela (600 / 2)
+    const centerX = 400; 
+    const centerY = 300; 
     const numeroRachadurasPrincipais = 8;
 
-    // Semente semi-estática para as linhas não tremerem freneticamente a cada milissegundo
     const seed = Math.floor(frameAnim * 0.1); 
     
     for (let i = 0; i < numeroRachadurasPrincipais; i++) {
         let x = centerX;
         let y = centerY;
         
-        // Espalha as fendas radiais em 360 graus
         let angulo = (i * (Math.PI * 2) / numeroRachadurasPrincipais) + (Math.sin(seed + i) * 0.2);
         
         ctx.beginPath();
@@ -367,13 +373,11 @@ function desenharRachadurasEspacoTempo() {
         const comprimentoSegmento = 80 + (Math.sin(seed * i) * 20);
 
         for (let j = 0; j < segmentos; j++) {
-            // Curvas acentuadas/zig-zags para parecer estilhaços de vidro
             angulo += (Math.sin(seed + j + i) * 0.4) - 0.2;
             x += Math.cos(angulo) * comprimentoSegmento;
             y += Math.sin(angulo) * comprimentoSegmento;
             ctx.lineTo(x, y);
             
-            // Pequenas fendas de ramificações secundárias
             if (j > 1 && Math.sin(seed + j) > 0) {
                 ctx.save();
                 ctx.lineWidth = 1.2;
@@ -389,7 +393,6 @@ function desenharRachadurasEspacoTempo() {
         ctx.stroke();
     }
     
-    // Pequeno centro circular estilhaçado
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
     ctx.lineWidth = 3;
     ctx.beginPath();
@@ -441,15 +444,21 @@ function gameLoop(now){
 
     const boss = invasores.find(i=>i.isBoss && i.hp>0);
     const shield = invasores.find(i=>i.isShield && i.hp>0);
-    const bossMortoCheck = invasores.find(i=>i.isBoss && i.hp <= 0 && (i.tipo === 2 || i.tipo === 3) && !bossMorrendo);
+    
+    // CORRIGIDO: Checa qualquer Boss morto que não tenha iniciado o gatilho de transição
+    const bossMortoCheck = invasores.find(i=>i.isBoss && i.hp <= 0 && !bossMorrendo);
 
     if(bossMortoCheck){
         bossMorrendo = true; 
         aplicarTremor(15); 
         
-        const falaMorte = bossMortoCheck.tipo === 3 ? "Criador: Este universo ainda será meu..." : "MK-II: Nos veremos novamente mortal...";
+        let falaMorte = "Inimigo: Como isso é possível?!";
+        if(bossMortoCheck.tipo === 1) falaMorte = "Assassino: O tempo... não pôde me salvar...";
+        if(bossMortoCheck.tipo === 2) falaMorte = "MK-II: Nos veremos novamente mortal...";
+        if(bossMortoCheck.tipo === 3) falaMorte = "Criador: Este universo ainda será meu...";
+
         falar(falaMorte, 3500, () => { 
-            invasores = invasores.filter(i => !i.isBoss && !i.isBlocoProtetor); 
+            invasores = invasores.filter(i => !i.isBoss && !i.isBlocoProtetor && !i.isShield); 
             faseAtual++; 
             criarFase(); 
         });
@@ -463,7 +472,7 @@ function gameLoop(now){
             falar(falasChefe[Math.floor(Math.random() * falasChefe.length)], 1000, ()=>{
                 tempoParado = true; somTempo.currentTime = 0; somTempo.play();
                 $('efeito-tempo').style.display = 'block';
-                aplicarTremor(14); // Tremida extrema ao quebrar o tempo
+                aplicarTremor(14); 
                 setTimeout(()=>{ 
                     tempoParado = false; 
                     contadorTempo = 0; 
@@ -494,9 +503,11 @@ function gameLoop(now){
             const blocosAtivos = invasores.filter(i => i.isBlocoProtetor && i.hp > 0).length;
             
             if(blocosAtivos < 4){
+                // Clampa a posição de spawn para não gerar fora das bordas do Canvas (800px)
+                const spawnX = Math.max(15, Math.min(800 - 220, boss.x));
                 for(let i = 0; i < 3; i++){
                     invasores.push({
-                        x: boss.x + 15 + (i * 65),
+                        x: spawnX + 15 + (i * 65),
                         y: boss.y + boss.h + 20,
                         w: 45,
                         h: 25,
@@ -504,7 +515,7 @@ function gameLoop(now){
                         isBlocoProtetor: true,
                         vivo: true
                     });
-                    explodir(boss.x + 35 + (i * 65), boss.y + boss.h + 30, '#00f6ff');
+                    explodir(spawnX + 35 + (i * 65), boss.y + boss.h + 30, '#00f6ff');
                 }
             }
         }
@@ -608,14 +619,16 @@ function gameLoop(now){
     // Colisões e Dano
     if(!tempoParado && !bossMorrendo){
         for(let ti = tiros.length - 1; ti >= 0; ti--){
-            const t = tiros[ti]; let consumed = false;
+            const t = tiros[ti]; 
+            let consumed = false;
+            
             for(const inv of invasores){
                 const alive = inv.isBoss ? inv.hp > 0 : (inv.isShield ? inv.hp > 0 : (inv.isBlocoProtetor ? inv.hp > 0 : inv.vivo));
                 if(!alive || !colide(t, inv)) continue;
+                
                 if(t.isFireball){
                     if(inv.isBoss && inv.tipo === 2) { 
                         explodir(t.x, t.y, '#666'); 
-                        tiros.splice(ti, 1); 
                         consumed = true; 
                         break; 
                     }
@@ -629,7 +642,6 @@ function gameLoop(now){
                         explodir(inv.x + inv.w/2, inv.y + inv.h/2, '#ff0055'); 
                         aplicarTremor(2);
                     }
-                    tiros.splice(ti, 1); 
                     consumed = true;
                     break;
                 } else {
@@ -647,8 +659,11 @@ function gameLoop(now){
                         consumed = true; 
                         aplicarTremor(1); 
                     }
-                    if(consumed) { explodir(t.x, t.y, '#fff'); tiros.splice(ti, 1); break; }
+                    if(consumed) { explodir(t.x, t.y, '#fff'); break; }
                 }
+            }
+            if(consumed) {
+                tiros.splice(ti, 1);
             }
         }
     }
@@ -659,7 +674,7 @@ function gameLoop(now){
     // Desenho dos Invasores, Blocos e Efeitos
     invasores.forEach(inv=>{ 
         if(inv.isBoss){ 
-            if(inv.hp > 0 || ((inv.tipo === 2 || inv.tipo === 3) && bossMorrendo)) desenharBoss(inv); 
+            if(inv.hp > 0 || bossMorrendo) desenharBoss(inv); 
         } else if(inv.isShield){ 
             if(inv.hp > 0) desenharEscudoBoss(inv); 
         } else if(inv.isBlocoProtetor){

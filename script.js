@@ -7,6 +7,7 @@ const $ = id => document.getElementById(id);
 const skins = {
     player: new Image(), amigo: new Image(), alien: new Image(),
     chefe: new Image(), chefe2: new Image(), fireball: new Image(), escudo: new Image()
+    criador: new Image() // <-- ADICIONE ISSO AQUI
 };
 skins.player.src = 'jogadorprincipal.png';
 skins.amigo.src = 'amigo.png';
@@ -15,6 +16,7 @@ skins.chefe.src = 'chefe1.png';
 skins.chefe2.src = 'chefe2.png';
 skins.fireball.src = 'bola-defogo.png';
 skins.escudo.src = 'escudo.png';
+skins.criador.src = 'criador.png'; // <-- ADICIONE ISSO AQUI                                                                                                                                            
 
 // Sons [cite: 27]
 const somMenu = new Audio('menu.mp3');
@@ -93,14 +95,38 @@ function criarFase(){
   const bossBar = $('boss-hp-bar'), bossLabel = $('boss-hp-label'), container = $('game-container');
   bossBar.style.display='none'; bossLabel.style.display='none';
   container.classList.remove('shake');
-
-  if(faseAtual % 10 === 0){
+    
+  // =========================================================================
+  // 1. CHEFE CRIADOR (Surgirá na fase 15, 30, 45, etc.)
+  // =========================================================================
+  if(faseAtual % 15 === 0){
+    bossBar.style.display='block'; bossLabel.style.display='block';
+    bossLabel.innerText = "O CRIADOR DE MUNDOS";
+    $('boss-hp-fill').style.width='100%';
+    const bossHp = 6000 + faseAtual*250;
+    invasores.push({ 
+        x:300, y:80, w:200, h:160, 
+        hp:bossHp, maxHp:bossHp, 
+        isBoss:true, tipo:3, 
+        dir:1, vel:1.5,
+        timerInvocacao: 0 
+    });
+    contadorTempo=0;
+  } 
+  // =========================================================================
+  // 2. CHEFE MK-II (Surgirá na fase 10, 20, 40, etc. Menos na 30, que é do Criador)
+  // =========================================================================
+  else if(faseAtual % 10 === 0){
     bossBar.style.display='block'; bossLabel.style.display='block';
     bossLabel.innerText = "MK-II: O ANULADOR";
     $('boss-hp-fill').style.width='100%';
     invasores.push({ x:300, y:80, w:180, h:150, hp:8000, maxHp:8000, isBoss:true, tipo:2, dir:1, vel:2.8 });
     invasores.push({ x:260, y:60, w:250, h:190, hp:600, maxHp:600, isShield:true });
-  } else if(faseAtual % 5 === 0){
+  } 
+  // =========================================================================
+  // 3. CHEFE SUPREMO (Surgirá na fase 5, 25, 35, etc. Menos na 10, 15, 20 e 30)
+  // =========================================================================
+  else if(faseAtual % 5 === 0){
     bossBar.style.display='block'; bossLabel.style.display='block';
     bossLabel.innerText = "CHEFE SUPREMO";
     $('boss-hp-fill').style.width='100%';
@@ -110,13 +136,20 @@ function criarFase(){
     invasores.push({ x:260, y:60, w:280, h:200, hp:shieldHp, maxHp:shieldHp, isShield:true });
     for(let i=0;i<4;i++) invasores.push({ x:120 + i*170, y:330, w:55, h:55, vivo:true, dir:1, vel:1.2 });
     contadorTempo=0;
-  } else {
+  } 
+  // =========================================================================
+  // 4. FASE NORMAL (Para todas as outras fases sem chefes)
+  // =========================================================================
+  else {
     const cols = 5;
     const rows = 2 + Math.min(2, Math.floor(faseAtual/3));
-    for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) invasores.push({ x: c*110 + 130, y: r*70 + 70, w:55, h:55, vivo:true, dir:1, vel: 0.8 + faseAtual*0.15 });
+    for(let r=0;r<rows;r++) {
+      for(let c=0;c<cols;c++) {
+        invasores.push({ x: c*110 + 130, y: r*70 + 70, w:55, h:55, vivo:true, dir:1, vel: 0.8 + faseAtual*0.15 });
+      }
+    }
   }
 }
-
 // Controles e Habilidades [cite: 51, 52]
 window.addEventListener('keydown', e => {
   keys[e.code] = true;

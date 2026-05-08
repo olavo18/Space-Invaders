@@ -16,8 +16,10 @@
 
 <div id="menu-principal">
     <h1>SPACE INVADERS</h1>
-    <p>Mova com <b>A D</b> ou <b>SETAS</b><br>Atire com <b>ESPAÇO</b><br>Especial <b>(E)</b> |
-    Escudo 2s <b>(R)</b><br>Derrote o Chefe a cada 5 níveis.</p>
+    <p>Mova com <b>A D</b> ou <b>SETAS</b><br>
+    Atire com <b>ESPAÇO</b><br>
+    Especial <b>(E)</b> | Escudo 2s <b>(R)</b><br>
+    Derrote o Chefe a cada 5 níveis.</p>
     <div class="menu-buttons">
         <button class="btn-play" onclick="iniciarHistoria()">INICIAR JOGO</button>
         <button class="btn-secondary" onclick="abrirGuiaBosses()">Guia de Chefes</button>
@@ -31,15 +33,21 @@
         <div>ESCUDO (R): <span id="escudo-txt">0</span>/2</div>
         <div>VIDAS: <span id="vidas-txt">3</span></div>
     </div>
+    
     <div id="boss-hp-label">CHEFE SUPREMO</div>
-    <div id="boss-hp-bar"><div id="boss-hp-fill"></div></div>
+    <div id="boss-hp-bar">
+        <div id="boss-hp-fill"></div>
+    </div>
+    
     <div id="efeito-tempo"></div>
     <div id="dialogo-box"></div>
+    
     <div id="game-over">
         <h2>FALHA NA MISSÃO</h2>
         <p>Fase alcançada: <span id="fase-final">1</span></p>
-        <button class="btn-play" style="width:auto;padding:14px 30px" onclick="location.reload()">REINICIAR SISTEMA</button>
+        <button class="btn-play" style="width:auto; padding:14px 30px;" onclick="location.reload()">REINICIAR SISTEMA</button>
     </div>
+    
     <canvas id="gameCanvas" width="800" height="600"></canvas>
 </div>
 

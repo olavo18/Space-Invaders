@@ -18,7 +18,7 @@ skins.chefe2.src = 'chefe2.png';
 skins.fireball.src = 'bola-defogo.png';
 skins.escudo.src = 'escudo.png';
 skins.criador.src = 'criador.png';
-skins.nexusVortex.src = 'nexus-vortex.png'; // Nome exato do arquivo que você vai salvar!
+skins.nexusVortex.src = 'nexus-vortex.png';
 
 // Sons
 const somMenu = new Audio('menu.mp3');
@@ -28,103 +28,111 @@ const somTiroInimigo = new Audio('nave2.mp3');
 
 somMenu.loop = true;
 somMenu.volume = 0.5;
-somTempo.volume = 0.4;
+somTempo.volume = 0.6;
 somTiroPlayer.volume = 0.3;
 somTiroInimigo.volume = 0.2;
 
-// Variáveis de Estado
-let modo = 'menu';
-let faseAtual = 1;
-let tempoParado = false;
-let contadorTempo = 0;
-let lastTime = performance.now();
-let avisandoHabilidade = false;
-let bossMorrendo = false;
+let audioPermitido = false;
 
-// Controle específico de Diálogo e Introdução da Fase 7
-let emDialogoFase7 = false;
-let indiceFraseFase7 = 0;
-const frasesFase7 = [
-    "Nexus Vortex: Ora, ora... Parece que temos um invasor persistentemente ousado.",
-    "Nexus Vortex: Meus escudos orbitais absorvem qualquer impacto!",
-    "Nexus Vortex: E os meus disparos teleguiados não te darão descanso!",
-    "SISTEMA: [ O DESAFIO COMEÇOU! PREPARE-SE! ]"
-];
-
-// Variáveis específicas para o Boss da Fase 7 (Nexus Vortex)
-let escudosOrbitais = [];
-let tirosTeleguiados = [];
-
-// Falas do Nexus Vortex durante a luta
-const falasNexus = [
-    "Nexus: Meus escudos são impenetráveis para sua tecnologia!",
-    "Nexus: Desvie disso se puder! TIRO RASTREADOR INICIADO!",
-    "Nexus: Clones de assalto, destruam o invasor!",
-    "Nexus: O campo de força consome sua esperança!"
-];
-
-// Física de balanço/inclinação para o Player (velX controla a rotação lateral)
-const player = { 
-    x: 370, y: 520, w: 60, h: 60, tx: 370, velX: 0, vidas: 3, 
-    danoTime: 0, kills: 0, cooldown: 0, 
-    escudoAtivo: false, escudoTimer: 0 
+window.permitirAudio = function() {
+    audioPermitido = true;
+    somMenu.play().catch(e => console.log("Áudio aguardando interação do usuário."));
+    $('overlay-start').style.opacity = '0';
+    setTimeout(() => {
+        $('overlay-start').style.display = 'none';
+        $('menu-principal').style.display = 'block';
+    }, 500);
 };
-const amigo = { x: -150, y: 450, w: 60, h: 60, tx: -150, velX: 0 };
-let invasores = [];
-let tiros = [];
-let tirosE = [];
-let particulas = [];
-const keys = {};
+
+// Estados Globais de Jogo
+let modo = 'menu'; // 'menu', 'historia', 'jogando', 'gameover'
+let fase = 1;
 let frameAnim = 0;
+let tempoUltimoQuadro = performance.now();
 
-// Falas do Chefe Supremo adaptadas ao estilo Tokitobashi
-const falasChefe = [
-    "TOKITOBASHI!", 
-    "O tempo volta a correr... depois que eu decidir!",
-    "Sua velocidade é irrelevante frente ao Salto Temporal!",
-    "Preveja isto se for capaz!"
-];
+// Entidades de Gameplay
+const player = {
+    x: 400, y: 520, w: 54, h: 54, tx: 400,
+    vidas: 3, maxVidas: 3,
+    kills: 0, tiros: [], recargaTiro: 0,
+    escudosRestantes: 2, escudoAtivo: false, tempoEscudo: 0,
+    especiaisRestantes: 3, especialAtivo: false, especialX: 0, especialY: 0
+};
 
-// Controle de Tremor de Tela (Screen Shake) por código
-let tremorIntensidade = 0;
+const amigo = { x: -150, y: 520, w: 50, h: 50, tx: -150, velX: 0 };
+
+let aliens = [];
+let tirosInimigos = [];
+let tirosTeleguiados = [];
+let particulas = [];
+
+// Definição das Propriedades dos Chefes
+let chefeAtivo = false;
+let boss = null;
+
+// Efeito de Parada Temporal "Tokitobashi" (Chefe 5)
+let tempoParado = false;
+let cronometroTempoParado = 0;
+let cooldownParadaTempo = 7500; // A cada 7.5 segundos
+let timerProximaParada = 7500;
+let avisandoHabilidade = false;
+
+// Estado do Chefe Fase 7 (Nexus Vortex)
+let emDialogoFase7 = false;
+let dialogoFase7Timer = 0;
+let escudosBoss7 = [];
+
+// Configurações de Tremor de Tela
+let intensidadeTremor = 0;
+
 function aplicarTremor(forca) {
-    tremorIntensidade = Math.max(tremorIntensidade, forca);
+    intensidadeTremor = forca;
 }
 
-// Funções Globais (Chamadas pelo HTML)
-window.permitirAudio = function() {
-    $('overlay-start').style.display = 'none';
-    $('menu-principal').style.display = 'block';
-    somMenu.play().catch(error => console.warn("Interação prévia necessária para o áudio.", error));
-    [somTempo, somTiroPlayer, somTiroInimigo].forEach(s => {
-        s.muted = true;
-        s.play().then(() => {
-            s.pause();
-            s.currentTime = 0;
-            s.muted = false;
-        }).catch(e => console.warn("Não foi possível pré-carregar os efeitos.", e));
-    });
-};
+// Controles Teclado
+const teclado = {};
+window.addEventListener('keydown', e => {
+    teclado[e.code] = true;
+    if (modo === 'jogando') {
+        if ((e.code === 'KeyE' || e.code === 'KeyQ') && player.kills >= 3 && player.especiaisRestantes > 0 && !player.especialAtivo) {
+            dispararEspecial();
+        }
+        if (e.code === 'KeyR' && player.escudosRestantes > 0 && !player.escudoAtivo) {
+            ativarEscudo();
+        }
+    }
+});
+window.addEventListener('keyup', e => teclado[e.code] = false);
 
-window.iniciarHistoria = function(){
-    somMenu.pause(); 
-    $('menu-principal').style.display = 'none';
-    $('game-container').style.display = 'block';
-    modo = 'historia';
-    amigo.tx = 200;
-    player.tx = 500;
-    falar("Hunter: Eu consigo derrotar esses alienígenas sozinho!", 2200, ()=>{
-        falar("Amigo: Hunter, você enlouqueceu? São muitos!", 2200, ()=>{
-            falar("Hunter: Vou mostrar do que sou capaz!", 1500, ()=>{
-                modo = 'jogando';
-                amigo.tx = -200; player.tx = 370;
-                criarFase();
-            });
-        });
-    });
-};
+// Diálogos Cinemáticos
+function falar(texto, duracao, callback) {
+    const box = $('dialogo-box');
+    box.innerText = texto;
+    box.classList.add('show');
+    setTimeout(() => {
+        box.classList.remove('show');
+        if (callback) callback();
+    }, duracao);
+}
 
-// Funções para controlar a exibição do Guia de Chefes
+// Habilidades Especiais do Jogador
+function dispararEspecial() {
+    player.especialAtivo = true;
+    player.especiaisRestantes--;
+    player.kills = 0;
+    avisandoHabilidade = false;
+    player.especialX = player.x + player.w / 2;
+    player.especialY = player.y;
+    aplicarTremor(12);
+}
+
+function ativarEscudo() {
+    player.escudoAtivo = true;
+    player.escudosRestantes--;
+    player.tempoEscudo = 2000; // 2 segundos
+}
+
+// Inicializadores de Menu e Dossiê
 window.abrirGuiaBosses = function() {
     $('guia-bosses-painel').classList.add('show');
 };
@@ -132,908 +140,798 @@ window.fecharGuiaBosses = function() {
     $('guia-bosses-painel').classList.remove('show');
 };
 
-// Lógica de Jogo
-function falar(texto, tempo, cb){
-    const box = $('dialogo-box');
-    box.innerText = texto;
-    box.classList.add('show');
-    setTimeout(()=>{ box.classList.remove('show'); cb && cb(); }, tempo);
-}
-
-// Desenha a caixa de diálogo no canvas para a animação de introdução do boss
-function desenharIntroducaoBoss7() {
-    ctx.save();
-    ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
-    ctx.fillRect(0, 0, 800, 600);
-    const x = 50, y = 400, w = 700, h = 160;
-    ctx.fillStyle = "#0c051a";
-    ctx.strokeStyle = "#a855f7";
-    ctx.lineWidth = 4;
-    ctx.fillRect(x, y, w, h);
-    ctx.strokeRect(x, y, w, h);
-    ctx.beginPath();
-    ctx.moveTo(x + 10, y + 45);
-    ctx.lineTo(x + w - 10, y + 45);
-    ctx.strokeStyle = "rgba(168, 85, 247, 0.3)";
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    ctx.fillStyle = "#c084fc";
-    ctx.font = "bold 20px 'Courier New', monospace";
-    ctx.fillText("NEXUS VORTEX - RECEPTÁCULO SUPREMO", x + 25, y + 33);
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "16px 'Courier New', monospace";
-    const textoMax = frasesFase7[indiceFraseFase7];
-    if (textoMax.length > 60) {
-        ctx.fillText(textoMax.substring(0, 60), x + 25, y + 75);
-        ctx.fillText(textoMax.substring(60), x + 25, y + 100);
-    } else {
-        ctx.fillText(textoMax, x + 25, y + 75);
+window.iniciarHistoria = function() {
+    if (audioPermitido) {
+        somMenu.pause();
     }
-    ctx.fillStyle = "#a855f7";
-    ctx.font = "bold 12px 'Courier New', monospace";
-    ctx.fillText("Pressione [ESPAÇO] ou [ENTER] para continuar...", x + w - 340, y + h - 15);
-    ctx.restore();
-}
+    $('menu-principal').style.display = 'none';
+    $('game-container').style.display = 'block';
+    modo = 'historia';
+    
+    amigo.tx = 300;
+    player.tx = 460;
+    
+    falar("Hunter: Eu consigo derrotar esses alienígenas sozinho!", 2200, () => {
+        falar("Amigo: Hunter, você enlouqueceu? São muitos!", 2200, () => {
+            falar("Hunter: Vou mostrar do que sou capaz!", 1500, () => {
+                modo = 'jogando';
+                player.tx = 400;
+                amigo.tx = 330; 
+                criarFase();
+            });
+        });
+    });
+};
 
-function criarFase(){
-    invasores = [];
-    tiros = []; tirosE = []; particulas = [];
-    avisandoHabilidade = false;
-    bossMorrendo = false;
-    escudosOrbitais = [];
+// Geração de Fase e Inimigos
+function criarFase() {
+    aliens = [];
+    tirosInimigos = [];
     tirosTeleguiados = [];
-    player.escudoAtivo = false; player.escudoTimer = 0;
-    const bossBar = $('boss-hp-bar'), bossLabel = $('boss-hp-label'), container = $('game-container');
-    bossBar.style.display = 'none'; bossLabel.style.display = 'none';
-    container.classList.remove('shake');
+    chefeAtivo = false;
+    boss = null;
+    escudosBoss7 = [];
+    tempoParado = false;
+    timerProximaParada = 7500;
     
-    if(faseAtual === 7 || (faseAtual > 7 && (faseAtual - 7) % 10 === 0)){
-        bossBar.style.display = 'block';
-        bossLabel.style.display = 'block';
-        bossLabel.innerText = "NEXUS VORTEX: O TITÃ DE DEFESA";
-        $('boss-hp-fill').style.width = '100%';
-        if (faseAtual === 7) {
-            emDialogoFase7 = true;
-            indiceFraseFase7 = 0;
-        }
-        invasores.push({
-            x: 310, y: 100, w: 180, h: 120,
-            hp: 1000, maxHp: 1000,
-            isBoss: true, tipo: 4,
-            dir: 1, vel: 2.0,
-            ultimoTiro: 0,
-            ultimoBot: 0,
-            anguloEscudos: 0
-        });
-        escudosOrbitais = [
-            { anguloOffset: 0, hp: 400, maxHp: 400, raio: 130, w: 45, h: 45, x: 0, y: 0, vivo: true },
-            { anguloOffset: Math.PI, hp: 400, maxHp: 400, raio: 130, w: 45, h: 45, x: 0, y: 0, vivo: true }
+    $('fase-txt').innerText = fase;
+    $('hab-txt').innerText = player.especiaisRestantes;
+    $('escudo-txt').innerText = player.escudosRestantes;
+    $('vidas-txt').innerText = player.vidas;
+
+    // Desliga UI de vida do Boss por padrão
+    $('boss-hp-bar').style.display = 'none';
+    $('boss-hp-label').style.display = 'none';
+
+    // Fases de Chefe (A cada 5 fases)
+    if (fase % 5 === 0) {
+        chefeAtivo = true;
+        let tipoChefe = (fase / 5) % 3; // Rotaciona os tipos de chefes criados
+
+        boss = {
+            x: 350, y: -150, w: 100, h: 80,
+            vidaMax: 100 + (fase * 20),
+            vida: 100 + (fase * 20),
+            velX: 2.5,
+            recargaAtalho: 0,
+            tipo: tipoChefe, // 1: Chefe Supremo (Tempo), 2: MK-II (Anulador), 0: Criador de Mundos
+            faseOrigem: fase,
+            faseRecuperouVida: false
+        };
+
+        // Customização de nome visual para a barra do Boss
+        let nomeBoss = "CHEFE SUPREMO";
+        if (tipoChefe === 2) nomeBoss = "MK-II: O ANULADOR";
+        if (tipoChefe === 0) nomeBoss = "O CRIADOR DE MUNDOS";
+        
+        $('boss-hp-label').innerText = nomeBoss;
+        $('boss-hp-bar').style.display = 'block';
+        $('boss-hp-label').style.display = 'block';
+        
+    } else if (fase === 7) {
+        // Fase Especial 7: Introduz o Boss Nexus Vortex
+        chefeAtivo = true;
+        emDialogoFase7 = true;
+        dialogoFase7Timer = 4000; // Tempo de diálogo introdutório na tela
+        
+        boss = {
+            x: 350, y: -150, w: 120, h: 90,
+            vidaMax: 200,
+            vida: 200,
+            velX: 2,
+            recargaAtalho: 0,
+            tipo: 7, // Tipo exclusivo para o Nexus Vortex
+            faseOrigem: 7
+        };
+
+        // Escudos Rotativos Orbitais do Boss 7
+        escudosBoss7 = [
+            { angulo: 0, raio: 90, w: 30, h: 30, ativo: true },
+            { angulo: Math.PI, raio: 90, w: 30, h: 30, ativo: true }
         ];
-        contadorTempo = 0;
-    }
-    else if(faseAtual % 15 === 0){
-        bossBar.style.display = 'block';
-        bossLabel.style.display = 'block';
-        bossLabel.innerText = "O CRIADOR DE MUNDOS";
-        $('boss-hp-fill').style.width = '100%';
-        const bossHp = 6000 + faseAtual * 250;
-        invasores.push({ 
-            x: 300, y: 80, w: 200, h: 160, 
-            hp: bossHp, maxHp: bossHp, 
-            isBoss: true, tipo: 3, 
-            dir: 1, vel: 1.5,
-            timerInvocacao: 0,
-            usouCura: false 
-        });
-        contadorTempo = 0;
-    } 
-    else if(faseAtual % 10 === 0){
-        bossBar.style.display = 'block';
-        bossLabel.style.display = 'block';
-        bossLabel.innerText = "MK-II: O ANULADOR";
-        $('boss-hp-fill').style.width = '100%';
-        invasores.push({ x: 300, y: 80, w: 180, h: 150, hp: 8000, maxHp: 8000, isBoss: true, tipo: 2, dir: 1, vel: 2.8 });
-        invasores.push({ x: 260, y: 60, w: 250, h: 190, hp: 600, maxHp: 600, isShield: true });
-    } 
-    else if(faseAtual % 5 === 0){
-        bossBar.style.display = 'block';
-        bossLabel.style.display = 'block';
-        bossLabel.innerText = "ASSASSINO DO TEMPO";
-        $('boss-hp-fill').style.width = '100%';
-        const bossHp = 5000 + faseAtual * 200;
-        invasores.push({ x: 300, y: 80, w: 200, h: 160, hp: bossHp, maxHp: bossHp, isBoss: true, tipo: 1, dir: 1, vel: 1.4 });
-        const shieldHp = 400 + faseAtual * 20;
-        invasores.push({ x: 260, y: 60, w: 280, h: 200, hp: shieldHp, maxHp: shieldHp, isShield: true });
-        for(let i = 0; i < 4; i++) invasores.push({ x: 120 + i * 170, y: 330, w: 55, h: 55, vivo: true, dir: 1, vel: 1.2 });
-        contadorTempo = 0;
-    } 
-    else {
-        const cols = 5;
-        const rows = 2 + Math.min(2, Math.floor(faseAtual/3));
-        for(let r = 0; r < rows; r++) {
-            for(let c = 0; c < cols; c++) {
-                invasores.push({ x: c * 110 + 130, y: r * 70 + 70, w: 55, h: 55, vivo: true, dir: 1, vel: 0.8 + faseAtual * 0.15 });
+
+        $('boss-hp-label').innerText = "NEXUS VORTEX";
+        $('boss-hp-bar').style.display = 'block';
+        $('boss-hp-label').style.display = 'block';
+
+    } else {
+        // Ondas normais de inimigos
+        let linhas = 3 + Math.floor(fase / 3);
+        let colunas = 8;
+        for (let l = 0; l < linhas; l++) {
+            for (let c = 0; c < colunas; c++) {
+                aliens.push({
+                    x: 80 + c * 80,
+                    y: 60 + l * 50,
+                    w: 40, h: 30,
+                    velX: 1 + (fase * 0.15),
+                    dir: 1,
+                    atirarCooldown: Math.random() * 2000 + 1000
+                });
             }
         }
     }
 }
 
-// Controles e Habilidades
-window.addEventListener('keydown', e => {
-    if (emDialogoFase7) {
-        if (e.code === 'Space' || e.code === 'Enter') {
-            e.preventDefault();
-            indiceFraseFase7++;
-            if (indiceFraseFase7 >= frasesFase7.length) {
-                emDialogoFase7 = false; // Começa o jogo!
-            }
-        }
-        return;
-    }
-
-    keys[e.code] = true;
-    if(!tempoParado && modo === 'jogando' && !bossMorrendo) {
-        if(e.code === 'KeyE') { if(player.kills >= 3){ tiros.push({ x: player.x + player.w/2 - 25, y: player.y - 20, w: 50, h: 50, s: 9, isFireball: true }); player.kills -= 3; } }
-        if(e.code === 'KeyR') { if(player.kills >= 2 && !player.escudoAtivo){ player.escudoAtivo = true; player.escudoTimer = 2000; player.kills -= 2; } }
-    }
-    if(['ArrowLeft','ArrowRight','KeyA','KeyD','Space'].includes(e.code)) e.preventDefault();
-});
-window.addEventListener('keyup', e => { keys[e.code] = false; });
-
-// Explosões Orgânicas
-function explodir(x, y, color){
-    const quantidade = color === '#00f6ff' || color === '#00ffaa' ? 24 : 16;
-    for(let i = 0; i < quantidade; i++){
-        const a = Math.random() * Math.PI * 2;
-        const sp = 2 + Math.random() * 4; 
-        particulas.push({ 
-            x, 
-            y, 
-            vx: Math.cos(a) * sp,  
-            vy: Math.sin(a) * sp, 
-            life: 30 + Math.random() * 20,  
-            maxLife: 50,
-            size: 2 + Math.random() * 4, 
-            color 
+// Criação de Partículas para Explosões Neons
+function criarExplosao(x, y, cor, quant = 12) {
+    for (let i = 0; i < quant; i++) {
+        let angulo = Math.random() * Math.PI * 2;
+        let velocidade = Math.random() * 4 + 2;
+        particulas.push({
+            x: x, y: y,
+            vx: Math.cos(angulo) * velocidade,
+            vy: Math.sin(angulo) * velocidade,
+            size: Math.random() * 4 + 2,
+            color: cor,
+            life: 30 + Math.random() * 20,
+            maxLife: 50
         });
     }
 }
 
-// Desenhar Nave com Inclinação Dinâmica (Roll) e balanço orgânico
-function desenharNave(obj, color, isPlayer){
+// Renderizador com Efeito Neon de Desenho das Naves
+function desenharNave(ent, corSombra, ehPlayer = false) {
     ctx.save();
-    const cx = obj.x + obj.w/2, cy = obj.y + obj.h/2;
-    const flutua = Math.sin(frameAnim * 0.06 + obj.x * 0.04) * 3.5;
-    ctx.translate(cx, cy + flutua);
-    if(isPlayer) {
-        const inclinacaoMax = 0.25;
-        let inclinacaoAlvo = 0;
-        if (keys['ArrowLeft'] || keys['KeyA']) inclinacaoAlvo = -inclinacaoMax;
-        if (keys['ArrowRight'] || keys['KeyD']) inclinacaoAlvo = inclinacaoMax;
-        player.velX += (inclinacaoAlvo - player.velX) * 0.15;
-        ctx.rotate(player.velX);
-    } else {
-        if(obj.dir) {
-            ctx.rotate(obj.dir * 0.08 + Math.cos(frameAnim * 0.05) * 0.03);
-        }
-    }
-
-    if(isPlayer && player.danoTime > 0 && Math.floor(player.danoTime/4)%2) ctx.globalAlpha = 0.4;
-    const img = isPlayer ? skins.player : (obj.x === amigo.x ? skins.amigo : skins.alien);
-    if (img.complete && img.naturalWidth !== 0) {
-        ctx.drawImage(img, -obj.w/2, -obj.h/2, obj.w, obj.h);
-    } else {
-        ctx.fillStyle = color;
-        if(isPlayer){ 
-            ctx.beginPath(); ctx.moveTo(0, -obj.h/2); ctx.lineTo(obj.w/2, obj.h/2); ctx.lineTo(0, obj.h/3);
-            ctx.lineTo(-obj.w/2, obj.h/2); ctx.closePath(); ctx.fill(); 
-        } else { 
-            ctx.beginPath();
-            ctx.ellipse(0,0,obj.w/2,obj.h/2.2,0,0,Math.PI*2); ctx.fill(); 
-        }
-    }
-    
-    if(isPlayer && player.escudoAtivo) {
-        ctx.restore();
-        ctx.save(); ctx.translate(cx, cy + flutua); 
-        ctx.rotate(frameAnim * 0.05);
-        const escalaPulso = 1.0 + Math.sin(frameAnim * 0.15) * 0.05;
-        if (skins.escudo.complete && skins.escudo.naturalWidth !== 0) { 
-            ctx.globalAlpha = 0.5 + Math.sin(frameAnim*0.2)*0.15;
-            ctx.drawImage(skins.escudo, -obj.w*0.8 * escalaPulso, -obj.h*0.8 * escalaPulso, obj.w*1.6 * escalaPulso, obj.h*1.6 * escalaPulso);
-        } else { 
-            ctx.strokeStyle = '#00d2ff';
-            ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(0,0, obj.w*0.8 * escalaPulso, 0, Math.PI*2); ctx.stroke(); 
-        }
-    }
-    ctx.restore();
-}
-
-const tempCanvas = document.createElement('canvas');
-const tempCtx = tempCanvas.getContext('2d');
-let imgCriadorProcessada = null;
-let imgNexusProcessada = null;
-function desenharBoss(obj){
-    ctx.save();
-    const cx = obj.x + obj.w/2, cy = obj.y + obj.h/2;
-    const escalaRespiracaoY = 1.0 + Math.sin(frameAnim * 0.04) * 0.03;
-    const escalaRespiracaoX = 1.0 - Math.sin(frameAnim * 0.04) * 0.01;
-    ctx.translate(cx, cy + Math.sin(frameAnim*0.04) * 5);
-    ctx.scale(escalaRespiracaoX, escalaRespiracaoY);
-    
-    if(bossMorrendo) ctx.filter = `hue-rotate(${frameAnim*15}deg) brightness(2)`;
-    
-    let img = skins.chefe;
-    if(obj.tipo === 2) img = skins.chefe2;
-    
-    if(obj.tipo === 4) {
-        img = skins.nexusVortex;
-        if (img.complete && img.naturalWidth !== 0) {
-            if (!imgNexusProcessada || imgNexusProcessada.width !== img.naturalWidth) {
-                tempCanvas.width = img.naturalWidth;
-                tempCanvas.height = img.naturalHeight;
-                tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
-                tempCtx.drawImage(img, 0, 0);
-                const imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-                const data = imgData.data;
-                for (let i = 0; i < data.length; i += 4) {
-                    if (data[i] > 220 && data[i+1] > 220 && data[i+2] > 220) {
-                        data[i+3] = 0;
-                    }
-                }
-                tempCtx.putImageData(imgData, 0, 0);
-                imgNexusProcessada = new Image();
-                imgNexusProcessada.src = tempCanvas.toDataURL();
-            }
-            img = imgNexusProcessada;
-        }
-    }
-    
-    if(obj.tipo === 3) {
-        img = skins.criador;
-        if (img.complete && img.naturalWidth !== 0) {
-            if (!imgCriadorProcessada || imgCriadorProcessada.width !== img.naturalWidth) {
-                tempCanvas.width = img.naturalWidth;
-                tempCanvas.height = img.naturalHeight;
-                tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
-                tempCtx.drawImage(img, 0, 0);
-                const imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-                const data = imgData.data;
-                for (let i = 0; i < data.length; i += 4) {
-                    if (data[i] > 220 && data[i+1] > 220 && data[i+2] > 220) {
-                        data[i+3] = 0;
-                    }
-                }
-                tempCtx.putImageData(imgData, 0, 0);
-                imgCriadorProcessada = new Image();
-                imgCriadorProcessada.src = tempCanvas.toDataURL();
-            }
-            img = imgCriadorProcessada;
-        }
-    } 
-
-    if (img.complete && img.naturalWidth !== 0) {
-        ctx.drawImage(img, -obj.w/2, -obj.h/2, obj.w, obj.h);
-    } else { 
-        ctx.save();
-        ctx.shadowBlur = 20;
-        ctx.shadowColor = (obj.tipo === 4) ? "rgba(168, 85, 247, 0.9)" : "rgba(0, 210, 255, 0.8)";
-        ctx.strokeStyle = (obj.tipo === 4) ? "#a855f7" : "#00d2ff";
-        ctx.lineWidth = 4;
-        ctx.fillStyle = "rgba(15, 10, 30, 0.9)";
-        ctx.beginPath();
-        ctx.moveTo(0, -obj.h/2);
-        ctx.lineTo(obj.w/2, obj.h/4);
-        ctx.lineTo(obj.w/3, obj.h/2);
-        ctx.lineTo(-obj.w/3, obj.h/2);
-        ctx.lineTo(-obj.w/2, obj.h/4);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-        ctx.restore();
-    }
-    ctx.restore();
-}
-
-function desenharEscudoBoss(obj){
-    ctx.save(); ctx.translate(obj.x + obj.w/2, obj.y + obj.h/2);
-    const pulso = 1.0 + Math.sin(frameAnim * 0.1) * 0.04;
-    ctx.scale(pulso, pulso);
-    if (skins.escudo.complete && skins.escudo.naturalWidth !== 0) { 
-        ctx.globalAlpha = 0.4 + Math.sin(frameAnim*0.1)*0.15;
-        ctx.drawImage(skins.escudo, -obj.w/2, -obj.h/2, obj.w, obj.h);
-    } else { 
-        ctx.strokeStyle = '#00d2ff'; ctx.lineWidth = 3; ctx.beginPath();
-        ctx.arc(0, 0, obj.w/2, 0, Math.PI*2); ctx.stroke();
-    }
-    ctx.restore();
-}
-
-// Desenhar Bolas de Fogo Especiais com rastro
-function desenharFireball(t){
-    const w = t.w || 50, h = t.h || 50;
-    ctx.save();
-    ctx.translate(t.x + w/2, t.y + h/2);
-    ctx.rotate(frameAnim*0.2);
-    ctx.shadowColor = '#ff5500';
+    ctx.shadowColor = corSombra;
     ctx.shadowBlur = 15;
-    if (skins.fireball.complete && skins.fireball.naturalWidth !== 0) {
-        ctx.drawImage(skins.fireball, -w/2, -h/2, w, h);
+    
+    let img = skins.alien;
+    if (ehPlayer) img = skins.player;
+    else if (ent === amigo) img = skins.amigo;
+
+    if (img.complete && img.naturalWidth !== 0) {
+        ctx.drawImage(img, ent.x, ent.y, ent.w, ent.h);
     } else {
-        ctx.fillStyle = '#ffae3b';
+        // Fallback geométrico caso imagens falhem no carregamento
+        ctx.fillStyle = corSombra;
         ctx.beginPath();
-        ctx.arc(0, 0, w/2, 0, Math.PI*2);
+        if (ehPlayer) {
+            ctx.moveTo(ent.x + ent.w / 2, ent.y);
+            ctx.lineTo(ent.x, ent.y + ent.h);
+            ctx.lineTo(ent.x + ent.w, ent.y + ent.h);
+        } else {
+            ctx.rect(ent.x, ent.y, ent.w, ent.h);
+        }
         ctx.fill();
     }
     ctx.restore();
 }
 
-// Efeito visual do Tokitobashi (Tela Trincada)
 function desenharRachadurasEspacoTempo() {
     ctx.save();
-    ctx.strokeStyle = 'rgba(0, 246, 255, 0.85)';
-    ctx.lineWidth = 2.5;
-    ctx.shadowColor = '#00f6ff';
-    ctx.shadowBlur = 15;
-    const centerX = 400;
-    const centerY = 300;
-    const numeroRachadurasPrincipais = 8;
-    const seed = Math.floor(frameAnim * 0.1);
-    
-    for (let i = 0; i < numeroRachadurasPrincipais; i++) {
-        let x = centerX;
-        let y = centerY;
-        let angulo = (i * (Math.PI * 2) / numeroRachadurasPrincipais) + (Math.sin(seed + i) * 0.2);
-        
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-        
-        const segmentos = 5;
-        const comprimentoSegmento = 80 + (Math.sin(seed * i) * 20);
-        
-        for (let j = 0; j < segmentos; j++) {
-            angulo += (Math.sin(seed + j + i) * 0.4) - 0.2;
-            x += Math.cos(angulo) * comprimentoSegmento;
-            y += Math.sin(angulo) * comprimentoSegmento;
-            ctx.lineTo(x, y);
-            
-            if (j > 1 && Math.sin(seed + j) > 0) {
-                ctx.save();
-                ctx.lineWidth = 1.2;
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
-                ctx.beginPath();
-                ctx.moveTo(x, y);
-                let anguloRamo = angulo + 0.8;
-                ctx.lineTo(x + Math.cos(anguloRamo) * 40, y + Math.sin(anguloRamo) * 40);
-                ctx.stroke();
-                ctx.restore();
-            }
-        }
-        ctx.stroke();
-    }
+    ctx.strokeStyle = "rgba(168, 85, 247, 0.4)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(100, 50); ctx.lineTo(150, 150); ctx.lineTo(120, 250);
+    ctx.moveTo(700, 100); ctx.lineTo(650, 220); ctx.lineTo(680, 340);
+    ctx.moveTo(350, 450); ctx.lineTo(450, 490); ctx.lineTo(410, 550);
+    ctx.stroke();
     ctx.restore();
 }
 
-function colide(r1, r2){
-    const w1 = r1.w || 6, h1 = r1.h || 20;
-    const w2 = r2.w || 6, h2 = r2.h || 20;
-    return r1.x < r2.x + w2 && r1.x + w1 > r2.x && r1.y < r2.y + h2 && r1.y + h1 > r2.y;
+function desenharIntroducaoBoss7() {
+    ctx.save();
+    ctx.font = "bold 20px 'Orbitron', sans-serif";
+    ctx.fillStyle = "#fff";
+    ctx.shadowColor = "#a855f7";
+    ctx.shadowBlur = 10;
+    ctx.textAlign = "center";
+    ctx.fillText("ALERTA: ANOMALIA DE GRAVIDADE DETECTADA", 400, 180);
+    ctx.font = "14px 'Orbitron', sans-serif";
+    ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+    ctx.fillText("O Nexus Vortex está manipulando a malha do espaço!", 400, 210);
+    ctx.restore();
 }
 
-// Game Loop Principal
-function gameLoop(now){
-    const dt = now - lastTime;
-    lastTime = now;
-    
-    ctx.clearRect(0,0,800,600);
+// Loop Principal de Atualização Física e Desenho (GameLoop)
+function gameLoop(agora) {
+    let dt = agora - tempoUltimoQuadro;
+    if (dt > 100) dt = 16; // Previne saltos bruscos se o jogo for minimizado
+    tempoUltimoQuadro = agora;
     frameAnim++;
-    
-    // Aplicação do tremor da tela
+
+    ctx.clearRect(0, 0, 800, 600);
+
+    // Configuração de tremor na tela (Screen Shake)
     ctx.save();
-    if(tremorIntensidade > 0.1) {
-        const dx = (Math.random() - 0.5) * tremorIntensidade;
-        const dy = (Math.random() - 0.5) * tremorIntensidade;
+    if (intensidadeTremor > 0.1) {
+        let dx = (Math.random() - 0.5) * intensidadeTremor;
+        let dy = (Math.random() - 0.5) * intensidadeTremor;
         ctx.translate(dx, dy);
-        tremorIntensidade *= 0.90; // Amortecimento
+        intensidadeTremor *= 0.9; // Decaimento do tremor
     }
-    
-    // Limitação de velocidade para manter as naves alinhadas
-    player.x += (player.tx - player.x) * 0.12;
-    amigo.x += (amigo.tx - amigo.x) * 0.1;
-    
-    if(player.cooldown > 0) player.cooldown -= dt;
-    if(player.escudoAtivo){
-        player.escudoTimer -= dt;
-        if(player.escudoTimer <= 0) player.escudoAtivo = false;
-    }
-    
-    if(amigo.x > -100) {
-        desenharNave(amigo, '#00d2ff', false);
-    }
-    desenharNave(player, '#00ff88', true);
-    
-    if(modo !== 'jogando'){
-        ctx.restore();
-        requestAnimationFrame(gameLoop);
-        return;
-    }
-    
-    $('fase-txt').innerText = faseAtual;
-    $('vidas-txt').innerText = player.vidas;
-    $('hab-txt').innerText = Math.min(player.kills, 3);
-    $('escudo-txt').innerText = Math.min(player.kills, 2);
-    
-    const boss = invasores.find(i=>i.isBoss && i.hp>0);
-    const shield = invasores.find(i=>i.isShield && i.hp>0);
-    
-    const bossMortoCheck = invasores.find(i=>i.isBoss && i.hp <= 0 && !bossMorrendo);
-    if(bossMortoCheck){
-        bossMorrendo = true;
-        aplicarTremor(15);
-        let falaMorte = "Inimigo: Como isso é possível?!";
-        if(bossMortoCheck.tipo === 1) falaMorte = "Assassino: O tempo... não pôde me salvar...";
-        if(bossMortoCheck.tipo === 2) falaMorte = "MK-II: Nos veremos novamente mortal...";
-        if(bossMortoCheck.tipo === 3) falaMorte = "Criador: Este universo ainda será meu...";
-        if(bossMortoCheck.tipo === 4) falaMorte = "Nexus: Sistemas integrados falhando... Escudos colapsando!";
+
+    if (modo === 'jogando' || modo === 'historia') {
         
-        falar(falaMorte, 3500, () => {
-            invasores = invasores.filter(i => !i.isBoss && !i.isBlocoProtetor && !i.isShield);
-            escudosOrbitais = [];
-            tirosTeleguiados = [];
-            faseAtual++;
-            criarFase();
-        });
-    }
-    
-    // COMPORTAMENTO EXCLUSIVO DO CHEFE DA FASE 7 (NEXUS VORTEX)
-    if(boss && boss.tipo === 4 && !tempoParado && !bossMorrendo && !emDialogoFase7){
-        boss.x += boss.vel * boss.dir * (dt/16);
-        if (boss.x < 50 || boss.x > 800 - boss.w - 50) {
-            boss.dir *= -1;
-            boss.x += boss.vel * boss.dir * (dt/16);
+        // Movimentação do Jogador
+        if (modo === 'jogando' && !tempoParado) {
+            if (teclado['ArrowLeft'] || teclado['KeyA']) player.tx -= 6.5 * (dt / 16);
+            if (teclado['ArrowRight'] || teclado['KeyD']) player.tx += 6.5 * (dt / 16);
+            player.tx = Math.max(10, Math.min(800 - player.w - 10, player.tx));
         }
-        
-        // Rotaciona o ângulo dos escudos ao redor do boss
-        boss.anguloEscudos += 0.02 * (dt/16);
-        escudosOrbitais.forEach(esc => {
-            if(esc.vivo) {
-                const anguloTotal = boss.anguloEscudos + esc.anguloOffset;
-                esc.x = (boss.x + boss.w/2 - esc.w/2) + Math.cos(anguloTotal) * esc.raio;
-                esc.y = (boss.y + boss.h/2 - esc.h/2) + Math.sin(anguloTotal) * esc.raio;
-                
-                // Regeneração passiva sutil dos escudos orbitais
-                if(esc.hp < esc.maxHp) esc.hp += 0.05 * (dt/16);
+        player.x += (player.tx - player.x) * 0.15;
+
+        // Atualização e Interpolação física do Amigo
+        if (modo === 'jogando') {
+            amigo.tx = player.x - 70; // Mantém-se de forma fixa ao lado esquerdo da sua nave
+            amigo.y = player.y;
+        }
+        amigo.x += (amigo.tx - amigo.x) * 0.1;
+
+        // Renderiza o Amigo se ele estiver ativo em cena
+        if (amigo.x > -80) {
+            desenharNave(amigo, '#00d2ff', false);
+        }
+
+        // Renderiza o Jogador principal
+        desenharNave(player, '#00ff88', true);
+
+        // Gerenciador de Recarga do Disparo do Jogador
+        if (player.recargaTiro > 0) player.recargaTiro -= dt;
+        if (modo === 'jogando' && teclado['Space'] && player.recargaTiro <= 0 && !tempoParado) {
+            player.tiros.push({ x: player.x + player.w / 2 - 2, y: player.y, vy: -9 });
+            player.recargaTiro = 280; // Tempo de recarga do tiro normal
+            if (audioPermitido) {
+                somTiroPlayer.currentTime = 0;
+                somTiroPlayer.play();
             }
-        });
-        
-        // Mecânica de Ataque 1: Tiros Teleguiados que buscam o jogador
-        boss.ultimoTiro += dt;
-        if(boss.ultimoTiro >= 3200){
-            boss.ultimoTiro = 0;
-            // Instancia 1 tiro teleguiado no centro do boss
-            tirosTeleguiados.push({
-                x: boss.x + boss.w/2 - 8,
-                y: boss.y + boss.h - 10,
-                w: 16, h: 16,
-                vel: 3.5,
-                rastro: []
-            });
-            aplicarTremor(4);
+        }
+
+        // Redução do Tempo do Escudo
+        if (player.escudoAtivo) {
+            player.tempoEscudo -= dt;
+            if (player.tempoEscudo <= 0) player.escudoAtivo = false;
             
-            // Fala aleatória de combate
-            if(Math.random() < 0.45) {
-                falar(falasNexus[Math.floor(Math.random() * falasNexus.length)], 1600);
-            }
-        }
-        
-        // Mecânica de Ataque 2: Invoca 2 naves normais de assalto de tempos em tempos
-        boss.ultimoBot += dt;
-        if(boss.ultimoBot >= 7000) {
-            boss.ultimoBot = 0;
-            falar("Nexus: Clones de assalto iniciados!", 1500);
-            for(let i = 1; i <= 2; i++) {
-                invasores.push({ x: boss.x + (boss.w / 3) * i, y: boss.y + boss.h + 10, w: 55, h: 55, vivo: true, dir: (i === 1) ? 1 : -1, vel: 1.2 });
-                explodir(boss.x + (boss.w / 3) * i + 25, boss.y + boss.h + 20, '#ff9900');
-            }
-        }
-    }
-    
-    if (!emDialogoFase7) {
-        for(let i = tirosTeleguiados.length - 1; i >= 0; i--){
-            const tt = tirosTeleguiados[i];
-            const dx = (player.x + player.w/2) - tt.x;
-            const dy = (player.y + player.h/2) - tt.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            
-            if(dist > 0) {
-                tt.x += (dx / dist) * tt.vel * (dt/16);
-                tt.y += (dy / dist) * tt.vel * (dt/16);
-            }
-            tt.rastro.push({x: tt.x, y: tt.y});
-            if(tt.rastro.length > 10) tt.rastro.shift();
-            
-            if (colide(tt, player)) {
-                tirosTeleguiados.splice(i, 1);
-                if (!player.escudoAtivo && player.danoTime <= 0) {
-                    player.vidas--;
-                    player.danoTime = 60;
-                    aplicarTremor(12);
-                    explodir(player.x + player.w/2, player.y + player.h/2, '#ff0055');
-                } else if (player.escudoAtivo) {
-                    explodir(tt.x, tt.y, '#00d2ff');
-                    aplicarTremor(3);
-                }
-                continue;
-            }
-            
-            let destruido = false;
-            for(let t of tiros){
-                const tx = t.x, ty = t.y, tw = t.w || 6, th = t.h || 20;
-                if(tt.x < tx + tw && tt.x + tt.w > tx && tt.y < ty + th && tt.y + tt.h > ty){
-                    explodir(tt.x, tt.y, '#a855f7');
-                    tirosTeleguiados.splice(i, 1);
-                    t.destruido = true;
-                    destruido = true;
-                    aplicarTremor(2);
-                    break;
-                }
-            }
-            if(destruido) continue;
-            
-            if(tt.y > 620) {
-                tirosTeleguiados.splice(i, 1);
-            }
-        }
-    }
-    
-    // IA do Criador de Mundos (Fase 15)
-    if(boss && boss.tipo === 3 && !tempoParado && !bossMorrendo){
-        boss.x += boss.vel * boss.dir * (dt/16);
-        if(boss.x < 50 || boss.x > 550) { boss.dir *= -1; boss.x += boss.vel * boss.dir * (dt/16); }
-        
-        boss.timerInvocacao += dt;
-        if(boss.timerInvocacao >= 6000){
-            boss.timerInvocacao = 0;
-            falar("Criador: Ergam-se, meus servos!", 1500);
-            for(let i=0; i<3; i++) {
-                invasores.push({ x: boss.x + i*70 - 40, y: boss.y + boss.h + 20, w:55, h:55, vivo:true, dir:1, vel:1.2 });
-                explodir(boss.x + i*70 - 15, boss.y + boss.h + 40, '#00ffaa');
-            }
-        }
-        if(boss.hp < boss.maxHp * 0.35 && !boss.usouCura){
-            boss.usouCura = true;
-            falar("Criador: Reconstruindo núcleo de energia vital!", 2500);
-            boss.hp = Math.min(boss.maxHp, boss.hp + 1500);
-            explodir(boss.x + boss.w/2, boss.y + boss.h/2, '#00ffaa');
-            aplicarTremor(10);
-        }
-    }
-    
-    // IA do Assassino Temporal (Fase 5 - Tokitobashi)
-    else if(boss && boss.tipo === 1) { 
-        contadorTempo += dt;
-        if(!tempoParado && contadorTempo >= 7500){
-            tempoParado = true;
-            contadorTempo = 0;
-            somTempo.play();
-            falar(falasChefe[Math.floor(Math.random()*falasChefe.length)], 2500, ()=>{
-                tempoParado = false;
-                contadorTempo = 0;
-            });
-        }
-        if(!tempoParado && Math.random() < 0.03 * (dt/16)){
-            tirosE.push({ x: boss.x + boss.w/2 - 2, y: boss.y + boss.h, s: 4.5 });
-            somTiroInimigo.currentTime = 0;
-            somTiroInimigo.play();
-        }
-    } 
-    
-    // Invasores Comuns Atirando
-    else { 
-        invasores.forEach(inv => {
-            if(!inv.isBoss && !inv.isShield && inv.vivo && Math.random() < 0.00065 * (dt/16)){
-                tirosE.push({ x: inv.x + inv.w/2, y: inv.y + inv.h, s: 4 });
-                somTiroInimigo.currentTime = 0;
-                somTiroInimigo.play();
-            }
-        });
-    }
-    
-    // Movimentação do Player e Disparo de Tiros Normais
-    if(!bossMorrendo) {
-        if(keys['Space'] && player.cooldown <= 0){
-            tiros.push({ x: player.x + player.w/2 - 3, y: player.y - 15 });
-            player.cooldown = 180; // cooldown original de disparos normais
-            somTiroPlayer.currentTime = 0;
-            somTiroPlayer.play();
-        }
-        if((keys['ArrowLeft'] || keys['KeyA']) && player.x > 10) player.tx -= 5.5 * (dt/16);
-        if((keys['ArrowRight'] || keys['KeyD']) && player.x < 730) player.tx += 5.5 * (dt/16);
-    }
-    
-    // IA e Movimentação Geral dos Invasores Comuns
-    let mudarLado = false;
-    invasores.forEach(inv => {
-        if(inv.isBoss || inv.isShield) return;
-        if(!inv.vivo) return;
-        inv.x += inv.vel * inv.dir * (dt/16);
-        if(inv.x > 740 || inv.x < 10) mudarLado = true;
-    });
-    if(mudarLado){
-        invasores.forEach(inv => {
-            if(inv.isBoss || inv.isShield) return;
-            inv.dir *= -1;
-            inv.y += 20;
-        });
-    }
-    
-    // Comportamento do Chefe MK-II e seu Escudo Protetor (Fase 10)
-    if(boss && boss.tipo === 2 && !tempoParado && !bossMorrendo){
-        boss.x += boss.vel * boss.dir * (dt/16);
-        if(boss.x < 50 || boss.x > 570) { boss.dir *= -1; boss.x += boss.vel * boss.dir * (dt/16); }
-        if(Math.random() < 0.04 * (dt/16)){
-            tirosE.push({ x: boss.x + boss.w/2 - 40, y: boss.y + boss.h, s: 5 });
-            tirosE.push({ x: boss.x + boss.w/2 + 40, y: boss.y + boss.h, s: 5 });
-            somTiroInimigo.currentTime = 0;
-            somTiroInimigo.play();
-        }
-    }
-    if(shield && boss && !bossMorrendo){
-        shield.x = boss.x - 40;
-        shield.y = boss.y - 15;
-    }
-    
-    // Movimento dos Tiros do Jogador
-    for(let tIdx = tiros.length - 1; tIdx >= 0; tIdx--){
-        let t = tiros[tIdx];
-        if(t.destruido) {
-            tiros.splice(tIdx, 1);
-            continue;
-        }
-        
-        t.y -= (t.s || 6) * (dt/16);
-        if(t.y < -50){ tiros.splice(tIdx, 1); continue; }
-        
-        let consumed = false;
-        
-        // Verifica se acertou o escudo orbital do Boss da Fase 7 antes de chegar nele
-        if (escudosOrbitais.length > 0 && !consumed) {
-            for(let esc of escudosOrbitais) {
-                if (esc.vivo && colide(t, esc)) {
-                    let dano = t.isFireball ? 50 : 40;
-                    esc.hp -= dano;
-                    explodir(t.x, t.y, '#00f6ff');
-                    aplicarTremor(t.isFireball ? 4 : 1);
-                    if(esc.hp <= 0) {
-                        esc.vivo = false;
-                        explodir(esc.x + esc.w/2, esc.y + esc.h/2, '#ff0055');
-                        falar("Nexus: Um dos meus escudos colapsou!", 2000);
-                        aplicarTremor(14);
-                    }
-                    consumed = true;
-                    break;
-                }
-            }
-        }
-        if(consumed) {
-            tiros.splice(tIdx, 1);
-            continue;
-        }
-        
-        for(let inv of invasores){
-            if((inv.vivo || inv.isBoss || inv.isShield) && colide(t, inv)){
-                // Se acertou o boss MK-II com seu Escudo Ativo protetor, anula o disparo
-                if(inv.isBoss && inv.tipo === 2 && shield) {
-                    explodir(t.x, t.y, '#666');
-                    consumed = true;
-                    break;
-                }
-                if(inv.isBoss || inv.isShield || inv.isBlocoProtetor){
-                    // Dano da bola de fogo balanceado para 50, e tiro normal 40
-                    let danoAplicado = t.isFireball ? 50 : 40;
-                    inv.hp -= danoAplicado;
-                    explodir(t.x + (t.isFireball ? 25 : 3), t.y + (t.isFireball ? 25 : 10), inv.isBoss ? '#ff0055' : '#00d2ff');
-                    aplicarTremor(t.isFireball ? 4 : 1);
-                } else {
-                    inv.vivo = false;
-                    player.kills++;
-                    explodir(inv.x + inv.w/2, inv.y + inv.h/2, '#ff0055');
-                    aplicarTremor(2);
-                }
-                consumed = true;
-                break;
-            }
-        }
-        if(consumed) tiros.splice(tIdx, 1);
-    }
-    
-    // Colisão Física dos Tiros Inimigos contra o Jogador (Não se movem no Tokitobashi)
-    if(!tempoParado){
-        for(let teIdx = tirosE.length - 1; teIdx >= 0; teIdx--){
-            let te = tirosE[teIdx];
-            if(colide(te, player)){
-                tirosE.splice(teIdx, 1);
-                if(!player.escudoAtivo && player.danoTime <= 0){
-                    player.vidas--;
-                    player.danoTime = 60; // 1 segundo de imunidade (a 60 FPS)
-                    aplicarTremor(12);
-                    explodir(player.x + player.w/2, player.y + player.h/2, '#ff0055');
-                } else if(player.escudoAtivo){
-                    explodir(te.x, te.y, '#00d2ff');
-                    aplicarTremor(3);
-                }
-                continue;
-            }
-            te.y += te.s * (dt/16);
-            if(te.y > 620) tirosE.splice(teIdx, 1);
-        }
-    }
-    
-    // Imunidade pós-dano
-    if(player.danoTime > 0) player.danoTime--;
-    
-    // Renderização dos Elementos no Canvas
-    invasores.forEach(inv => {
-        if(inv.isBoss && inv.hp > 0) {
-            desenharBoss(inv);
-        } 
-        else if(inv.isShield && inv.hp > 0) {
-            desenharEscudoBoss(inv);
-        }
-        else if(inv.vivo) {
-            desenharNave(inv, '#ff0055', false);
-        }
-    });
-    
-    // Renderiza graficamente escudos orbitais da fase 7 se estiverem ativos
-    escudosOrbitais.forEach(esc => {
-        if(esc.vivo) {
+            // Desenho do Escudo Protetor Neon
             ctx.save();
-            ctx.translate(esc.x + esc.w/2, esc.y + esc.h/2);
-            ctx.rotate(frameAnim * 0.1);
-            if (skins.escudo.complete && skins.escudo.naturalWidth !== 0) {
-                ctx.drawImage(skins.escudo, -esc.w/2, -esc.h/2, esc.w, esc.h);
-            } else {
-                ctx.strokeStyle = '#00f6ff';
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.arc(0, 0, esc.w/2, 0, Math.PI * 2);
-                ctx.stroke();
-            }
+            ctx.shadowColor = '#00d2ff';
+            ctx.shadowBlur = 15;
+            ctx.strokeStyle = '#00d2ff';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(player.x + player.w / 2, player.y + player.h / 2, 45, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fillStyle = 'rgba(0, 210, 255, 0.1)';
+            ctx.fill();
             ctx.restore();
-            
-            // Barra de vida física de cada escudo ativo
-            ctx.fillStyle = "rgba(0,0,0,0.5)";
-            ctx.fillRect(esc.x, esc.y - 8, esc.w, 4);
-            ctx.fillStyle = "#00f6ff";
-            ctx.fillRect(esc.x, esc.y - 8, esc.w * (esc.hp / esc.maxHp), 4);
         }
-    });
-    
-    // Barra de Vida dos Chefes na Interface Superior
-    if(boss){
-        $('boss-hp-fill').style.width = `${Math.max(0, (boss.hp / boss.maxHp) * 100)}%`;
-    }
-    
-    // Tiros normais e fireball do player
-    tiros.forEach(t => {
-        if(t.isFireball){
-            desenharFireball(t);
-        } else {
+
+        // Atualização dos Tiros do Jogador
+        for (let i = player.tiros.length - 1; i >= 0; i--) {
+            let t = player.tiros[i];
+            if (!tempoParado) t.y += t.vy * (dt / 16);
+            
+            if (t.y < -10) {
+                player.tiros.splice(i, 1);
+                continue;
+            }
+
+            // Desenha tiro do jogador
             ctx.save();
+            ctx.fillStyle = '#00ff88';
             ctx.shadowColor = '#00ff88';
             ctx.shadowBlur = 8;
-            ctx.fillStyle = '#fff';
-            ctx.fillRect(t.x, t.y, t.w || 6, t.h || 20);
-            ctx.fillStyle = 'rgba(0, 255, 136, 0.4)';
-            ctx.fillRect(t.x, t.y + (t.h || 20), t.w || 6, (t.h || 20) * 1.5);
+            ctx.fillRect(t.x, t.y, 4, 12);
             ctx.restore();
         }
-    });
-    
-    // Tiros Inimigos Normais
-    tirosE.forEach(te => {
-        ctx.save();
-        ctx.shadowColor = '#ff0055';
-        ctx.shadowBlur = 8;
-        ctx.fillStyle = '#fff';
-        ctx.fillRect(te.x, te.y, 5, 15);
-        ctx.fillStyle = 'rgba(255, 0, 85, 0.4)';
-        ctx.fillRect(te.x, te.y - 10, 5, 10);
-        ctx.restore();
-    });
-    
-    // Tiros Teleguiados do Boss 7
-    tirosTeleguiados.forEach(tt => {
-        // Desenha o rastro luminoso
-        ctx.save();
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = 'rgba(168, 85, 247, 0.3)';
-        ctx.beginPath();
-        for(let r = 0; r < tt.rastro.length; r++){
-            if(r === 0) ctx.moveTo(tt.rastro[r].x, tt.rastro[r].y);
-            else ctx.lineTo(tt.rastro[r].x, tt.rastro[r].y);
-        }
-        ctx.stroke();
-        ctx.restore();
 
-        // Orb de Energia do Tiro
-        ctx.save();
-        ctx.translate(tt.x, tt.y);
-        ctx.rotate(frameAnim * 0.15);
-        ctx.shadowColor = '#a855f7';
-        ctx.shadowBlur = 12;
-        ctx.fillStyle = '#fff';
-        ctx.beginPath();
-        ctx.arc(0, 0, 8, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = '#a855f7';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        ctx.restore();
-    });
-    
-    // Partículas com Física de Inércia, Atrito e Escala
-    particulas.forEach((p, i)=>{ 
-        p.x += p.vx * (dt/16); 
-        p.y += p.vy * (dt/16); 
-        p.vx *= 0.94; 
-        p.vy *= 0.94;
-        p.life -= dt/16; 
-        
-        if(p.life <= 0) {
-            particulas.splice(i, 1);
-            return;
+        // Atualização do Especial de Bola de Fogo
+        if (player.especialAtivo) {
+            player.especialY -= 5.5 * (dt / 16);
+            
+            // Desenho animado da Bola de Fogo Neon
+            ctx.save();
+            ctx.shadowColor = '#ff3c00';
+            ctx.shadowBlur = 25;
+            if (skins.fireball.complete && skins.fireball.naturalWidth !== 0) {
+                ctx.drawImage(skins.fireball, player.especialX - 35, player.especialY - 35, 70, 70);
+            } else {
+                ctx.fillStyle = '#ff5500';
+                ctx.beginPath();
+                ctx.arc(player.especialX, player.especialY, 25, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.restore();
+
+            if (player.especialY < -50) {
+                player.especialAtivo = false;
+            }
         }
+
+        // Controle da Habilidade de Parada Temporal "Tokitobashi" (Chefe nível 5)
+        if (chefeAtivo && boss && boss.tipo === 1) {
+            if (!tempoParado) {
+                timerProximaParada -= dt;
+                if (timerProximaParada <= 0) {
+                    tempoParado = true;
+                    cronometroTempoParado = 2500; // Tempo paralisado por 2.5 segundos
+                    if (audioPermitido) somTempo.play();
+                    $('efeito-tempo').style.display = 'block';
+                    falar("CHEFÃO: Tokitobashi! O tempo está sob meu domínio!", 2000);
+                    aplicarTremor(15);
+                }
+            } else {
+                cronometroTempoParado -= dt;
+                if (cronometroTempoParado <= 0) {
+                    tempoParado = false;
+                    timerProximaParada = cooldownParadaTempo;
+                    $('efeito-tempo').style.display = 'none';
+                }
+            }
+        }
+
+        // ==========================================
+        // ATUALIZAÇÃO DOS ALIENS NORMAIS
+        // ==========================================
+        if (!chefeAtivo) {
+            let inverterFronteira = false;
+            aliens.forEach(al => {
+                if (!tempoParado) {
+                    al.x += al.velX * al.dir * (dt / 16);
+                    if (al.x > 800 - al.w - 10 || al.x < 10) {
+                        inverterFronteira = true;
+                    }
+                }
+                
+                // Desenhar Inimigo Comum
+                desenharNave(al, '#ff0055');
+
+                // Lógica de Disparo dos Aliens Normais
+                if (!tempoParado && modo === 'jogando') {
+                    al.atirarCooldown -= dt;
+                    if (al.atirarCooldown <= 0) {
+                        tirosInimigos.push({ x: al.x + al.w / 2 - 2, y: al.y + al.h, vy: 4 });
+                        al.atirarCooldown = Math.random() * 3000 + 1500; // Reseta recarga aleatória
+                        if (audioPermitido) {
+                            somTiroInimigo.currentTime = 0;
+                            somTiroInimigo.play();
+                        }
+                    }
+                }
+            });
+
+            if (inverterFronteira && !tempoParado) {
+                aliens.forEach(al => {
+                    al.dir *= -1;
+                    al.y += 15; // Desce degrau orbital
+                });
+            }
+
+            // Colisão: Tiros normais do Jogador contra Aliens Comuns
+            for (let i = player.tiros.length - 1; i >= 0; i--) {
+                let t = player.tiros[i];
+                for (let j = aliens.length - 1; j >= 0; j--) {
+                    let al = aliens[j];
+                    if (t.x > al.x && t.x < al.x + al.w && t.y > al.y && t.y < al.y + al.h) {
+                        criarExplosao(al.x + al.w / 2, al.y + al.h / 2, '#ff0055');
+                        aliens.splice(j, 1);
+                        player.tiros.splice(i, 1);
+                        player.kills++;
+                        aplicarTremor(4);
+                        break;
+                    }
+                }
+            }
+
+            // Colisão: Especial de Bola de Fogo contra Aliens Comuns (Perfura todos)
+            if (player.especialAtivo) {
+                for (let j = aliens.length - 1; j >= 0; j--) {
+                    let al = aliens[j];
+                    if (player.especialX + 25 > al.x && player.especialX - 25 < al.x + al.w &&
+                        player.especialY + 25 > al.y && player.especialY - 25 < al.y + al.h) {
+                        criarExplosao(al.x + al.w / 2, al.y + al.h / 2, '#ffaa00', 16);
+                        aliens.splice(j, 1);
+                        player.kills++;
+                        aplicarTremor(6);
+                    }
+                }
+            }
+
+            // Condição de Vitória da Fase Comum
+            if (aliens.length === 0 && modo === 'jogando') {
+                fase++;
+                criarFase();
+            }
+        }
+
+        // ==========================================
+        // ATUALIZAÇÃO DO CHEFE (BOSS) ATIVO
+        // ==========================================
+        if (chefeAtivo && boss) {
+            
+            // Diálogo introdutório do Boss 7
+            if (emDialogoFase7) {
+                dialogoFase7Timer -= dt;
+                if (dialogoFase7Timer <= 0) {
+                    emDialogoFase7 = false;
+                }
+            }
+
+            // Descida e entrada triunfal do Chefe na arena
+            if (boss.y < 80) {
+                boss.y += 2 * (dt / 16);
+            } else if (!tempoParado && !emDialogoFase7) {
+                // Movimentação lateral oscilante correta do Boss
+                boss.x += boss.velX * (dt / 16);
+                if (boss.x > 800 - boss.w - 15 || boss.x < 15) {
+                    boss.velX *= -1;
+                }
+            }
+
+            // Renderiza Imagem / Skin do Chefe
+            ctx.save();
+            ctx.shadowBlur = 20;
+            let corSombraBoss = '#ffae3b';
+            let imgBoss = skins.chefe;
+
+            if (boss.tipo === 1) {
+                corSombraBoss = '#ff0055';
+                imgBoss = skins.chefe2;
+            } else if (boss.tipo === 0) {
+                corSombraBoss = '#00d2ff';
+                imgBoss = skins.criador;
+            } else if (boss.tipo === 7) {
+                corSombraBoss = '#a855f7';
+                imgBoss = skins.nexusVortex;
+            }
+
+            ctx.shadowColor = corSombraBoss;
+            if (imgBoss.complete && imgBoss.naturalWidth !== 0) {
+                ctx.drawImage(imgBoss, boss.x, boss.y, boss.w, boss.h);
+            } else {
+                ctx.fillStyle = corSombraBoss;
+                ctx.fillRect(boss.x, boss.y, boss.w, boss.h);
+            }
+            ctx.restore();
+
+            // Lógicas específicas de cada IA de Chefe
+            if (!tempoParado && boss.y >= 80 && modo === 'jogando' && !emDialogoFase7) {
+                boss.recargaAtalho -= dt;
+                if (boss.recargaAtalho <= 0) {
+                    
+                    if (boss.tipo === 1) {
+                        // Chefe Supremo: Atira rajadas alternadas de 3 tiros
+                        tirosInimigos.push({ x: boss.x + 20, y: boss.y + boss.h, vy: 5 });
+                        tirosInimigos.push({ x: boss.x + boss.w / 2, y: boss.y + boss.h, vy: 5.5 });
+                        tirosInimigos.push({ x: boss.x + boss.w - 20, y: boss.y + boss.h, vy: 5 });
+                        boss.recargaAtalho = 1200;
+
+                    } else if (boss.tipo === 2) {
+                        // MK-II Anulador: Esquiva lateral rápida ao detectar tiros do jogador vindo em sua direção
+                        let tiroAproximando = player.tiros.some(t => t.x > boss.x - 20 && t.x < boss.x + boss.w + 20 && t.y > boss.y && t.y < boss.y + 200);
+                        if (tiroAproximando && Math.random() < 0.6) {
+                            boss.x += (boss.velX > 0 ? 60 : -60);
+                            boss.x = Math.max(20, Math.min(800 - boss.w - 20, boss.x));
+                            criarExplosao(boss.x + boss.w / 2, boss.y + boss.h / 2, '#ffae3b', 4);
+                        }
+                        
+                        // Atira dois lasers direcionais lentos
+                        tirosInimigos.push({ x: boss.x + 15, y: boss.y + boss.h, vy: 4.5 });
+                        tirosInimigos.push({ x: boss.x + boss.w - 15, y: boss.y + boss.h, vy: 4.5 });
+                        boss.recargaAtalho = 1500;
+
+                    } else if (boss.tipo === 0) {
+                        // O Criador de Mundos: Reconstroi matéria invocando 2 capangas nas laterais
+                        if (aliens.length < 4 && Math.random() < 0.4) {
+                            aliens.push({
+                                x: boss.x - 50, y: boss.y + 20, w: 32, h: 24, velX: 1.5, dir: -1, atirarCooldown: 1000
+                            });
+                            aliens.push({
+                                x: boss.x + boss.w + 10, y: boss.y + 20, w: 32, h: 24, velX: 1.5, dir: 1, atirarCooldown: 1500
+                            });
+                            criarExplosao(boss.x, boss.y + 20, '#00d2ff', 6);
+                        }
+
+                        // Recupera 25% de vida uma única vez quando estiver à beira da morte (<25% HP)
+                        if (boss.vida < boss.vidaMax * 0.25 && !boss.faseRecuperouVida) {
+                            boss.vida += boss.vidaMax * 0.35; // Cura emergencial de 35% de HP
+                            boss.faseRecuperouVida = true;
+                            falar("CRIADOR: Protocolo de autoreparação ativado!", 2000);
+                            criarExplosao(boss.x + boss.w / 2, boss.y + boss.h / 2, '#00ff88', 25);
+                        }
+
+                        tirosInimigos.push({ x: boss.x + boss.w / 2 - 2, y: boss.y + boss.h, vy: 5 });
+                        boss.recargaAtalho = 1800;
+
+                    } else if (boss.tipo === 7) {
+                        // Boss 7 Nexus Vortex: Atira projéteis roxos teleguiados perseguidores
+                        if (tirosTeleguiados.length < 2) {
+                            tirosTeleguiados.push({
+                                x: boss.x + boss.w / 2,
+                                y: boss.y + boss.h,
+                                vx: 0, vy: 2,
+                                rastro: []
+                            });
+                        }
+                        // Disparo laser frontal de suporte
+                        tirosInimigos.push({ x: boss.x + 20, y: boss.y + boss.h, vy: 6 });
+                        tirosInimigos.push({ x: boss.x + boss.w - 20, y: boss.y + boss.h, vy: 6 });
+                        boss.recargaAtalho = 2000;
+                    }
+                    
+                    if (audioPermitido) {
+                        somTiroInimigo.currentTime = 0;
+                        somTiroInimigo.play();
+                    }
+                }
+            }
+
+            // Atualização e física dos Escudos Rotativos do Boss 7
+            if (boss.tipo === 7) {
+                escudosBoss7.forEach(es => {
+                    if (es.ativo) {
+                        es.angulo += 0.04; // Velocidade de rotação
+                        es.x = (boss.x + boss.w / 2) + Math.cos(es.angulo) * es.raio - es.w / 2;
+                        es.y = (boss.y + boss.h / 2) + Math.sin(es.angulo) * es.raio - es.h / 2;
+
+                        // Desenha o Escudo Orbital
+                        ctx.save();
+                        ctx.shadowColor = '#00d2ff';
+                        ctx.shadowBlur = 10;
+                        ctx.strokeStyle = '#00d2ff';
+                        ctx.lineWidth = 2;
+                        ctx.fillStyle = 'rgba(0, 210, 255, 0.2)';
+                        ctx.beginPath();
+                        ctx.arc(es.x + es.w / 2, es.y + es.h / 2, es.w / 2, 0, Math.PI * 2);
+                        ctx.stroke();
+                        ctx.fill();
+                        ctx.restore();
+                    }
+                });
+            }
+
+            // Atualização da Barra Visual de Vida do Chefe
+            let percentualVida = Math.max(0, boss.vida / boss.vidaMax) * 100;
+            $('boss-hp-fill').style.width = percentualVida + '%';
+
+            // ==========================================
+            // COLISÕES CONTRA O CHEFE (BOSS)
+            // ==========================================
+            
+            // Colisão: Tiros normais do jogador contra os Escudos Orbitais (Boss 7) ou contra o corpo do Chefe
+            for (let i = player.tiros.length - 1; i >= 0; i--) {
+                let t = player.tiros[i];
+                let tiroAbatido = false;
+
+                // Primeiro verifica se colide com escudos ativos do Boss 7
+                if (boss.tipo === 7) {
+                    for (let es of escudosBoss7) {
+                        if (es.ativo && t.x > es.x && t.x < es.x + es.w && t.y > es.y && t.y < es.y + es.h) {
+                            criarExplosao(t.x, t.y, '#00d2ff', 5);
+                            player.tiros.splice(i, 1);
+                            tiroAbatido = true;
+                            aplicarTremor(2);
+                            break;
+                        }
+                    }
+                }
+
+                if (tiroAbatido) continue;
+
+                // Verifica colisão direta com o corpo do Chefe
+                if (t.x > boss.x && t.x < boss.x + boss.w && t.y > boss.y && t.y < boss.y + boss.h) {
+                    boss.vida -= 10; // Causa dano no Chefe
+                    criarExplosao(t.x, t.y, corSombraBoss, 6);
+                    player.tiros.splice(i, 1);
+                    aplicarTremor(5);
+
+                    // Morte do Chefe
+                    if (boss.vida <= 0) {
+                        criarExplosao(boss.x + boss.w / 2, boss.y + boss.h / 2, corSombraBoss, 40);
+                        chefeAtivo = false;
+                        boss = null;
+                        aplicarTremor(20);
+                        fase++;
+                        criarFase();
+                    }
+                }
+            }
+
+            // Colisão: Especial de Bola de Fogo contra o Chefe (Dano massivo)
+            if (player.especialAtivo && boss) {
+                let colidiuEspecial = false;
+                
+                // Bola de fogo quebra escudos orbitais imediatamente
+                if (boss.tipo === 7) {
+                    escudosBoss7.forEach(es => {
+                        if (es.ativo && player.especialX + 25 > es.x && player.especialX - 25 < es.x + es.w &&
+                            player.especialY + 25 > es.y && player.especialY - 25 < es.y + es.h) {
+                            es.ativo = false;
+                            criarExplosao(es.x + es.w / 2, es.y + es.h / 2, '#00d2ff', 20);
+                        }
+                    });
+                }
+
+                if (player.especialX + 25 > boss.x && player.especialX - 25 < boss.x + boss.w &&
+                    player.especialY + 25 > boss.y && player.especialY - 25 < boss.y + boss.h) {
+                    
+                    boss.vida -= 40; // Super dano
+                    criarExplosao(player.especialX, player.especialY, '#ff3c00', 30);
+                    player.especialAtivo = false; // Consome o projétil do especial
+                    aplicarTremor(15);
+
+                    if (boss.vida <= 0) {
+                        criarExplosao(boss.x + boss.w / 2, boss.y + boss.h / 2, corSombraBoss, 40);
+                        chefeAtivo = false;
+                        boss = null;
+                        aplicarTremor(25);
+                        fase++;
+                        criarFase();
+                    }
+                }
+            }
+        }
+
+        // ==========================================
+        // PROCESSAMENTO DE PROJÉTEIS INIMIGOS
+        // ==========================================
         
-        ctx.save();
-        ctx.globalAlpha = p.life / p.maxLife;
-        ctx.fillStyle = p.color;
-        ctx.shadowColor = p.color;
-        ctx.shadowBlur = 6;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size * (p.life / p.maxLife), 0, Math.PI*2);
-        ctx.fill();
-        ctx.restore();
-    });
-    
-    // Alerta Visual de Habilidade Especial Pronta
-    if(player.kills >= 3 && !avisandoHabilidade){
-        avisandoHabilidade = true;
-        aplicarTremor(3);
+        // 1. Tiros Convencionais dos Inimigos
+        for (let i = tirosInimigos.length - 1; i >= 0; i--) {
+            let t = tirosInimigos[i];
+            t.y += t.vy * (dt / 16);
+
+            if (t.y > 610) {
+                tirosInimigos.splice(i, 1);
+                continue;
+            }
+
+            // Desenho do Projétil Inimigo Neon
+            ctx.save();
+            ctx.fillStyle = '#ff0055';
+            ctx.shadowColor = '#ff0055';
+            ctx.shadowBlur = 8;
+            ctx.fillRect(t.x, t.y, 4, 10);
+            ctx.restore();
+
+            // Colisão com a nave do Player
+            if (t.x > player.x && t.x < player.x + player.w && t.y > player.y && t.y < player.y + player.h) {
+                tirosInimigos.splice(i, 1);
+                
+                if (player.escudoAtivo) {
+                    criarExplosao(t.x, t.y, '#00d2ff', 8);
+                    aplicarTremor(3);
+                } else {
+                    player.vidas--;
+                    criarExplosao(player.x + player.w / 2, player.y + player.h / 2, '#ff0000', 25);
+                    aplicarTremor(15);
+                    $('vidas-txt').innerText = player.vidas;
+                }
+            }
+        }
+
+        // 2. Tiros Teleguiados Perseguidores (Boss 7)
+        for (let i = tirosTeleguiados.length - 1; i >= 0; i--) {
+            let tt = tirosTeleguiados[i];
+            
+            // Gravação do rastro dinâmico
+            tt.rastro.push({ x: tt.x, y: tt.y });
+            if (tt.rastro.length > 8) tt.rastro.shift();
+
+            // IA Teleguiada: Calcula o ângulo em direção à nave do Jogador
+            let dx = (player.x + player.w / 2) - tt.x;
+            let dy = (player.y + player.h / 2) - tt.y;
+            let dist = Math.sqrt(dx * dx + dy * dy);
+            
+            if (dist > 5) {
+                // Curva em direção ao jogador suavizadamente
+                tt.vx += (dx / dist) * 0.15 * (dt / 16);
+                tt.vy += (dy / dist) * 0.15 * (dt / 16);
+            }
+
+            // Limitação de velocidade terminal para não ficar incontrolável
+            let vel = Math.sqrt(tt.vx * tt.vx + tt.vy * tt.vy);
+            if (vel > 4.5) {
+                tt.vx = (tt.vx / vel) * 4.5;
+                tt.vy = (tt.vy / vel) * 4.5;
+            }
+
+            tt.x += tt.vx * (dt / 16);
+            tt.y += tt.vy * (dt / 16);
+
+            if (tt.y > 610) {
+                tirosTeleguiados.splice(i, 1);
+                continue;
+            }
+
+            // Desenha rastro luminoso e orbe de energia teleguiada
+            ctx.save();
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = 'rgba(168, 85, 247, 0.3)';
+            ctx.beginPath();
+            for (let r = 0; r < tt.rastro.length; r++) {
+                if (r === 0) ctx.moveTo(tt.rastro[r].x, tt.rastro[r].y);
+                else ctx.lineTo(tt.rastro[r].x, tt.rastro[r].y);
+            }
+            ctx.stroke();
+            ctx.restore();
+
+            ctx.save();
+            ctx.translate(tt.x, tt.y);
+            ctx.rotate(frameAnim * 0.15);
+            ctx.shadowColor = '#a855f7';
+            ctx.shadowBlur = 12;
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(0, 0, 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#a855f7';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.restore();
+
+            // Colisão do Teleguiado contra o Player
+            if (tt.x > player.x && tt.x < player.x + player.w && tt.y > player.y && tt.y < player.y + player.h) {
+                tirosTeleguiados.splice(i, 1);
+                
+                if (player.escudoAtivo) {
+                    criarExplosao(tt.x, tt.y, '#00d2ff', 10);
+                    aplicarTremor(4);
+                } else {
+                    player.vidas--;
+                    criarExplosao(player.x + player.w / 2, player.y + player.h / 2, '#ff0000', 30);
+                    aplicarTremor(18);
+                    $('vidas-txt').innerText = player.vidas;
+                }
+            }
+        }
+
+        // ==========================================
+        // ATUALIZAÇÃO DO SISTEMA DE PARTÍCULAS
+        // ==========================================
+        particulas.forEach((p, i) => {
+            p.x += p.vx * (dt / 16);
+            p.y += p.vy * (dt / 16);
+            p.vx *= 0.94;
+            p.vy *= 0.94;
+            p.life -= dt / 16;
+            
+            if (p.life <= 0) {
+                particulas.splice(i, 1);
+                return;
+            }
+            
+            ctx.save();
+            ctx.globalAlpha = p.life / p.maxLife;
+            ctx.fillStyle = p.color;
+            ctx.shadowColor = p.color;
+            ctx.shadowBlur = 6;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size * (p.life / p.maxLife), 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        });
+
+        // Alerta visual de habilidade pronta
+        if (player.kills >= 3 && !avisandoHabilidade) {
+            avisandoHabilidade = true;
+            aplicarTremor(3);
+        }
+
+        // Distorção visual de Espaço-Tempo (Tokitobashi ativo)
+        if (tempoParado) {
+            desenharRachadurasEspacoTempo();
+            ctx.fillStyle = "rgba(168, 85, 247, 0.08)";
+            ctx.fillRect(0, 0, 800, 600);
+        }
+
+        if (emDialogoFase7) {
+            desenharIntroducaoBoss7();
+        }
+
+        ctx.restore(); // Desfaz a rotação/deslocamento do tremor de tela
+
+        // Derrota total do jogador (Game Over)
+        if (player.vidas <= 0) {
+            modo = 'gameover';
+            $('fase-final').innerText = fase;
+            $('game-over').classList.add('show');
+        }
     }
-    
-    // Efeito Visual de Distorção de Espaço-Tempo (Tokitobashi ativo)
-    if(tempoParado){
-        desenharRachadurasEspacoTempo();
-        ctx.fillStyle = "rgba(0, 246, 255, 0.08)";
-        ctx.fillRect(0,0,800,600);
-    }
-    
-    // Renderiza a introdução de diálogo no topo se a fase 7 começar
-    if (emDialogoFase7) {
-        desenharIntroducaoBoss7();
-    }
-    
-    ctx.restore(); // Finaliza o screen shake tremor
-    
-    // Derrota do jogador
-    if(player.vidas <= 0){
-        somMenu.pause();
-        alert("GAME OVER! A Terra foi dominada!");
-        location.reload();
-        return;
-    }
-    
-    // Condição de Vitória Geral do Jogo
-    if(faseAtual > 15){
-        alert("PARABÉNS! Você derrotou O Criador de Mundos e salvou o universo!");
-        location.reload();
-        return;
-    }
-    
+
     requestAnimationFrame(gameLoop);
 }
 
-// Inicia o Loop principal de renderização
+// Inicia o loop de animação imediatamente ao carregar o arquivo script
 requestAnimationFrame(gameLoop);

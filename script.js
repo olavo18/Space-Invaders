@@ -107,7 +107,8 @@ function criarFase(){
         hp:bossHp, maxHp:bossHp, 
         isBoss:true, tipo:3, 
         dir:1, vel:1.5,
-        timerInvocacao: 0 
+        timerInvocacao: 0,
+        usouCura: false // Controla a habilidade única de reviver do criador
     });
     contadorTempo=0;
   } 
@@ -193,14 +194,25 @@ function desenharBoss(obj){
   
   let img = skins.chefe;
   if(obj.tipo === 2) img = skins.chefe2;
-  if(obj.tipo === 3) img = skins.criador; 
+  if(obj.tipo === 3) {
+      img = skins.criador;
+      // FILTRO PARA ELIMINAR O FUNDO BRANCO DO CRIADOR:
+      // Se a imagem estiver carregada, misturamos a cor branca de fundo do sprite com a tela usando 'multiply'
+      if (img.complete && img.naturalWidth !== 0) {
+          ctx.globalCompositeOperation = 'multiply';
+      }
+  } 
 
-  if (img.complete && img.naturalWidth !== 0) ctx.drawImage(img, -obj.w/2, -obj.h/2, obj.w, obj.h);
-  else { 
+  if (img.complete && img.naturalWidth !== 0) {
+      ctx.drawImage(img, -obj.w/2, -obj.h/2, obj.w, obj.h);
+  } else { 
       ctx.fillStyle = (obj.tipo === 3) ? '#00d2ff' : ((obj.tipo === 2) ? '#444' : '#8b0030'); 
       ctx.beginPath(); ctx.ellipse(0,0,obj.w/2,obj.h/2,0,0,Math.PI*2); ctx.fill(); 
   }
   ctx.restore();
+  
+  // Reseta o modo de mistura do canvas após desenhar
+  ctx.globalCompositeOperation = 'source-over';
 }
 
 function desenharEscudoBoss(obj){
@@ -263,7 +275,7 @@ function gameLoop(now){
       const falaMorte = bossMortoCheck.tipo === 3 ? "Criador: Este universo ainda será meu..." : "MK-II: Nos veremos novamente mortal...";
       
       falar(falaMorte, 3500, () => { 
-          invasores = invasores.filter(i => !i.isBoss); 
+          invasores = invasores.filter(i => !i.isBoss && !i.isBlocoProtetor); // Limpa blocos restantes na vitória
           faseAtual++; 
           criarFase(); 
       });
@@ -288,17 +300,56 @@ function gameLoop(now){
       if(boss.x < 15) boss.x = 15; if(boss.x > 785 - boss.w) boss.x = 785 - boss.w;
   }
 
-  // NOVA MECÂNICA: Invocação do Criador de Mundos (Tipo 3)
+  // NOVA MECÂNICA DO CRIADOR DE MUNDOS (Tipo 3) - Barreiras e Recuperação
   if(boss && boss.tipo === 3 && !tempoParado && !bossMorrendo){
     boss.timerInvocacao += dt;
+    
+    // 1. Invocação de Barreiras menores a cada 4 segundos
     if(boss.timerInvocacao >= 4000){
       boss.timerInvocacao = 0;
-      const minionsAtuais = invasores.filter(i => !i.isBoss && !i.isShield && i.vivo).length;
-      if(minionsAtuais < 6){
-        invasores.push({ x: boss.x + 20, y: boss.y + boss.h + 10, w:55, h:55, vivo:true, dir: 1, vel: 1.2 });
-        invasores.push({ x: boss.x + boss.w - 75, y: boss.y + boss.h + 10, w:55, h:55, vivo:true, dir: -1, vel: 1.2 });
-        explodir(boss.x + 40, boss.y + boss.h + 30, '#00d2ff');
-        explodir(boss.x + boss.w - 40, boss.y + boss.h + 30, '#00d2ff');
+      const blocosAtivos = invasores.filter(i => i.isBlocoProtetor).length;
+      
+      // Se não houver muitas barreiras na tela, ele invoca 3 pequenos blocos protetores logo abaixo dele
+      if(blocosAtivos < 4){
+        for(let i=0; i<3; i++){
+          invasores.push({
+            x: boss.x + 15 + (i * 65),
+            y: boss.y + boss.h + 20,
+            w: 45,
+            h: 25,
+            hp: 150, // HP do Bloco (3 tiros normais)
+            isBlocoProtetor: true,
+            vivo: true
+          });
+          explodir(boss.x + 35 + (i * 65), boss.y + boss.h + 30, '#00f6ff');
+        }
+      }
+    }
+
+    // 2. Barreira Gigante e Cura de Emergência (Gera uma vez só, quando o HP cai abaixo de 20%)
+    if(boss.hp < (boss.maxHp * 0.20) && !boss.usouCura) {
+      boss.usouCura = true;
+      boss.hp += boss.maxHp * 0.50; // Recupera 50% da vida total
+      if(boss.hp > boss.maxHp) boss.hp = boss.maxHp;
+
+      falar("Criador: BARREIRA SUPREMA! Sinta a minha barreira indestrutível!", 3000);
+      $('game-container').classList.add('shake');
+      setTimeout(() => { $('game-container').classList.remove('shake'); }, 1000);
+
+      // Invoca uma barreira gigante bem no meio do cenário
+      invasores.push({
+        x: 100,
+        y: 300,
+        w: 600, // Gigante! Ocupa quase a largura do canvas
+        h: 40,
+        hp: 900, // Muita vida para o jogador ter que martelar
+        isBlocoProtetor: true,
+        vivo: true
+      });
+
+      // Efeito estético de explosão para spawnar a mega barreira
+      for(let xB = 100; xB <= 700; xB += 60) {
+        explodir(xB, 320, '#00ffaa');
       }
     }
   }
@@ -320,9 +371,9 @@ function gameLoop(now){
   // Atualização dos Invasores
   let vivos = 0; let edge = false;
   invasores.forEach(inv=>{
-    if(inv.isBoss ? inv.hp<=0 : (inv.isShield ? inv.hp<=0 : !inv.vivo)) return;
-    if(!inv.isShield) vivos++;
-    if((inv.isBoss || inv.isShield || !tempoParado) && !bossMorrendo){
+    if(inv.isBoss ? inv.hp<=0 : (inv.isShield ? inv.hp<=0 : (inv.isBlocoProtetor ? inv.hp<=0 : !inv.vivo))) return;
+    if(!inv.isShield && !inv.isBlocoProtetor) vivos++; // Blocos e Escudos não contam como "invasores vivos" para passar de fase
+    if((inv.isBoss || inv.isShield || !tempoParado) && !bossMorrendo && !inv.isBlocoProtetor){
        if(inv.isShield && boss){ inv.x = boss.x + boss.w/2 - inv.w/2; inv.y = boss.y + boss.h/2 - inv.h/2; }
        else {
          inv.x += inv.vel * inv.dir * (dt/16); if(inv.x > 800 - inv.w - 10 || inv.x < 10) edge = true;
@@ -331,7 +382,7 @@ function gameLoop(now){
     }
   });
 
-  if(edge && !bossMorrendo){ invasores.forEach(e=>{ if(!e.isShield){ e.dir *= -1; if(e.x < 10) e.x = 11; if(e.x > 800 - e.w - 10) e.x = 800 - e.w - 11; if(!e.isBoss && !tempoParado) e.y += 12; } }); }
+  if(edge && !bossMorrendo){ invasores.forEach(e=>{ if(!e.isShield && !e.isBlocoProtetor){ e.dir *= -1; if(e.x < 10) e.x = 11; if(e.x > 800 - e.w - 10) e.x = 800 - e.w - 11; if(!e.isBoss && !tempoParado) e.y += 12; } }); }
 
   // Atualização dos Tiros Inimigos
   for(let i=tirosE.length-1;i>=0;i--){
@@ -347,7 +398,7 @@ function gameLoop(now){
     for(let ti=tiros.length-1; ti>=0; ti--){
       const t = tiros[ti]; let consumed = false;
       for(const inv of invasores){
-        const alive = inv.isBoss ? inv.hp>0 : (inv.isShield ? inv.hp>0 : inv.vivo);
+        const alive = inv.isBoss ? inv.hp>0 : (inv.isShield ? inv.hp>0 : (inv.isBlocoProtetor ? inv.hp>0 : inv.vivo));
         if(!alive || !colide(t, inv)) continue;
         if(t.isFireball){
           if(inv.isBoss && inv.tipo === 2) { 
@@ -356,7 +407,7 @@ function gameLoop(now){
               consumed = true; 
               break; 
           }
-          if(inv.isBoss || inv.isShield){ 
+          if(inv.isBoss || inv.isShield || inv.isBlocoProtetor){ 
               inv.hp -= 40; 
               explodir(t.x+(t.w||50)/2, t.y+(t.h||50)/2, inv.isBoss ? '#ff0055' : '#00d2ff'); 
           } else { 
@@ -364,11 +415,12 @@ function gameLoop(now){
               player.kills++; 
               explodir(inv.x+inv.w/2, inv.y+inv.h/2, '#ff0055'); 
           }
-          tiros.splice(ti,1); // Bola de fogo some ao colidir com qualquer coisa
+          tiros.splice(ti,1); // Bola de fogo some ao colidir
           consumed = true;
           break;
         } else {
           if(inv.isShield) { inv.hp -= 50; consumed = true; }
+          else if(inv.isBlocoProtetor) { inv.hp -= 50; consumed = true; } // Tiro comum dá 50 de dano nas barreiras
           else if(inv.isBoss) { 
               if(inv.tipo === 3 || !(shield && shield.hp > 0)) {
                   inv.hp -= 50; 
@@ -385,12 +437,26 @@ function gameLoop(now){
   if(boss) $('boss-hp-fill').style.width = Math.max(0,(boss.hp/boss.maxHp)*100)+'%';
   if(vivos === 0 && !bossMorrendo){ faseAtual++; criarFase(); }
 
-  // Desenho dos Invasores e Efeitos
+  // Desenho dos Invasores, Blocos e Efeitos
   invasores.forEach(inv=>{ 
       if(inv.isBoss){ 
           if(inv.hp>0 || ((inv.tipo === 2 || inv.tipo === 3) && bossMorrendo)) desenharBoss(inv); 
       } else if(inv.isShield){ 
           if(inv.hp>0) desenharEscudoBoss(inv); 
+      } else if(inv.isBlocoProtetor){
+          if(inv.hp>0) {
+              // Estilo visual neon tecnológico para as barreiras protetoras
+              ctx.save();
+              ctx.fillStyle = '#00f6ff';
+              ctx.shadowColor = '#00f6ff';
+              ctx.shadowBlur = 8;
+              ctx.fillRect(inv.x, inv.y, inv.w, inv.h);
+              ctx.shadowBlur = 0;
+              ctx.strokeStyle = '#ffffff';
+              ctx.lineWidth = 2;
+              ctx.strokeRect(inv.x + 3, inv.y + 3, inv.w - 6, inv.h - 6);
+              ctx.restore();
+          }
       } else if(inv.vivo) {
           desenharNave(inv, '#ff0055', false); 
       }

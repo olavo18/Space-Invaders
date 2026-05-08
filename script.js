@@ -108,7 +108,7 @@ function criarFase(){
         isBoss:true, tipo:3, 
         dir:1, vel:1.5,
         timerInvocacao: 0,
-        usouCura: false // Controla a habilidade única de reviver do criador
+        usouCura: false // Controla a cura única
     });
     contadorTempo=0;
   } 
@@ -186,6 +186,11 @@ function desenharNave(obj, color, isPlayer){
   ctx.restore();
 }
 
+// Canvas auxiliar persistente para limpar o fundo branco do Criador sem perder desempenho
+const tempCanvas = document.createElement('canvas');
+const tempCtx = tempCanvas.getContext('2d');
+let imgCriadorProcessada = null;
+
 function desenharBoss(obj){
   ctx.save();
   const cx = obj.x + obj.w/2, cy = obj.y + obj.h/2;
@@ -196,10 +201,33 @@ function desenharBoss(obj){
   if(obj.tipo === 2) img = skins.chefe2;
   if(obj.tipo === 3) {
       img = skins.criador;
-      // FILTRO PARA ELIMINAR O FUNDO BRANCO DO CRIADOR:
-      // Se a imagem estiver carregada, misturamos a cor branca de fundo do sprite com a tela usando 'multiply'
+      
+      // REMOCÃO DINÂMICA DE FUNDO BRANCO (Filtro por Software):
       if (img.complete && img.naturalWidth !== 0) {
-          ctx.globalCompositeOperation = 'multiply';
+          if (!imgCriadorProcessada || imgCriadorProcessada.width !== img.naturalWidth) {
+              tempCanvas.width = img.naturalWidth;
+              tempCanvas.height = img.naturalHeight;
+              tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
+              tempCtx.drawImage(img, 0, 0);
+              
+              const imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+              const data = imgData.data;
+              
+              // Varre todos os pixels. Se for quase branco, transforma em transparente (Alpha = 0)
+              for (let i = 0; i < data.length; i += 4) {
+                  const r = data[i];
+                  const g = data[i+1];
+                  const b = data[i+2];
+                  // Se a cor for muito próxima de branco (R, G e B acima de 220)
+                  if (r > 220 && g > 220 && b > 220) {
+                      data[i+3] = 0; // Torna transparente
+                  }
+              }
+              tempCtx.putImageData(imgData, 0, 0);
+              imgCriadorProcessada = new Image();
+              imgCriadorProcessada.src = tempCanvas.toDataURL();
+          }
+          img = imgCriadorProcessada; // Usa a imagem sem fundo tratada
       }
   } 
 
@@ -210,9 +238,6 @@ function desenharBoss(obj){
       ctx.beginPath(); ctx.ellipse(0,0,obj.w/2,obj.h/2,0,0,Math.PI*2); ctx.fill(); 
   }
   ctx.restore();
-  
-  // Reseta o modo de mistura do canvas após desenhar
-  ctx.globalCompositeOperation = 'source-over';
 }
 
 function desenharEscudoBoss(obj){
@@ -275,7 +300,7 @@ function gameLoop(now){
       const falaMorte = bossMortoCheck.tipo === 3 ? "Criador: Este universo ainda será meu..." : "MK-II: Nos veremos novamente mortal...";
       
       falar(falaMorte, 3500, () => { 
-          invasores = invasores.filter(i => !i.isBoss && !i.isBlocoProtetor); // Limpa blocos restantes na vitória
+          invasores = invasores.filter(i => !i.isBoss && !i.isBlocoProtetor); // Limpa tudo na vitória
           faseAtual++; 
           criarFase(); 
       });
@@ -306,10 +331,10 @@ function gameLoop(now){
     
     // 1. Invocação de Barreiras menores a cada 4 segundos
     if(boss.timerInvocacao >= 4000){
-      boss.timerInvocacao = 0;
-      const blocosAtivos = invasores.filter(i => i.isBlocoProtetor).length;
+      boss.timerInvocacao = 0; // Zera o temporizador para começar a contagem de novo
+      const blocosAtivos = invasores.filter(i => i.isBlocoProtetor && i.hp > 0).length;
       
-      // Se não houver muitas barreiras na tela, ele invoca 3 pequenos blocos protetores logo abaixo dele
+      // Gera blocos somente se houver menos de 4 na tela
       if(blocosAtivos < 4){
         for(let i=0; i<3; i++){
           invasores.push({
@@ -317,7 +342,7 @@ function gameLoop(now){
             y: boss.y + boss.h + 20,
             w: 45,
             h: 25,
-            hp: 150, // HP do Bloco (3 tiros normais)
+            hp: 150, 
             isBlocoProtetor: true,
             vivo: true
           });
@@ -372,7 +397,7 @@ function gameLoop(now){
   let vivos = 0; let edge = false;
   invasores.forEach(inv=>{
     if(inv.isBoss ? inv.hp<=0 : (inv.isShield ? inv.hp<=0 : (inv.isBlocoProtetor ? inv.hp<=0 : !inv.vivo))) return;
-    if(!inv.isShield && !inv.isBlocoProtetor) vivos++; // Blocos e Escudos não contam como "invasores vivos" para passar de fase
+    if(!inv.isShield && !inv.isBlocoProtetor) vivos++; // Blocos e Escudos não contam como inimigos para passar de fase
     if((inv.isBoss || inv.isShield || !tempoParado) && !bossMorrendo && !inv.isBlocoProtetor){
        if(inv.isShield && boss){ inv.x = boss.x + boss.w/2 - inv.w/2; inv.y = boss.y + boss.h/2 - inv.h/2; }
        else {
@@ -408,7 +433,7 @@ function gameLoop(now){
               break; 
           }
           if(inv.isBoss || inv.isShield || inv.isBlocoProtetor){ 
-              inv.hp -= 40; 
+              inv.hp -= 75; // BOLA DE FOGO CAUSA 75 DE DANO AGORA!
               explodir(t.x+(t.w||50)/2, t.y+(t.h||50)/2, inv.isBoss ? '#ff0055' : '#00d2ff'); 
           } else { 
               inv.vivo = false; 

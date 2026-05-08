@@ -57,8 +57,8 @@ let frameAnim = 0;
 // Falas do Chefe Supremo adaptadas ao estilo Tokitobashi
 const falasChefe = [
     "TOKITOBASHI!", 
-    "O tempo volta a correr... depois que eu decidir!", 
-    "Sua velocidade é irrelevante frente ao Salto Temporal!", 
+    "O tempo volta a correr... depois que eu decidir!",
+    "Sua velocidade é irrelevante frente ao Salto Temporal!",
     "Preveja isto se for capaz!"
 ];
 
@@ -336,6 +336,69 @@ function desenharFireball(t){
     ctx.restore();
 }
 
+// Nova função adicionada: Efeito visual do Tokitobashi (Tela Trincada)
+function desenharRachadurasEspacoTempo() {
+    ctx.save();
+    
+    // Configuração das linhas neon
+    ctx.strokeStyle = 'rgba(0, 246, 255, 0.85)'; 
+    ctx.lineWidth = 2.5;
+    ctx.shadowColor = '#00f6ff';
+    ctx.shadowBlur = 15;
+
+    const centerX = 400; // Centro horizontal da tela (800 / 2)
+    const centerY = 300; // Centro vertical da tela (600 / 2)
+    const numeroRachadurasPrincipais = 8;
+
+    // Semente semi-estática para as linhas não tremerem freneticamente a cada milissegundo
+    const seed = Math.floor(frameAnim * 0.1); 
+    
+    for (let i = 0; i < numeroRachadurasPrincipais; i++) {
+        let x = centerX;
+        let y = centerY;
+        
+        // Espalha as fendas radiais em 360 graus
+        let angulo = (i * (Math.PI * 2) / numeroRachadurasPrincipais) + (Math.sin(seed + i) * 0.2);
+        
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+
+        const segmentos = 5;
+        const comprimentoSegmento = 80 + (Math.sin(seed * i) * 20);
+
+        for (let j = 0; j < segmentos; j++) {
+            // Curvas acentuadas/zig-zags para parecer estilhaços de vidro
+            angulo += (Math.sin(seed + j + i) * 0.4) - 0.2;
+            x += Math.cos(angulo) * comprimentoSegmento;
+            y += Math.sin(angulo) * comprimentoSegmento;
+            ctx.lineTo(x, y);
+            
+            // Pequenas fendas de ramificações secundárias
+            if (j > 1 && Math.sin(seed + j) > 0) {
+                ctx.save();
+                ctx.lineWidth = 1.2;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                let anguloRamo = angulo + 0.8;
+                ctx.lineTo(x + Math.cos(anguloRamo) * 40, y + Math.sin(anguloRamo) * 40);
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+        ctx.stroke();
+    }
+    
+    // Pequeno centro circular estilhaçado
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 15, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.restore();
+}
+
 const colide = (a, b) => a.x < b.x + b.w && a.x + (a.w || 6) > b.x && a.y < b.y + b.h && a.y + (a.h || 20) > b.y;
 
 // Game Loop
@@ -400,6 +463,7 @@ function gameLoop(now){
             falar(falasChefe[Math.floor(Math.random() * falasChefe.length)], 1000, ()=>{
                 tempoParado = true; somTempo.currentTime = 0; somTempo.play();
                 $('efeito-tempo').style.display = 'block';
+                aplicarTremor(14); // Tremida extrema ao quebrar o tempo
                 setTimeout(()=>{ 
                     tempoParado = false; 
                     contadorTempo = 0; 
@@ -665,6 +729,11 @@ function gameLoop(now){
             ctx.restore(); 
         } 
     });
+
+    // RENDEREZAÇÃO DA TELA RACHADA DURANTE O TOKITOBASHI
+    if (tempoParado) {
+        desenharRachadurasEspacoTempo();
+    }
 
     ctx.restore(); // Restaura o contexto do Screen Shake
     requestAnimationFrame(gameLoop);

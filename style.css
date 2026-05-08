@@ -25,7 +25,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
+    overflow-x: hidden; /* Evita rolagem lateral no mobile */
     perspective: 1000px; /* Adiciona profundidade 3D para as telas */
 }
 
@@ -127,7 +127,7 @@ body::before {
     50%, 100% { top: 120%; } 
 }
 
-<h1> {
+h1 {
     font-family: 'Orbitron', sans-serif;
     font-size: 44px;
     color: #fff;
@@ -173,6 +173,9 @@ body::before {
     font-family: 'Orbitron', sans-serif;
     position: relative;
     overflow: hidden;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 .btn-play:hover { 
@@ -213,6 +216,9 @@ body::before {
     box-shadow: 
         0 0 15px rgba(0, 210, 255, 0.15),
         inset 0 0 10px rgba(0, 210, 255, 0.1);
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 .btn-secondary:hover {
@@ -247,11 +253,12 @@ body::before {
     left: 150%;
 }
 
-/* Container do Jogo com efeito de monitor CRT retrô sutil */
+/* Container do Jogo Responsivo para Mobile */
 #game-container {
     display: none;
     position: relative;
     width: 800px;
+    max-width: 95%; /* Garante que o container não ultrapasse a largura da tela no celular */
     height: 600px;
     background: #020208;
     border: 3px solid var(--neon-blue);
@@ -260,6 +267,15 @@ body::before {
     box-shadow: 
         0 0 60px rgba(0, 210, 255, 0.25),
         inset 0 0 40px rgba(0, 0, 0, 0.9);
+}
+
+/* Canvas Responsivo */
+#gameCanvas {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    height: auto; /* Mantém a proporção de tela em qualquer celular */
+    display: block;
 }
 
 /* Linhas de scan sutil (estilo fliperama) dentro do jogo */
@@ -275,7 +291,7 @@ body::before {
     opacity: 0.4;
 }
 
-/* Camada da Interface Superior */
+/* Camada da Interface Superior Adaptável */
 #ui-camada {
     position: absolute;
     top: 20px;
@@ -292,6 +308,14 @@ body::before {
     letter-spacing: 1.5px;
 }
 
+/* Seletor genérico para os botões virtuais criados via JS */
+#mobile-controls-container button,
+button {
+    touch-action: manipulation; /* Remove o delay de 300ms de toque no mobile */
+    -webkit-user-select: none; /* Impede a seleção do texto do botão */
+    user-select: none;
+}
+
 /* Caixa de Diálogo futurista */
 #dialogo-box {
     position: absolute;
@@ -305,7 +329,8 @@ body::before {
     font-weight: 700;
     display: none;
     z-index: 200;
-    width: 600px;
+    width: 90%; /* Ajustado para caber perfeitamente em telas pequenas */
+    max-width: 600px;
     text-align: center;
     border: 2px solid var(--neon-blue);
     box-shadow: 
@@ -358,7 +383,8 @@ body::before {
     top: 60px;
     left: 50%;
     transform: translateX(-50%);
-    width: 450px;
+    width: 90%; /* Ajuste responsivo para celulares */
+    max-width: 450px;
     height: 12px;
     background: rgba(20, 10, 15, 0.8);
     border: 1px solid rgba(255, 0, 85, 0.5);
@@ -410,9 +436,10 @@ body::before {
 
 #game-over h2 {
     font-family: 'Orbitron', sans-serif;
-    font-size: 60px;
+    font-size: 8vw; /* Fonte responsiva com base no viewport */
+    max-font-size: 60px;
     color: var(--neon-pink);
-    letter-spacing: 12px;
+    letter-spacing: 6px;
     text-shadow: 
         0 0 15px var(--neon-pink), 
         0 0 30px var(--neon-pink);
@@ -449,14 +476,13 @@ body::before {
     inset: 0;
     background: rgba(2, 2, 8, 0.95);
     z-index: 1100;
-    /* CORRIGIDO: Agora inicia estritamente invisível e controlado por flexbox */
     display: none; 
     align-items: center;
     justify-content: center;
     padding: 20px;
 }
 
-/* CORRIGIDO: Quando adicionado o .show pelo JS, o container usa display flex */
+/* Ativação do container usando flexbox */
 #guia-bosses-painel.show {
     display: flex !important; 
 }
@@ -468,7 +494,7 @@ body::before {
     width: 95%;
     max-width: 750px;
     max-height: 85vh;
-    padding: 35px;
+    padding: 25px; /* Reduzido de 35px para caber melhor no mobile */
     box-shadow: 
         0 0 50px rgba(0, 210, 255, 0.2),
         inset 0 0 25px rgba(0, 210, 255, 0.1);
@@ -476,7 +502,7 @@ body::before {
     -webkit-backdrop-filter: blur(15px);
     display: flex;
     flex-direction: column;
-    gap: 25px;
+    gap: 20px;
     position: relative;
     overflow-y: auto;
 }
@@ -507,9 +533,9 @@ body::before {
 
 .guia-header h2 {
     font-family: 'Orbitron', sans-serif;
-    font-size: 24px;
+    font-size: 20px; /* Reduzido para não quebrar linha no celular */
     color: var(--neon-blue);
-    letter-spacing: 3px;
+    letter-spacing: 2px;
     text-shadow: 0 0 10px rgba(0, 210, 255, 0.5);
 }
 
@@ -527,6 +553,9 @@ body::before {
     align-items: center;
     justify-content: center;
     transition: all 0.3s ease;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 .btn-close:hover {
@@ -539,17 +568,17 @@ body::before {
 .guia-conteudo {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 15px;
 }
 
-/* Item Individual de Chefe no Guia */
+/* Item de Chefe no Guia */
 .boss-card {
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 16px;
-    padding: 20px;
+    padding: 15px;
     display: flex;
-    gap: 20px;
+    gap: 15px;
     align-items: center;
     transition: all 0.3s ease;
 }
@@ -561,8 +590,8 @@ body::before {
 }
 
 .boss-icon-container {
-    width: 80px;
-    height: 80px;
+    width: 60px; /* Levemente reduzido para telas menores */
+    height: 60px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -573,26 +602,26 @@ body::before {
 }
 
 .boss-icon {
-    max-width: 64px;
-    max-height: 64px;
+    max-width: 48px;
+    max-height: 48px;
     object-fit: contain;
 }
 
 .boss-info {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
 }
 
 .boss-name {
     font-family: 'Orbitron', sans-serif;
-    font-size: 18px;
+    font-size: 16px;
     color: var(--neon-pink);
     letter-spacing: 1px;
 }
 
 .boss-meta {
-    font-size: 11px;
+    font-size: 10px;
     color: var(--neon-orange);
     text-transform: uppercase;
     font-weight: 700;
@@ -600,8 +629,8 @@ body::before {
 }
 
 .boss-desc {
-    font-size: 13.5px;
-    line-height: 1.5;
+    font-size: 12.5px;
+    line-height: 1.4;
     color: #b0c4de;
 }
 
@@ -609,13 +638,13 @@ body::before {
 .btn-back-menu {
     display: inline-block;
     width: 100%;
-    margin-top: 15px;
-    padding: 16px 20px;
+    margin-top: 10px;
+    padding: 14px 20px;
     font-family: 'Orbitron', sans-serif;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 3px;
+    letter-spacing: 2px;
     text-align: center;
     color: #fff;
     cursor: pointer;
@@ -625,6 +654,9 @@ body::before {
     border-radius: 14px;
     transition: all 0.3s ease-in-out;
     box-shadow: 0 0 15px rgba(0, 210, 255, 0.15);
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 .btn-back-menu:hover {

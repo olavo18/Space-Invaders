@@ -89,6 +89,15 @@ window.iniciarHistoria = function(){
   });
 };
 
+// Funções para controlar a exibição do Guia de Chefes
+window.abrirGuiaBosses = function() {
+    $('guia-bosses-painel').style.display = 'flex';
+};
+
+window.fecharGuiaBosses = function() {
+    $('guia-bosses-painel').style.display = 'none';
+};
+
 // Lógica de Jogo
 function falar(texto, tempo, cb){
   const box = $('dialogo-box');
@@ -388,7 +397,7 @@ function gameLoop(now){
       falar(falasChefe[Math.floor(Math.random()*falasChefe.length)], 1000, ()=>{
         tempoParado = true; somTempo.currentTime = 0; somTempo.play();
         $('efeito-tempo').style.display='block';
-        setTimeout(()=>{ tempoParado = false; contadorTempo = 0; avisandoHabilidade = false; $('efeito-tempo').style.none; }, 2500);
+        setTimeout(()=>{ tempoParado = false; contadorTempo = 0; avisandoHabilidade = false; $('efeito-tempo').style.display='none'; }, 2500);
       });
     }
   }

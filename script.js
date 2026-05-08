@@ -39,12 +39,13 @@ let lastTime = performance.now();
 let avisandoHabilidade = false;
 let bossMorrendo = false;
 
+// Física de balanço/inclinação para o Player (velX controla a rotação lateral)
 const player = { 
-    x:370, y:520, w:60, h:60, tx:370, vidas:3, 
+    x:370, y:520, w:60, h:60, tx:370, velX: 0, vidas:3, 
     danoTime:0, kills:0, cooldown:0, 
     escudoAtivo: false, escudoTimer: 0 
 };
-const amigo = { x:-150, y:450, w:60, h:60, tx:-150 };
+const amigo = { x:-150, y:450, w:60, h:60, tx:-150, velX: 0 };
 
 let invasores = [];
 let tiros = [];
@@ -53,6 +54,13 @@ let particulas = [];
 const keys = {};
 let frameAnim = 0;
 const falasChefe = ["ZA WARUDO!", "O tempo é meu!", "Você não pode se mexer!", "Inútil! Inútil! Inútil!"];
+
+// Controle de Tremor de Tela (Screen Shake) por código
+let tremorIntensidade = 0;
+
+function aplicarTremor(forca) {
+  tremorIntensidade = Math.max(tremorIntensidade, forca);
+}
 
 // Funções Globais (Chamadas pelo HTML)
 window.permitirAudio = function() {
@@ -155,38 +163,81 @@ window.addEventListener('keydown', e => {
 });
 window.addEventListener('keyup', e => { keys[e.code] = false; });
 
-// Renderização
-function explodir(x,y,color){
-  for(let i=0;i<14;i++){
+// Explosões Orgânicas com Desaceleração, Fade e Tamanhos Variados (Física Realista)
+function explodir(x, y, color){
+  const quantidade = color === '#00f6ff' || color === '#00ffaa' ? 24 : 16;
+  for(let i=0; i<quantidade; i++){
     const a = Math.random()*Math.PI*2;
-    const sp = 1 + Math.random()*3;
-    particulas.push({ x, y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, life:30, color });
+    const sp = 2 + Math.random()*4; // Velocidades variadas
+    particulas.push({ 
+      x, 
+      y, 
+      vx:Math.cos(a)*sp, 
+      vy:Math.sin(a)*sp, 
+      life: 30 + Math.random()*20, 
+      maxLife: 50,
+      size: 2 + Math.random()*4, // Partículas de tamanhos variados
+      color 
+    });
   }
 }
 
+// Desenhar Nave com Inclinação Dinâmica (Roll) e balanço orgânico
 function desenharNave(obj, color, isPlayer){
   ctx.save();
   const cx = obj.x + obj.w/2, cy = obj.y + obj.h/2;
-  const flutua = Math.sin(frameAnim*0.08 + obj.x*0.05) * 3;
+  
+  // Flutuação orbital mais suave usando senos e cossenos combinados
+  const flutua = Math.sin(frameAnim*0.06 + obj.x*0.04) * 3.5;
   ctx.translate(cx, cy + flutua);
-  if(!isPlayer && obj.dir) ctx.rotate(obj.dir * 0.1);
-  if(isPlayer && player.danoTime > 0 && Math.floor(player.danoTime/4)%2) ctx.globalAlpha = 0.4;
-  const img = isPlayer ? skins.player : (obj.x === amigo.x ? skins.amigo : skins.alien);
-  if (img.complete && img.naturalWidth !== 0) ctx.drawImage(img, -obj.w/2, -obj.h/2, obj.w, obj.h);
-  else {
-      ctx.fillStyle = color;
-      if(isPlayer){ ctx.beginPath(); ctx.moveTo(0, -obj.h/2); ctx.lineTo(obj.w/2, obj.h/2); ctx.lineTo(0, obj.h/3); ctx.lineTo(-obj.w/2, obj.h/2); ctx.closePath(); ctx.fill(); }
-      else { ctx.beginPath(); ctx.ellipse(0,0,obj.w/2,obj.h/2.2,0,0,Math.PI*2); ctx.fill(); }
+  
+  // FÍSICA DE INCLINAÇÃO: Se move para os lados, inclina o desenho (Efeito de Roll lateral)
+  if(isPlayer) {
+      const inclinacaoMax = 0.25; // Limite de inclinação em radianos
+      let inclinacaoAlvo = 0;
+      if (keys['ArrowLeft'] || keys['KeyA']) inclinacaoAlvo = -inclinacaoMax;
+      if (keys['ArrowRight'] || keys['KeyD']) inclinacaoAlvo = inclinacaoMax;
+      
+      // Suaviza a rotação (interpolação)
+      obj.velX += (inclinacaoAlvo - obj.velX) * 0.15;
+      ctx.rotate(obj.velX);
+  } else {
+      // Inimigos comuns também inclinam levemente para a direção de movimento
+      if(obj.dir) {
+          ctx.rotate(obj.dir * 0.08 + Math.cos(frameAnim * 0.05) * 0.03);
+      }
   }
+
+  if(isPlayer && player.danoTime > 0 && Math.floor(player.danoTime/4)%2) ctx.globalAlpha = 0.4;
+  
+  const img = isPlayer ? skins.player : (obj.x === amigo.x ? skins.amigo : skins.alien);
+  if (img.complete && img.naturalWidth !== 0) {
+      ctx.drawImage(img, -obj.w/2, -obj.h/2, obj.w, obj.h);
+  } else {
+      ctx.fillStyle = color;
+      if(isPlayer){ 
+          ctx.beginPath(); ctx.moveTo(0, -obj.h/2); ctx.lineTo(obj.w/2, obj.h/2); ctx.lineTo(0, obj.h/3); ctx.lineTo(-obj.w/2, obj.h/2); ctx.closePath(); ctx.fill(); 
+      } else { 
+          ctx.beginPath(); ctx.ellipse(0,0,obj.w/2,obj.h/2.2,0,0,Math.PI*2); ctx.fill(); 
+      }
+  }
+  
+  // Escudo com efeito de pulsação suave e distorção
   if(isPlayer && player.escudoAtivo) {
-      ctx.restore(); ctx.save(); ctx.translate(cx, cy + flutua); ctx.rotate(frameAnim * 0.1);
-      if (skins.escudo.complete && skins.escudo.naturalWidth !== 0) { ctx.globalAlpha = 0.6 + Math.sin(frameAnim*0.2)*0.2; ctx.drawImage(skins.escudo, -obj.w*0.8, -obj.h*0.8, obj.w*1.6, obj.h*1.6); }
-      else { ctx.strokeStyle = '#00d2ff'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(0,0, obj.w*0.8, 0, Math.PI*2); ctx.stroke(); }
+      ctx.restore(); ctx.save(); ctx.translate(cx, cy + flutua); 
+      ctx.rotate(frameAnim * 0.05);
+      const escalaPulso = 1.0 + Math.sin(frameAnim * 0.15) * 0.05; // Pulsa suavemente
+      if (skins.escudo.complete && skins.escudo.naturalWidth !== 0) { 
+          ctx.globalAlpha = 0.5 + Math.sin(frameAnim*0.2)*0.15; 
+          ctx.drawImage(skins.escudo, -obj.w*0.8 * escalaPulso, -obj.h*0.8 * escalaPulso, obj.w*1.6 * escalaPulso, obj.h*1.6 * escalaPulso); 
+      } else { 
+          ctx.strokeStyle = '#00d2ff'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(0,0, obj.w*0.8 * escalaPulso, 0, Math.PI*2); ctx.stroke(); 
+      }
   }
   ctx.restore();
 }
 
-// Canvas auxiliar persistente para limpar o fundo branco do Criador sem perder desempenho
+// Canvas auxiliar persistente para limpar o fundo branco do Criador
 const tempCanvas = document.createElement('canvas');
 const tempCtx = tempCanvas.getContext('2d');
 let imgCriadorProcessada = null;
@@ -194,40 +245,38 @@ let imgCriadorProcessada = null;
 function desenharBoss(obj){
   ctx.save();
   const cx = obj.x + obj.w/2, cy = obj.y + obj.h/2;
-  ctx.translate(cx, cy + Math.sin(frameAnim*0.05) * 6);
+  
+  // Respiração pesada do Boss usando escala não-linear
+  const escalaRespiracaoY = 1.0 + Math.sin(frameAnim * 0.04) * 0.03;
+  const escalaRespiracaoX = 1.0 - Math.sin(frameAnim * 0.04) * 0.01;
+  
+  ctx.translate(cx, cy + Math.sin(frameAnim*0.04) * 5);
+  ctx.scale(escalaRespiracaoX, escalaRespiracaoY);
+  
   if(bossMorrendo) ctx.filter = `hue-rotate(${frameAnim*15}deg) brightness(2)`;
   
   let img = skins.chefe;
   if(obj.tipo === 2) img = skins.chefe2;
   if(obj.tipo === 3) {
       img = skins.criador;
-      
-      // REMOCÃO DINÂMICA DE FUNDO BRANCO (Filtro por Software):
       if (img.complete && img.naturalWidth !== 0) {
           if (!imgCriadorProcessada || imgCriadorProcessada.width !== img.naturalWidth) {
               tempCanvas.width = img.naturalWidth;
               tempCanvas.height = img.naturalHeight;
               tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
               tempCtx.drawImage(img, 0, 0);
-              
               const imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
               const data = imgData.data;
-              
-              // Varre todos os pixels. Se for quase branco, transforma em transparente (Alpha = 0)
               for (let i = 0; i < data.length; i += 4) {
-                  const r = data[i];
-                  const g = data[i+1];
-                  const b = data[i+2];
-                  // Se a cor for muito próxima de branco (R, G e B acima de 220)
-                  if (r > 220 && g > 220 && b > 220) {
-                      data[i+3] = 0; // Torna transparente
+                  if (data[i] > 220 && data[i+1] > 220 && data[i+2] > 220) {
+                      data[i+3] = 0;
                   }
               }
               tempCtx.putImageData(imgData, 0, 0);
               imgCriadorProcessada = new Image();
               imgCriadorProcessada.src = tempCanvas.toDataURL();
           }
-          img = imgCriadorProcessada; // Usa a imagem sem fundo tratada
+          img = imgCriadorProcessada;
       }
   } 
 
@@ -242,8 +291,14 @@ function desenharBoss(obj){
 
 function desenharEscudoBoss(obj){
   ctx.save(); ctx.translate(obj.x + obj.w/2, obj.y + obj.h/2);
-  if (skins.escudo.complete && skins.escudo.naturalWidth !== 0) { ctx.globalAlpha = 0.5 + Math.sin(frameAnim*0.1)*0.2; ctx.drawImage(skins.escudo, -obj.w/2, -obj.h/2, obj.w, obj.h); }
-  else { ctx.globalAlpha = 0.35; ctx.strokeStyle = '#00d2ff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(0,0,obj.w/2,obj.h/2,0,0,Math.PI*2); ctx.stroke(); }
+  const pulso = 1.0 + Math.sin(frameAnim * 0.1) * 0.04;
+  ctx.scale(pulso, pulso);
+  if (skins.escudo.complete && skins.escudo.naturalWidth !== 0) { 
+      ctx.globalAlpha = 0.4 + Math.sin(frameAnim*0.1)*0.15; 
+      ctx.drawImage(skins.escudo, -obj.w/2, -obj.h/2, obj.w, obj.h); 
+  } else { 
+      ctx.globalAlpha = 0.35; ctx.strokeStyle = '#00d2ff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(0,0,obj.w/2,obj.h/2,0,0,Math.PI*2); ctx.stroke(); 
+  }
   ctx.restore();
 }
 
@@ -252,7 +307,12 @@ function desenharFireball(t){
   const w = t.w || 50;
   const h = t.h || 50;
   ctx.translate(t.x + w/2, t.y + h/2); 
-  ctx.rotate(frameAnim*0.3);
+  ctx.rotate(frameAnim*0.2);
+  
+  // Brilho intenso em volta do especial
+  ctx.shadowColor = '#ff5500';
+  ctx.shadowBlur = 15;
+  
   if (skins.fireball.complete && skins.fireball.naturalWidth !== 0) {
       ctx.drawImage(skins.fireball, -w/2, -h/2, w, h);
   } else { 
@@ -270,8 +330,18 @@ function colide(a,b){ return a.x < b.x+b.w && a.x+(a.w||6) > b.x && a.y < b.y+b.
 function gameLoop(now){
   const dt = Math.min(32, now - lastTime);
   lastTime = now; frameAnim += dt * 0.06;
+  
   ctx.clearRect(0,0,800,600);
   if(modo === 'menu') { requestAnimationFrame(gameLoop); return; }
+
+  // Sistema Dinâmico de Screen Shake (Tremida Física do Canvas)
+  ctx.save();
+  if (tremorIntensidade > 0.1) {
+      const dx = (Math.random() - 0.5) * tremorIntensidade;
+      const dy = (Math.random() - 0.5) * tremorIntensidade;
+      ctx.translate(dx, dy);
+      tremorIntensidade *= 0.88; // Reduz gradativamente o tremor (atrito)
+  }
 
   const lerp = 1 - Math.pow(0.001, dt/1000);
   player.x += (player.tx - player.x) * lerp;
@@ -282,7 +352,12 @@ function gameLoop(now){
 
   if(amigo.x > -100) desenharNave(amigo, '#00d2ff', false);
   desenharNave(player, '#00ff88', true);
-  if(modo !== 'jogando'){ requestAnimationFrame(gameLoop); return; }
+  
+  if(modo !== 'jogando'){ 
+    ctx.restore();
+    requestAnimationFrame(gameLoop); 
+    return; 
+  }
 
   $('fase-txt').innerText = faseAtual;
   $('vidas-txt').innerText = player.vidas;
@@ -294,13 +369,12 @@ function gameLoop(now){
   const bossMortoCheck = invasores.find(i=>i.isBoss && i.hp <= 0 && (i.tipo === 2 || i.tipo === 3) && !bossMorrendo);
 
   if(bossMortoCheck){
-      bossMorrendo = true; $('game-container').classList.add('shake');
+      bossMorrendo = true; 
+      aplicarTremor(15); // Faz a tela tremer muito na morte do chefe!
       
-      const nomeBoss = bossMortoCheck.tipo === 3 ? "Criador" : "MK-II";
       const falaMorte = bossMortoCheck.tipo === 3 ? "Criador: Este universo ainda será meu..." : "MK-II: Nos veremos novamente mortal...";
-      
       falar(falaMorte, 3500, () => { 
-          invasores = invasores.filter(i => !i.isBoss && !i.isBlocoProtetor); // Limpa tudo na vitória
+          invasores = invasores.filter(i => !i.isBoss && !i.isBlocoProtetor); 
           faseAtual++; 
           criarFase(); 
       });
@@ -314,7 +388,7 @@ function gameLoop(now){
       falar(falasChefe[Math.floor(Math.random()*falasChefe.length)], 1000, ()=>{
         tempoParado = true; somTempo.currentTime = 0; somTempo.play();
         $('efeito-tempo').style.display='block';
-        setTimeout(()=>{ tempoParado = false; contadorTempo = 0; avisandoHabilidade = false; $('efeito-tempo').style.display='none'; }, 2500);
+        setTimeout(()=>{ tempoParado = false; contadorTempo = 0; avisandoHabilidade = false; $('efeito-tempo').style.none; }, 2500);
       });
     }
   }
@@ -331,10 +405,9 @@ function gameLoop(now){
     
     // 1. Invocação de Barreiras menores a cada 4 segundos
     if(boss.timerInvocacao >= 4000){
-      boss.timerInvocacao = 0; // Zera o temporizador para começar a contagem de novo
+      boss.timerInvocacao = 0;
       const blocosAtivos = invasores.filter(i => i.isBlocoProtetor && i.hp > 0).length;
       
-      // Gera blocos somente se houver menos de 4 na tela
       if(blocosAtivos < 4){
         for(let i=0; i<3; i++){
           invasores.push({
@@ -354,25 +427,22 @@ function gameLoop(now){
     // 2. Barreira Gigante e Cura de Emergência (Gera uma vez só, quando o HP cai abaixo de 20%)
     if(boss.hp < (boss.maxHp * 0.20) && !boss.usouCura) {
       boss.usouCura = true;
-      boss.hp += boss.maxHp * 0.50; // Recupera 50% da vida total
+      boss.hp += boss.maxHp * 0.50; 
       if(boss.hp > boss.maxHp) boss.hp = boss.maxHp;
 
       falar("Criador: BARREIRA SUPREMA! Sinta a minha barreira indestrutível!", 3000);
-      $('game-container').classList.add('shake');
-      setTimeout(() => { $('game-container').classList.remove('shake'); }, 1000);
+      aplicarTremor(12);
 
-      // Invoca uma barreira gigante bem no meio do cenário
       invasores.push({
         x: 100,
         y: 300,
-        w: 600, // Gigante! Ocupa quase a largura do canvas
+        w: 600, 
         h: 40,
-        hp: 900, // Muita vida para o jogador ter que martelar
+        hp: 900, 
         isBlocoProtetor: true,
         vivo: true
       });
 
-      // Efeito estético de explosão para spawnar a mega barreira
       for(let xB = 100; xB <= 700; xB += 60) {
         explodir(xB, 320, '#00ffaa');
       }
@@ -397,7 +467,7 @@ function gameLoop(now){
   let vivos = 0; let edge = false;
   invasores.forEach(inv=>{
     if(inv.isBoss ? inv.hp<=0 : (inv.isShield ? inv.hp<=0 : (inv.isBlocoProtetor ? inv.hp<=0 : !inv.vivo))) return;
-    if(!inv.isShield && !inv.isBlocoProtetor) vivos++; // Blocos e Escudos não contam como inimigos para passar de fase
+    if(!inv.isShield && !inv.isBlocoProtetor) vivos++; 
     if((inv.isBoss || inv.isShield || !tempoParado) && !bossMorrendo && !inv.isBlocoProtetor){
        if(inv.isShield && boss){ inv.x = boss.x + boss.w/2 - inv.w/2; inv.y = boss.y + boss.h/2 - inv.h/2; }
        else {
@@ -413,8 +483,19 @@ function gameLoop(now){
   for(let i=tirosE.length-1;i>=0;i--){
     const te = tirosE[i]; te.y += 5 * (dt/16);
     if(colide({x:te.x, y:te.y, w:5, h:15}, player)){
-        if(player.escudoAtivo) { explodir(te.x, te.y, '#00d2ff'); tirosE.splice(i,1); }
-        else if(player.danoTime <= 0) { player.vidas--; player.danoTime = 60; tirosE.splice(i,1); explodir(player.x+player.w/2, player.y+player.h/2, '#00ff88'); if(player.vidas <= 0){ modo = 'gameover'; $('fase-final').innerText = faseAtual; $('game-over').classList.add('show'); } }
+        if(player.escudoAtivo) { 
+            explodir(te.x, te.y, '#00d2ff'); 
+            tirosE.splice(i,1); 
+            aplicarTremor(2);
+        }
+        else if(player.danoTime <= 0) { 
+            player.vidas--; 
+            player.danoTime = 60; 
+            tirosE.splice(i,1); 
+            explodir(player.x+player.w/2, player.y+player.h/2, '#00ff88'); 
+            aplicarTremor(8); // Tela treme forte ao tomar dano direto
+            if(player.vidas <= 0){ modo = 'gameover'; $('fase-final').innerText = faseAtual; $('game-over').classList.add('show'); } 
+        }
     } else if(te.y > 620) tirosE.splice(i,1);
   }
 
@@ -433,26 +514,29 @@ function gameLoop(now){
               break; 
           }
           if(inv.isBoss || inv.isShield || inv.isBlocoProtetor){ 
-              inv.hp -= 75; // BOLA DE FOGO CAUSA 75 DE DANO AGORA!
+              inv.hp -= 75; 
               explodir(t.x+(t.w||50)/2, t.y+(t.h||50)/2, inv.isBoss ? '#ff0055' : '#00d2ff'); 
+              aplicarTremor(4);
           } else { 
               inv.vivo = false; 
               player.kills++; 
               explodir(inv.x+inv.w/2, inv.y+inv.h/2, '#ff0055'); 
+              aplicarTremor(2);
           }
-          tiros.splice(ti,1); // Bola de fogo some ao colidir
+          tiros.splice(ti,1); 
           consumed = true;
           break;
         } else {
-          if(inv.isShield) { inv.hp -= 50; consumed = true; }
-          else if(inv.isBlocoProtetor) { inv.hp -= 50; consumed = true; } // Tiro comum dá 50 de dano nas barreiras
+          if(inv.isShield) { inv.hp -= 50; consumed = true; aplicarTremor(1.5); }
+          else if(inv.isBlocoProtetor) { inv.hp -= 50; consumed = true; aplicarTremor(1.5); } 
           else if(inv.isBoss) { 
               if(inv.tipo === 3 || !(shield && shield.hp > 0)) {
                   inv.hp -= 50; 
+                  aplicarTremor(3); // Feedback de impacto forte no Boss
               }
               consumed = true; 
           }
-          else { inv.vivo = false; player.kills++; consumed = true; }
+          else { inv.vivo = false; player.kills++; consumed = true; aplicarTremor(1); }
           if(consumed) { explodir(t.x, t.y, '#fff'); tiros.splice(ti,1); break; }
         }
       }
@@ -487,9 +571,62 @@ function gameLoop(now){
       }
   });
 
-  tiros.forEach(t=> t.isFireball ? desenharFireball(t) : (ctx.fillStyle='#fff', ctx.fillRect(t.x, t.y, t.w, t.h)));
-  tirosE.forEach(te=>(ctx.fillStyle='#ff0055', ctx.fillRect(te.x, te.y, 5, 15)));
-  particulas.forEach((p,i)=>{ p.x += p.vx * (dt/16); p.y += p.vy * (dt/16); p.life -= dt/16; if(p.life<=0) particulas.splice(i,1); else { ctx.globalAlpha = p.life/30; ctx.fillStyle = p.color; ctx.fillRect(p.x-2,p.y-2,4,4); ctx.globalAlpha = 1; } });
+  // Renderização dos Tiros e Laser com Brilho Neon e Rastro
+  tiros.forEach(t => {
+      if(t.isFireball) {
+          desenharFireball(t);
+      } else {
+          ctx.save();
+          ctx.shadowColor = '#00f6ff';
+          ctx.shadowBlur = 10;
+          ctx.fillStyle = '#fff';
+          // Desenha o tiro principal
+          ctx.fillRect(t.x, t.y, t.w, t.h);
+          // Rastro dinâmico esticado atrás do laser
+          ctx.fillStyle = 'rgba(0, 210, 255, 0.45)';
+          ctx.fillRect(t.x, t.y + t.h, t.w, t.h * 1.5);
+          ctx.restore();
+      }
+  });
+
+  // Tiros Inimigos com Rastro e Brilho Neon Vermelho
+  tirosE.forEach(te => {
+      ctx.save();
+      ctx.shadowColor = '#ff0055';
+      ctx.shadowBlur = 8;
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(te.x, te.y, 5, 15);
+      // Rastro vermelho
+      ctx.fillStyle = 'rgba(255, 0, 85, 0.4)';
+      ctx.fillRect(te.x, te.y - 10, 5, 10);
+      ctx.restore();
+  });
+
+  // Atualização e física fina das partículas (Inércia, Atrito e Escala)
+  particulas.forEach((p,i)=>{ 
+      p.x += p.vx * (dt/16); 
+      p.y += p.vy * (dt/16); 
+      p.vx *= 0.94; // Simula atrito no espaço (desacelera suavemente)
+      p.vy *= 0.94;
+      p.life -= dt/16; 
+      
+      if(p.life<=0) {
+          particulas.splice(i,1); 
+      } else { 
+          ctx.save(); 
+          const escalaVida = p.life / p.maxLife;
+          ctx.globalAlpha = escalaVida; 
+          ctx.fillStyle = p.color; 
+          
+          // Desenha partículas circulares suaves que encolhem antes de morrer
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size * escalaVida, 0, Math.PI*2);
+          ctx.fill();
+          ctx.restore(); 
+      } 
+  });
+
+  ctx.restore(); // Restaura o contexto do Screen Shake
   requestAnimationFrame(gameLoop);
 }
 

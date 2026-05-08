@@ -18,8 +18,10 @@
     <h1>SPACE INVADERS</h1>
     <p>Mova com <b>A D</b> ou <b>SETAS</b><br>Atire com <b>ESPAÇO</b><br>Especial <b>(E)</b> |
     Escudo 2s <b>(R)</b><br>Derrote o Chefe a cada 5 níveis.</p>
-    <button class="btn-play" onclick="iniciarHistoria()">INICIAR JOGO</button>
-    <button class="btn-bosses" onclick="abrirGuiaBosses()">Guia de Chefes</button>
+    <div class="menu-buttons">
+        <button class="btn-play" onclick="iniciarHistoria()">INICIAR JOGO</button>
+        <button class="btn-secondary" onclick="abrirGuiaBosses()">Guia de Chefes</button>
+    </div>
 </div>
 
 <div id="game-container">
@@ -42,28 +44,39 @@
 </div>
 
 <div id="guia-bosses-painel" style="display: none;">
-    <div class="guia-conteudo">
-        <h2>Dossiê de Ameaças</h2>
-        
-        <div class="boss-card">
-            <span class="boss-tag rosa">Fase 5+</span>
-            <h3>Chefe Supremo</h3>
-            <p><strong>Poder:</strong> Controle Temporal. A cada 7 segundos ele paralisa o tempo com <em>"ZA WARUDO!"</em>, impedindo seus movimentos por 2.5 segundos enquanto seus projéteis continuam ativos. Vem escoltado por um escudo orbital.</p>
+    <div class="guia-container">
+        <div class="guia-header">
+            <h2>Dossiê de Ameaças</h2>
+            <button class="btn-close" onclick="fecharGuiaBosses()">×</button>
         </div>
         
-        <div class="boss-card">
-            <span class="boss-tag cinza">Fase 10+</span>
-            <h3>MK-II: O Anulador</h3>
-            <p><strong>Poder:</strong> Esquiva Evasiva. Seus sensores hiper-rápidos detectam seus tiros normais e o fazem desviar lateralmente. Use o tempo a seu favor para encurralá-lo e destrua seu escudo frontal primeiro!</p>
+        <div class="guia-conteudo">
+            <div class="boss-card">
+                <div class="boss-info">
+                    <span class="boss-meta" style="color: var(--neon-pink);">Fase 5+</span>
+                    <h3 class="boss-name">Chefe Supremo</h3>
+                    <p class="boss-desc"><strong>Poder:</strong> Controle Temporal. A cada 7 segundos ele paralisa o tempo com <em>"ZA WARUDO!"</em>, impedindo seus movimentos por 2.5 segundos enquanto seus projéteis continuam ativos. Vem escoltado por um escudo orbital.</p>
+                </div>
+            </div>
+            
+            <div class="boss-card">
+                <div class="boss-info">
+                    <span class="boss-meta" style="color: var(--neon-orange);">Fase 10+</span>
+                    <h3 class="boss-name">MK-II: O Anulador</h3>
+                    <p class="boss-desc"><strong>Poder:</strong> Esquiva Evasiva. Seus sensores hiper-rápidos detectam seus tiros normais e o fazem desviar lateralmente. Use o tempo a seu favor para encurralá-lo e destrua seu escudo frontal primeiro!</p>
+                </div>
+            </div>
+            
+            <div class="boss-card">
+                <div class="boss-info">
+                    <span class="boss-meta" style="color: var(--neon-blue);">Fase 15+</span>
+                    <h3 class="boss-name">O Criador de Mundos</h3>
+                    <p class="boss-desc"><strong>Poder:</strong> Reconstrução de Matéria. Cria barreiras menores a cada 4 segundos. Ao cair abaixo de 20% de vida, ativa uma <strong>Cura de Emergência (recupera 50% de HP)</strong> e invoca uma Barreira Suprema indestrutível no centro da tela.</p>
+                </div>
+            </div>
+            
+            <button class="btn-back-menu" onclick="fecharGuiaBosses()">Voltar ao Menu</button>
         </div>
-        
-        <div class="boss-card">
-            <span class="boss-tag azul">Fase 15+</span>
-            <h3>O Criador de Mundos</h3>
-            <p><strong>Poder:</strong> Reconstrução de Matéria. Cria barreiras menores a cada 4 segundos. Ao cair abaixo de 20% de vida, ativa uma <strong>Cura de Emergência (recupera 50% de HP)</strong> e invoca uma Barreira Suprema indestrutível no centro da tela.</p>
-        </div>
-        
-        <button class="btn-fechar" onclick="fecharGuiaBosses()">Voltar ao Menu</button>
     </div>
 </div>
 

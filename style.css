@@ -147,7 +147,7 @@ h1 {
     color: #b0c4de; 
 }
 
-/* Container de Botões no Menu */
+/* Container de Botões no Menu para alinhar os elementos perfeitamente */
 .menu-buttons {
     display: flex;
     flex-direction: column;
@@ -186,7 +186,9 @@ h1 {
     transform: translateY(-1px) scale(0.99);
 }
 
-/* Botão Secundário */
+/* ==========================================================
+   BOTÃO SECUNDÁRIO (ABRIR GUIA DE CHEFES NO MENU)
+   ========================================================== */
 .btn-secondary {
     display: block;
     width: 100%;
@@ -247,7 +249,7 @@ h1 {
     left: 150%;
 }
 
-/* Container do Jogo */
+/* Container do Jogo com efeito de monitor CRT retrô sutil */
 #game-container {
     display: none;
     position: relative;
@@ -262,7 +264,7 @@ h1 {
         inset 0 0 40px rgba(0, 0, 0, 0.9);
 }
 
-/* Linhas de scan sutil (estilo fliperama) */
+/* Linhas de scan sutil (estilo fliperama) dentro do jogo */
 #game-container::before {
     content: " ";
     display: block;
@@ -325,18 +327,23 @@ h1 {
     transform: translate(-50%, -50%) scale(1); 
 }
 
-/* Salto Temporal Estilo Hit (Tokitobashi) */
+/* ==========================================================
+   MUDADO: SALTO TEMPORAL ESTILO "HIT" (TOKITOBASHI)
+   ========================================================== */
 #efeito-tempo {
     position: absolute;
     inset: 0;
+    /* Degradê azulado/arroxeado profundo, escurecendo as bordas */
     background: radial-gradient(circle, rgba(147, 51, 234, 0.22) 20%, rgba(15, 10, 42, 0.78) 100%);
     display: none;
     z-index: 5;
     pointer-events: none;
     
+    /* Efeito de quebra dimensional e rotação de cor nas artes do canvas */
     backdrop-filter: hue-rotate(190deg) saturate(1.8) contrast(1.25);
     -webkit-backdrop-filter: hue-rotate(190deg) saturate(1.8) contrast(1.25);
     
+    /* Borda neon roxo-espelhada que esmaga os cantos */
     box-shadow: inset 0 0 110px rgba(168, 85, 247, 0.65);
     animation: tokitobashiPulse 1.2s ease-in-out infinite alternate;
 }
@@ -352,7 +359,7 @@ h1 {
     }
 }
 
-/* Barra de Vida do Chefe */
+/* Barra de Vida do Chefe Estilo Sci-Fi */
 #boss-hp-bar {
     position: absolute;
     top: 60px;
@@ -392,7 +399,7 @@ h1 {
     letter-spacing: 4px;
 }
 
-/* Tela de Fim de Jogo */
+/* Tela de Fim de Jogo Impactante */
 #game-over {
     position: absolute;
     inset: 0;
@@ -419,7 +426,7 @@ h1 {
     animation: pulseGlow 1.5s ease-in-out infinite alternate;
 }
 
-/* Animações de Pulsação */
+/* Animações Auxiliares de Pulsação */
 @keyframes pulseGlow {
     from {
         text-shadow: 0 0 10px rgba(0, 210, 255, 0.5), 0 0 20px rgba(0, 210, 255, 0.3);
@@ -429,7 +436,7 @@ h1 {
     }
 }
 
-/* Tremida de Tela */
+/* Tremida de Tela melhorada para impactos físicos convincentes */
 .shake { animation: shakeAnim 0.15s cubic-bezier(.36,.07,.19,.97) both; }
 
 @keyframes shakeAnim {
@@ -439,7 +446,11 @@ h1 {
     40%, 60% { transform: translate3d(5px, -3px, 0); }
 }
 
-/* Painel do Guia de Chefes */
+
+/* ==========================================================
+   PAINEL DO GUIA DE CHEFES (Glassmorphism Holográfico)
+   ========================================================== */
+
 #guia-bosses-painel {
     position: fixed;
     inset: 0;
@@ -452,7 +463,7 @@ h1 {
 }
 
 #guia-bosses-painel.show {
-    display: flex; 
+    display: flex; /* Garante que a classe active mostre o guia */
 }
 
 .guia-container {
@@ -475,7 +486,7 @@ h1 {
     overflow-y: auto;
 }
 
-/* Scrollbar Customizada */
+/* Estilização da Scrollbar para navegadores baseados em Webkit */
 .guia-container::-webkit-scrollbar {
     width: 8px;
 }
@@ -536,7 +547,7 @@ h1 {
     gap: 20px;
 }
 
-/* Item de Chefe no Guia */
+/* Item Individual de Chefe no Guia */
 .boss-card {
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -599,7 +610,9 @@ h1 {
     color: #b0c4de;
 }
 
-/* Botão "Voltar ao Menu" do Guia */
+/* ==========================================================
+   O BOTÃO "VOLTAR AO MENU" DO GUIA (ESTILO SCI-FI EXCLUSIVO)
+   ========================================================== */
 .btn-back-menu {
     display: inline-block;
     width: 100%;
@@ -614,6 +627,7 @@ h1 {
     color: #fff;
     cursor: pointer;
     
+    /* Degradê futurista de aviso/retorno */
     background: linear-gradient(135deg, rgba(255, 0, 85, 0.2) 0%, rgba(0, 210, 255, 0.2) 100%);
     border: 2px solid rgba(0, 210, 255, 0.6);
     border-radius: 14px;

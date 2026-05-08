@@ -212,7 +212,7 @@ function desenharEscudoBoss(obj){
 
 function desenharFireball(t){
   ctx.save(); ctx.translate(t.x + t.w/2, t.y + t.h/2); ctx.rotate(frameAnim*0.3);
-  if (skins.fireball.complete && skins.fireball.naturalWidth !== 0) ctx.drawImage(skins.fireball, -t.w/2, -t.h/2, t.w, h);
+  if (skins.fireball.complete && skins.fireball.naturalWidth !== 0) ctx.drawImage(skins.fireball, -t.w/2, -t.h/2, t.w, t.h);
   else { ctx.fillStyle = '#ffae3b'; ctx.beginPath(); ctx.arc(0,0,t.w/2,0,Math.PI*2); ctx.fill(); }
   ctx.restore();
 }

@@ -148,7 +148,6 @@ function desenharIntroducaoBoss7() {
     // Fundo semitransparente escuro para dar destaque
     ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
     ctx.fillRect(0, 0, 800, 600);
-
     // Caixa de diálogo com estilo futurista roxo (cor tema do Nexus)
     const x = 50, y = 400, w = 700, h = 160;
     ctx.fillStyle = "#0c051a";
@@ -156,7 +155,6 @@ function desenharIntroducaoBoss7() {
     ctx.lineWidth = 4;
     ctx.fillRect(x, y, w, h);
     ctx.strokeRect(x, y, w, h);
-
     // Linha de detalhe estético
     ctx.beginPath();
     ctx.moveTo(x + 10, y + 45);
@@ -164,16 +162,13 @@ function desenharIntroducaoBoss7() {
     ctx.strokeStyle = "rgba(168, 85, 247, 0.3)";
     ctx.lineWidth = 1;
     ctx.stroke();
-
     // Nome de quem fala
     ctx.fillStyle = "#c084fc";
     ctx.font = "bold 20px 'Courier New', monospace";
     ctx.fillText("NEXUS VORTEX - RECEPTÁCULO SUPREMO", x + 25, y + 33);
-
     // Texto da frase atual
     ctx.fillStyle = "#ffffff";
     ctx.font = "16px 'Courier New', monospace";
-    
     // Suporte básico a quebra de linha simples
     const textoMax = frasesFase7[indiceFraseFase7];
     if (textoMax.length > 60) {
@@ -192,21 +187,20 @@ function desenharIntroducaoBoss7() {
 
 function criarFase(){
     invasores = [];
-    tiros = []; tirosE = []; particulas = []; avisandoHabilidade = false; bossMorrendo = false;
+    tiros = []; tirosE = []; particulas = [];
+    avisandoHabilidade = false; bossMorrendo = false;
     escudosOrbitais = [];
     tirosTeleguiados = [];
     player.escudoAtivo = false; player.escudoTimer = 0;
     const bossBar = $('boss-hp-bar'), bossLabel = $('boss-hp-label'), container = $('game-container');
     bossBar.style.display = 'none'; bossLabel.style.display = 'none';
     container.classList.remove('shake');
-    
     // 1. CHEFE SECRETO SPECIAL: NEXUS VORTEX (Fase 7, 17, 27...)
     if(faseAtual === 7 || (faseAtual > 7 && (faseAtual - 7) % 10 === 0)){
         bossBar.style.display = 'block';
         bossLabel.style.display = 'block';
         bossLabel.innerText = "NEXUS VORTEX: O TITÃ DE DEFESA";
         $('boss-hp-fill').style.width = '100%';
-        
         // Ativando diálogo de introdução caso seja a Fase 7
         if (faseAtual === 7) {
             emDialogoFase7 = true;
@@ -377,10 +371,11 @@ function desenharNave(obj, color, isPlayer){
     ctx.restore();
 }
 
-// Canvas auxiliar persistente para limpar o fundo branco do Criador
+// Canvas auxiliar persistente para limpar o fundo branco de imagens em tempo real
 const tempCanvas = document.createElement('canvas');
 const tempCtx = tempCanvas.getContext('2d');
 let imgCriadorProcessada = null;
+let imgNexusProcessada = null; // Canvas auxiliar para o Nexus Vortex da fase 7
 
 function desenharBoss(obj){
     ctx.save();
@@ -394,8 +389,32 @@ function desenharBoss(obj){
     
     let img = skins.chefe;
     if(obj.tipo === 2) img = skins.chefe2;
-    if(obj.tipo === 4) img = skins.nexusVortex;
-    // Se for o Nexus Vortex
+    
+    // REMOÇÃO DE FUNDO BRANCO AUTOMÁTICA VIA CÓDIGO PARA O BOSS DA FASE 7 (NEXUS VORTEX)
+    if(obj.tipo === 4) {
+        img = skins.nexusVortex;
+        if (img.complete && img.naturalWidth !== 0) {
+            if (!imgNexusProcessada || imgNexusProcessada.width !== img.naturalWidth) {
+                tempCanvas.width = img.naturalWidth;
+                tempCanvas.height = img.naturalHeight;
+                tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
+                tempCtx.drawImage(img, 0, 0);
+                const imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                const data = imgData.data;
+                // Varre os pixels removendo qualquer resíduo branco/claro puro de fundo
+                for (let i = 0; i < data.length; i += 4) {
+                    if (data[i] > 220 && data[i+1] > 220 && data[i+2] > 220) {
+                        data[i+3] = 0; // Transparência total
+                    }
+                }
+                tempCtx.putImageData(imgData, 0, 0);
+                imgNexusProcessada = new Image();
+                imgNexusProcessada.src = tempCanvas.toDataURL();
+            }
+            img = imgNexusProcessada;
+        }
+    }
+    
     if(obj.tipo === 3) {
         img = skins.criador;
         if (img.complete && img.naturalWidth !== 0) {
@@ -862,7 +881,7 @@ function gameLoop(now){
             const hitW = t.isFireball ? 50 : 6;
             const hitH = t.isFireball ? 50 : 18;
 
-            // 1. Colisão contra Escudos Orbitais do Boss 7 (Requer que o escudo esteja ativo)
+            // 1. Colisão contra Escudos Orbitais do Boss 7 (Danos Ajustados: Tiro normal = 40, Especial = 150)
             if(boss && boss.tipo === 4){
                 let acertouAlgumEscudo = false;
                 for(let e = 0; e < escudosOrbitais.length; e++){
@@ -870,10 +889,10 @@ function gameLoop(now){
                     if(esc.hp > 0 && colide({ x: t.x, y: t.y, w: hitW, h: hitH }, esc)){
                         acertouAlgumEscudo = true;
                         if(t.isFireball){
-                            esc.hp -= 200;
+                            esc.hp -= 150; // Dano da Bola de Fogo ajustado para 150
                             explodir(t.x + 25, t.y + 25, '#00f6ff');
                         } else {
-                            esc.hp -= 34;
+                            esc.hp -= 40; // Dano do tiro normal ajustado para 40
                             explodir(t.x, t.y, '#00d2ff');
                         }
                         tiros.splice(i, 1);
@@ -908,10 +927,10 @@ function gameLoop(now){
                         break;
                     }
 
-                    // Cálculo normal de dano
+                    // Cálculo normal de dano (Ajustado: Tiro normal = 40, Especial = 150)
                     if(inv.isBoss || inv.isShield || inv.isBlocoProtetor){
-                        let dano = 25;
-                        if(t.isFireball) dano = 450;
+                        let dano = 40; // Tiro normal agora tira 40
+                        if(t.isFireball) dano = 150; // Especial agora tira 150
                         inv.hp -= dano;
                         
                         if(inv.isBoss){

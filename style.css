@@ -138,6 +138,14 @@ h1 {
     color: #b0c4de; 
 }
 
+/* Container de Botões no Menu para acomodar os novos elementos */
+.menu-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+}
+
 /* Botão Play com pulso de brilho ativo */
 .btn-play {
     padding: 18px 36px; 
@@ -167,6 +175,34 @@ h1 {
 
 .btn-play:active {
     transform: translateY(-1px) scale(0.99);
+}
+
+/* Botão Secundário para o Guia de Chefes */
+.btn-secondary {
+    padding: 14px 28px;
+    font-size: 14px;
+    font-weight: 700;
+    background: rgba(0, 210, 255, 0.1);
+    color: var(--neon-blue);
+    border: 2px solid rgba(0, 210, 255, 0.4);
+    border-radius: 14px;
+    cursor: pointer;
+    width: 100%;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    transition: all 0.3s ease;
+    font-family: 'Orbitron', sans-serif;
+}
+
+.btn-secondary:hover {
+    background: rgba(0, 210, 255, 0.25);
+    border-color: var(--neon-blue);
+    box-shadow: 0 0 15px rgba(0, 210, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+.btn-secondary:active {
+    transform: translateY(0);
 }
 
 /* Container do Jogo com efeito de monitor CRT retrô sutil */
@@ -303,7 +339,7 @@ h1 {
     letter-spacing: 4px;
 }
 
-/* Tela de Fim de Jogo Impacante */
+/* Tela de Fim de Jogo Impactante */
 #game-over {
     position: absolute;
     inset: 0;
@@ -348,4 +384,164 @@ h1 {
     20%, 80% { transform: translate3d(3px, -2px, 0); }
     30%, 50%, 70% { transform: translate3d(-5px, 4px, 0); }
     40%, 60% { transform: translate3d(5px, -3px, 0); }
+}
+
+
+/* ==========================================================
+   PAINEL DO GUIA DE CHEFES (Glassmorphism Holográfico)
+   ========================================================== */
+
+#guia-bosses-painel {
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 2, 8, 0.95);
+    z-index: 1100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.guia-container {
+    background: rgba(10, 10, 25, 0.85);
+    border: 2px solid var(--neon-blue);
+    border-radius: 24px;
+    width: 95%;
+    max-width: 750px;
+    max-height: 85vh;
+    padding: 35px;
+    box-shadow: 
+        0 0 50px rgba(0, 210, 255, 0.2),
+        inset 0 0 25px rgba(0, 210, 255, 0.1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    position: relative;
+    overflow-y: auto;
+}
+
+/* Estilização da Scrollbar para navegadores baseados em Webkit */
+.guia-container::-webkit-scrollbar {
+    width: 8px;
+}
+.guia-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 10px;
+}
+.guia-container::-webkit-scrollbar-thumb {
+    background: rgba(0, 210, 255, 0.3);
+    border-radius: 10px;
+}
+.guia-container::-webkit-scrollbar-thumb:hover {
+    background: var(--neon-blue);
+}
+
+.guia-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid rgba(0, 210, 255, 0.2);
+    padding-bottom: 15px;
+}
+
+.guia-header h2 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 24px;
+    color: var(--neon-blue);
+    letter-spacing: 3px;
+    text-shadow: 0 0 10px rgba(0, 210, 255, 0.5);
+}
+
+.btn-close {
+    background: transparent;
+    color: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.btn-close:hover {
+    color: #fff;
+    border-color: var(--neon-pink);
+    background: rgba(255, 0, 85, 0.2);
+    box-shadow: 0 0 10px rgba(255, 0, 85, 0.4);
+}
+
+.guia-conteudo {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Item Individual de Chefe no Guia */
+.boss-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.boss-card:hover {
+    background: rgba(0, 210, 255, 0.04);
+    border-color: rgba(0, 210, 255, 0.3);
+    transform: scale(1.01);
+}
+
+.boss-icon-container {
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px dashed rgba(0, 210, 255, 0.3);
+    flex-shrink: 0;
+}
+
+.boss-icon {
+    max-width: 64px;
+    max-height: 64px;
+    object-fit: contain;
+}
+
+.boss-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.boss-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 18px;
+    color: var(--neon-pink);
+    letter-spacing: 1px;
+}
+
+.boss-meta {
+    font-size: 11px;
+    color: var(--neon-orange);
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+}
+
+.boss-desc {
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: #b0c4de;
 }

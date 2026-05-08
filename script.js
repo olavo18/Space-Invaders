@@ -889,7 +889,7 @@ function gameLoop(now){
                     if(esc.hp > 0 && colide({ x: t.x, y: t.y, w: hitW, h: hitH }, esc)){
                         acertouAlgumEscudo = true;
                         if(t.isFireball){
-                            esc.hp -= 150; // Dano da Bola de Fogo ajustado para 150
+                            esc.hp -= 80; // Dano da Bola de Fogo ajustado para 150
                             explodir(t.x + 25, t.y + 25, '#00f6ff');
                         } else {
                             esc.hp -= 40; // Dano do tiro normal ajustado para 40
